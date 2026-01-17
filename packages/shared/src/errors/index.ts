@@ -1,0 +1,41 @@
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  INTERNAL_SERVER_ERROR: 500,
+} as const
+
+export type HttpStatus = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]
+
+export type HttpErrorStatus =
+  | typeof HTTP_STATUS.BAD_REQUEST
+  | typeof HTTP_STATUS.UNAUTHORIZED
+  | typeof HTTP_STATUS.FORBIDDEN
+  | typeof HTTP_STATUS.NOT_FOUND
+  | typeof HTTP_STATUS.CONFLICT
+  | typeof HTTP_STATUS.INTERNAL_SERVER_ERROR
+
+export const ERROR_CODES = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  INVALID_INPUT: 'INVALID_INPUT',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  DUPLICATE_ENTRY: 'DUPLICATE_ENTRY',
+  ALREADY_EXISTS: 'ALREADY_EXISTS',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  DATABASE_ERROR: 'DATABASE_ERROR',
+} as const
+
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
+
+export interface ApiError {
+  code: ErrorCode
+  message: string
+  details?: unknown
+}
