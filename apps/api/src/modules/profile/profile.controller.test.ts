@@ -1,9 +1,14 @@
 import { type ApiError, ERROR_CODES, HTTP_STATUS, type Profile } from '@myfinances/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { errorHandler } from '../../middleware/error-handler.middleware'
+import { AppError, errorHandler } from '../../middleware/error-handler.middleware'
 import type { Env } from '../../types'
+import { GetProfileUseCase } from './get-profile.usecase'
 import { profileController } from './profile.controller'
+import { UpdateProfileUseCase } from './update-profile.usecase'
+
+vi.mock('./get-profile.usecase')
+vi.mock('./update-profile.usecase')
 
 type SuccessResponse = { data: Profile }
 type ErrorResponse = { error: ApiError }
@@ -25,14 +30,6 @@ const testEnv = {
   SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
 }
 
-const mockSupabaseFrom = vi.fn()
-
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({
-    from: mockSupabaseFrom,
-  }),
-}))
-
 function createTestApp() {
   const app = new Hono<Env>()
 
@@ -48,28 +45,6 @@ function createTestApp() {
   return app
 }
 
-function mockSelectChain(data: Profile | null, error: unknown = null) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data, error }),
-      }),
-    }),
-  }
-}
-
-function mockUpdateChain(data: Profile | null, error: unknown = null) {
-  return {
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data, error }),
-        }),
-      }),
-    }),
-  }
-}
-
 describe('Profile Controller', () => {
   let app: ReturnType<typeof createTestApp>
 
@@ -80,17 +55,28 @@ describe('Profile Controller', () => {
 
   describe('GET /profile', () => {
     it('returns profile when found', async () => {
-      mockSupabaseFrom.mockReturnValue(mockSelectChain(mockProfile))
+      const mockExecute = vi.fn().mockResolvedValue(mockProfile)
+      vi.mocked(GetProfileUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as GetProfileUseCase
+      )
 
       const res = await app.request('/profile', { method: 'GET' }, testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse
       expect(json.data).toEqual(mockProfile)
+      expect(mockExecute).toHaveBeenCalledWith('user-123')
     })
 
     it('returns 404 when profile not found', async () => {
-      mockSupabaseFrom.mockReturnValue(mockSelectChain(null, { code: 'PGRST116' }))
+      const mockExecute = vi
+        .fn()
+        .mockRejectedValue(
+          new AppError(ERROR_CODES.NOT_FOUND, 'Profile not found', HTTP_STATUS.NOT_FOUND)
+        )
+      vi.mocked(GetProfileUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as GetProfileUseCase
+      )
 
       const res = await app.request('/profile', { method: 'GET' }, testEnv)
 
@@ -109,13 +95,17 @@ describe('Profile Controller', () => {
 
     it('updates profile with valid data', async () => {
       const updatedProfile = { ...mockProfile, name: 'Jane Doe' }
-      mockSupabaseFrom.mockReturnValue(mockUpdateChain(updatedProfile))
+      const mockExecute = vi.fn().mockResolvedValue(updatedProfile)
+      vi.mocked(UpdateProfileUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as UpdateProfileUseCase
+      )
 
       const res = await app.request('/profile', patchRequest({ name: 'Jane Doe' }), testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse
       expect(json.data.name).toBe('Jane Doe')
+      expect(mockExecute).toHaveBeenCalledWith('user-123', { name: 'Jane Doe' })
     })
 
     it('returns 400 for invalid update data', async () => {
@@ -125,7 +115,14 @@ describe('Profile Controller', () => {
     })
 
     it('returns 404 when profile not found on update', async () => {
-      mockSupabaseFrom.mockReturnValue(mockUpdateChain(null, { code: 'PGRST116' }))
+      const mockExecute = vi
+        .fn()
+        .mockRejectedValue(
+          new AppError(ERROR_CODES.NOT_FOUND, 'Profile not found', HTTP_STATUS.NOT_FOUND)
+        )
+      vi.mocked(UpdateProfileUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as UpdateProfileUseCase
+      )
 
       const res = await app.request('/profile', patchRequest({ name: 'Jane Doe' }), testEnv)
 

@@ -1,9 +1,18 @@
 import { type ApiError, type Category, ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { errorHandler } from '../../middleware/error-handler.middleware'
+import { AppError, errorHandler } from '../../middleware/error-handler.middleware'
 import type { Env } from '../../types'
 import { categoriesController } from './categories.controller'
+import { CreateCategoryUseCase } from './create-category.usecase'
+import { DeleteCategoryUseCase } from './delete-category.usecase'
+import { ListCategoriesUseCase } from './list-categories.usecase'
+import { UpdateCategoryUseCase } from './update-category.usecase'
+
+vi.mock('./list-categories.usecase')
+vi.mock('./create-category.usecase')
+vi.mock('./update-category.usecase')
+vi.mock('./delete-category.usecase')
 
 type SuccessResponse<T> = { data: T }
 type ErrorResponse = { error: ApiError }
@@ -36,12 +45,6 @@ const testEnv = {
   SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
 }
 
-const mockSupabaseFrom = vi.fn()
-
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({ from: mockSupabaseFrom }),
-}))
-
 function createTestApp() {
   const app = new Hono<Env>()
   app.onError(errorHandler)
@@ -54,42 +57,6 @@ function createTestApp() {
   return app
 }
 
-function mockSelectChain(data: Category[] | Category | null, error: unknown = null) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {}
-  chain.select = vi.fn().mockReturnValue(chain)
-  chain.or = vi.fn().mockReturnValue(chain)
-  chain.eq = vi.fn().mockReturnValue(chain)
-  chain.order = vi.fn().mockResolvedValue({ data, error })
-  chain.single = vi.fn().mockResolvedValue({ data, error })
-  return chain
-}
-
-function mockInsertChain(data: Category | null, error: unknown = null) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {}
-  chain.insert = vi.fn().mockReturnValue(chain)
-  chain.select = vi.fn().mockReturnValue(chain)
-  chain.single = vi.fn().mockResolvedValue({ data, error })
-  return chain
-}
-
-function mockUpdateChain(data: Category | null, error: unknown = null) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {}
-  chain.update = vi.fn().mockReturnValue(chain)
-  chain.eq = vi.fn().mockReturnValue(chain)
-  chain.select = vi.fn().mockReturnValue(chain)
-  chain.single = vi.fn().mockResolvedValue({ data, error })
-  return chain
-}
-
-function mockSoftDeleteChain(error: unknown = null, count = 1) {
-  const result = Promise.resolve({ error, count })
-  const innerChain = { eq: vi.fn().mockReturnValue(result) }
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {}
-  chain.update = vi.fn().mockReturnValue(chain)
-  chain.eq = vi.fn().mockReturnValue(innerChain)
-  return chain
-}
-
 describe('Categories Controller', () => {
   let app: ReturnType<typeof createTestApp>
 
@@ -100,19 +67,26 @@ describe('Categories Controller', () => {
 
   describe('GET /categories', () => {
     it('returns list of categories', async () => {
-      mockSupabaseFrom.mockReturnValue(mockSelectChain([systemCategory, userCategory]))
+      const mockExecute = vi.fn().mockResolvedValue([systemCategory, userCategory])
+      vi.mocked(ListCategoriesUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as ListCategoriesUseCase
+      )
 
       const res = await app.request('/categories', { method: 'GET' }, testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse<Category[]>
       expect(json.data).toHaveLength(2)
+      expect(mockExecute).toHaveBeenCalledWith('user-123')
     })
   })
 
   describe('POST /categories', () => {
     it('creates category with valid data', async () => {
-      mockSupabaseFrom.mockReturnValue(mockInsertChain(userCategory))
+      const mockExecute = vi.fn().mockResolvedValue(userCategory)
+      vi.mocked(CreateCategoryUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as CreateCategoryUseCase
+      )
 
       const res = await app.request(
         '/categories',
@@ -127,6 +101,11 @@ describe('Categories Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.CREATED)
       const json = (await res.json()) as SuccessResponse<Category>
       expect(json.data.name).toBe('Custom')
+      expect(mockExecute).toHaveBeenCalledWith('user-123', {
+        name: 'Custom',
+        icon: '⭐',
+        color: '#00FF00',
+      })
     })
 
     it('returns 400 for invalid data', async () => {
@@ -146,9 +125,11 @@ describe('Categories Controller', () => {
 
   describe('PATCH /categories/:id', () => {
     it('updates user category', async () => {
-      const selectMock = mockSelectChain(userCategory)
-      const updateMock = mockUpdateChain({ ...userCategory, name: 'Updated' })
-      mockSupabaseFrom.mockReturnValueOnce(selectMock).mockReturnValueOnce(updateMock)
+      const updatedCategory = { ...userCategory, name: 'Updated' }
+      const mockExecute = vi.fn().mockResolvedValue(updatedCategory)
+      vi.mocked(UpdateCategoryUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as UpdateCategoryUseCase
+      )
 
       const res = await app.request(
         '/categories/user-1',
@@ -163,10 +144,22 @@ describe('Categories Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse<Category>
       expect(json.data.name).toBe('Updated')
+      expect(mockExecute).toHaveBeenCalledWith('user-123', 'user-1', { name: 'Updated' })
     })
 
     it('returns 403 when modifying system category', async () => {
-      mockSupabaseFrom.mockReturnValue(mockSelectChain(systemCategory))
+      const mockExecute = vi
+        .fn()
+        .mockRejectedValue(
+          new AppError(
+            ERROR_CODES.FORBIDDEN,
+            'Cannot modify system category',
+            HTTP_STATUS.FORBIDDEN
+          )
+        )
+      vi.mocked(UpdateCategoryUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as UpdateCategoryUseCase
+      )
 
       const res = await app.request(
         '/categories/system-1',
@@ -186,17 +179,30 @@ describe('Categories Controller', () => {
 
   describe('DELETE /categories/:id', () => {
     it('soft deletes user category', async () => {
-      const selectMock = mockSelectChain(userCategory)
-      const deleteMock = mockSoftDeleteChain(null, 1)
-      mockSupabaseFrom.mockReturnValueOnce(selectMock).mockReturnValueOnce(deleteMock)
+      const mockExecute = vi.fn().mockResolvedValue(undefined)
+      vi.mocked(DeleteCategoryUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as DeleteCategoryUseCase
+      )
 
       const res = await app.request('/categories/user-1', { method: 'DELETE' }, testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.NO_CONTENT)
+      expect(mockExecute).toHaveBeenCalledWith('user-123', 'user-1')
     })
 
     it('returns 403 when deleting system category', async () => {
-      mockSupabaseFrom.mockReturnValue(mockSelectChain(systemCategory))
+      const mockExecute = vi
+        .fn()
+        .mockRejectedValue(
+          new AppError(
+            ERROR_CODES.FORBIDDEN,
+            'Cannot delete system category',
+            HTTP_STATUS.FORBIDDEN
+          )
+        )
+      vi.mocked(DeleteCategoryUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as DeleteCategoryUseCase
+      )
 
       const res = await app.request('/categories/system-1', { method: 'DELETE' }, testEnv)
 
