@@ -13,5 +13,10 @@ export const createSalarySchema = salaryHistorySchema.pick({
   effective_from: true,
 })
 
+export const salaryQuerySchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
+})
+
 export type SalaryHistory = z.infer<typeof salaryHistorySchema>
 export type CreateSalary = z.infer<typeof createSalarySchema>
+export type SalaryQuery = z.infer<typeof salaryQuerySchema>

@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/error-handler.middleware'
 import { categoriesController } from './modules/categories/categories.controller'
 import { expensesController } from './modules/expenses/expenses.controller'
 import { profileController } from './modules/profile/profile.controller'
+import { salaryController } from './modules/salary/salary.controller'
 import type { Env } from './types'
 
 const app = new Hono<Env>()
@@ -25,6 +26,7 @@ api.use('*', authMiddleware)
 api.route('/profile', profileController)
 api.route('/categories', categoriesController)
 api.route('/expenses', expensesController)
+api.route('/salary', salaryController)
 
 app.route('/api/v1', api)
 
