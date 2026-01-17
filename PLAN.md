@@ -14,26 +14,26 @@
 - [x] Test RLS policies work correctly
 - [x] Create database indexes for common queries
 
-### Phase 2: Monorepo & Project Setup (Current)
+### Phase 2: Monorepo & Project Setup ✅
 
-- [ ] Initialize pnpm workspace
-- [ ] Create `apps/api` package structure
-- [ ] Create `apps/web` package structure
-- [ ] Create `packages/shared` for Zod schemas
-- [ ] Set up TypeScript configs (base + per-package)
-- [ ] Set up BiomeJS
-- [ ] Set up Vitest for testing
+- [x] Initialize pnpm workspace
+- [x] Create `apps/api` package structure
+- [x] Create `apps/web` package structure
+- [x] Create `packages/shared` for Zod schemas
+- [x] Set up TypeScript configs (base + per-package)
+- [x] Set up BiomeJS
+- [x] Set up Vitest for testing
 
-### Phase 3: Shared Package
+### Phase 3: Shared Package ✅
 
-- [ ] Create Zod schemas for `expense`
-- [ ] Create Zod schemas for `category`
-- [ ] Create Zod schemas for `salary_history`
-- [ ] Create Zod schemas for `profile`
-- [ ] Create shared types (inferred from Zod)
-- [ ] Create money utilities (cents ↔ BRL conversion)
+- [x] Create Zod schemas for `expense`
+- [x] Create Zod schemas for `category`
+- [x] Create Zod schemas for `salary_history`
+- [x] Create Zod schemas for `profile`
+- [x] Create shared types (inferred from Zod)
+- [x] Create money utilities (cents ↔ BRL conversion)
 
-### Phase 4: API - Auth & Profile
+### Phase 4: API - Auth & Profile (Current)
 
 - [ ] Set up Hono with Cloudflare Workers
 - [ ] Create auth middleware (Supabase JWT verification)
