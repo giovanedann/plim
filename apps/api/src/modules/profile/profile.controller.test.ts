@@ -20,6 +20,7 @@ const mockProfile: Profile = {
   avatar_url: null,
   currency: 'BRL',
   locale: 'pt-BR',
+  is_onboarded: false,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 }

@@ -7,6 +7,7 @@ export const profileSchema = z.object({
   avatar_url: z.string().url().nullable(),
   currency: z.string().default('BRL'),
   locale: z.string().default('pt-BR'),
+  is_onboarded: z.boolean().default(false),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 })
