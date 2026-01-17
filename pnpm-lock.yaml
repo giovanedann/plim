@@ -20,6 +20,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@hono/zod-validator':
+        specifier: ^0.7.6
+        version: 0.7.6(hono@4.11.4)(zod@3.25.76)
       '@myfinances/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -29,6 +32,9 @@ importers:
       hono:
         specifier: ^4.7.4
         version: 4.11.4
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250109.0
@@ -655,6 +661,12 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@hono/zod-validator@0.7.6':
+    resolution: {integrity: sha512-Io1B6d011Gj1KknV4rXYz4le5+5EubcWEU/speUjuw9XMMIaP3n78yXLhjd2A3PXaXaUwEAluOiAyLqhBEJgsw==}
+    peerDependencies:
+      hono: '>=3.9.0'
+      zod: ^3.25.0 || ^4.0.0
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -2292,6 +2304,11 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.0':
     optional: true
+
+  '@hono/zod-validator@0.7.6(hono@4.11.4)(zod@3.25.76)':
+    dependencies:
+      hono: 4.11.4
+      zod: 3.25.76
 
   '@img/colour@1.0.0': {}
 

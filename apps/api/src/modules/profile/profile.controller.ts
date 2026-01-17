@@ -1,10 +1,10 @@
-import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { updateProfileSchema, HTTP_STATUS } from '@myfinances/shared'
-import { createSupabaseClientWithAuth, type Bindings } from '../../lib/supabase'
+import { HTTP_STATUS, updateProfileSchema } from '@myfinances/shared'
+import { Hono } from 'hono'
+import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
 import type { AuthVariables } from '../../middleware/auth.middleware'
-import { ProfileRepository } from './profile.repository'
 import { GetProfileUseCase } from './get-profile.usecase'
+import { ProfileRepository } from './profile.repository'
 import { UpdateProfileUseCase } from './update-profile.usecase'
 
 type ProfileEnv = {

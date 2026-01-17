@@ -1,15 +1,14 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { authMiddleware } from './middleware/auth.middleware'
+import { errorHandler } from './middleware/error-handler.middleware'
+import { profileController } from './modules/profile/profile.controller'
+import type { Env } from './types'
 
-type Bindings = {
-  SUPABASE_URL: string
-  SUPABASE_ANON_KEY: string
-  SUPABASE_SERVICE_ROLE_KEY: string
-}
-
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<Env>()
 
 app.use('*', cors())
+app.onError(errorHandler)
 
 app.get('/', (c) => {
   return c.json({ message: 'MyFinances API', version: '0.0.1' })
@@ -18,5 +17,11 @@ app.get('/', (c) => {
 app.get('/health', (c) => {
   return c.json({ status: 'ok' })
 })
+
+const api = new Hono<Env>()
+api.use('*', authMiddleware)
+api.route('/profile', profileController)
+
+app.route('/api/v1', api)
 
 export default app
