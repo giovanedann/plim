@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.middleware'
 import { errorHandler } from './middleware/error-handler.middleware'
 import { categoriesController } from './modules/categories/categories.controller'
+import { expensesController } from './modules/expenses/expenses.controller'
 import { profileController } from './modules/profile/profile.controller'
 import type { Env } from './types'
 
@@ -23,6 +24,7 @@ const api = new Hono<Env>()
 api.use('*', authMiddleware)
 api.route('/profile', profileController)
 api.route('/categories', categoriesController)
+api.route('/expenses', expensesController)
 
 app.route('/api/v1', api)
 

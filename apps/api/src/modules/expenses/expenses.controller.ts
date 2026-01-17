@@ -1,0 +1,96 @@
+import { zValidator } from '@hono/zod-validator'
+import {
+  HTTP_STATUS,
+  createExpenseSchema,
+  expenseFiltersSchema,
+  updateExpenseSchema,
+} from '@myfinances/shared'
+import { Hono } from 'hono'
+import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
+import type { AuthVariables } from '../../middleware/auth.middleware'
+import { CreateExpenseUseCase } from './create-expense.usecase'
+import { DeleteExpenseUseCase } from './delete-expense.usecase'
+import { ExpensesRepository } from './expenses.repository'
+import { GetExpenseUseCase } from './get-expense.usecase'
+import { ListExpensesUseCase } from './list-expenses.usecase'
+import { UpdateExpenseUseCase } from './update-expense.usecase'
+
+type ExpensesEnv = {
+  Bindings: Bindings
+  Variables: AuthVariables
+}
+
+const expensesController = new Hono<ExpensesEnv>()
+
+expensesController.get('/', zValidator('query', expenseFiltersSchema), async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const filters = c.req.valid('query')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new ListExpensesUseCase(repository)
+
+  const expenses = await useCase.execute(userId, filters)
+
+  return c.json({ data: expenses }, HTTP_STATUS.OK)
+})
+
+expensesController.get('/:id', async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const expenseId = c.req.param('id')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new GetExpenseUseCase(repository)
+
+  const expense = await useCase.execute(userId, expenseId)
+
+  return c.json({ data: expense }, HTTP_STATUS.OK)
+})
+
+expensesController.post('/', zValidator('json', createExpenseSchema), async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const input = c.req.valid('json')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new CreateExpenseUseCase(repository)
+
+  const expense = await useCase.execute(userId, input)
+
+  return c.json({ data: expense }, HTTP_STATUS.CREATED)
+})
+
+expensesController.patch('/:id', zValidator('json', updateExpenseSchema), async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const expenseId = c.req.param('id')
+  const input = c.req.valid('json')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new UpdateExpenseUseCase(repository)
+
+  const expense = await useCase.execute(userId, expenseId, input)
+
+  return c.json({ data: expense }, HTTP_STATUS.OK)
+})
+
+expensesController.delete('/:id', async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const expenseId = c.req.param('id')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new DeleteExpenseUseCase(repository)
+
+  await useCase.execute(userId, expenseId)
+
+  return c.body(null, HTTP_STATUS.NO_CONTENT)
+})
+
+export { expensesController }
