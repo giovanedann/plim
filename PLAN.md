@@ -33,16 +33,16 @@
 - [x] Create shared types (inferred from Zod)
 - [x] Create money utilities (cents ↔ BRL conversion)
 
-### Phase 4: API - Auth & Profile (Current)
+### Phase 4: API - Auth & Profile ✅
 
-- [ ] Set up Hono with Cloudflare Workers
-- [ ] Create auth middleware (Supabase JWT verification)
-- [ ] Create error handling middleware
-- [ ] Implement `GET /profile` endpoint
-- [ ] Implement `PATCH /profile` endpoint
-- [ ] Write tests for profile endpoints
+- [x] Set up Hono with Cloudflare Workers
+- [x] Create auth middleware (Supabase JWT verification)
+- [x] Create error handling middleware
+- [x] Implement `GET /profile` endpoint
+- [x] Implement `PATCH /profile` endpoint
+- [x] Write tests for profile endpoints
 
-### Phase 5: API - Categories
+### Phase 5: API - Categories (Current)
 
 - [ ] Implement `GET /categories` (user's + defaults)
 - [ ] Implement `POST /categories`
