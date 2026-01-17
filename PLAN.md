@@ -42,26 +42,26 @@
 - [x] Implement `PATCH /profile` endpoint
 - [x] Write tests for profile endpoints
 
-### Phase 5: API - Categories (Current)
+### Phase 5: API - Categories ✅
 
-- [ ] Implement `GET /categories` (user's + defaults)
-- [ ] Implement `POST /categories`
-- [ ] Implement `PATCH /categories/:id`
-- [ ] Implement `DELETE /categories/:id` (soft delete)
-- [ ] Write tests for category endpoints
+- [x] Implement `GET /categories` (user's + defaults)
+- [x] Implement `POST /categories`
+- [x] Implement `PATCH /categories/:id`
+- [x] Implement `DELETE /categories/:id` (soft delete)
+- [x] Write tests for category endpoints
 
-### Phase 6: API - Expenses
+### Phase 6: API - Expenses ✅
 
-- [ ] Implement `GET /expenses` with filters (date range, category, payment method)
-- [ ] Implement `POST /expenses` (one-time)
-- [ ] Implement `POST /expenses` (recurrent)
-- [ ] Implement `POST /expenses` (installments - creates multiple records)
-- [ ] Implement `PATCH /expenses/:id`
-- [ ] Implement `DELETE /expenses/:id`
-- [ ] Implement logic for projecting recurrent expenses
-- [ ] Write tests for expense endpoints
+- [x] Implement `GET /expenses` with filters (date range, category, payment method)
+- [x] Implement `POST /expenses` (one-time)
+- [x] Implement `POST /expenses` (recurrent)
+- [x] Implement `POST /expenses` (installments - creates multiple records)
+- [x] Implement `PATCH /expenses/:id`
+- [x] Implement `DELETE /expenses/:id`
+- [x] Implement logic for projecting recurrent expenses
+- [x] Write tests for expense endpoints
 
-### Phase 7: API - Salary
+### Phase 7: API - Salary (Current)
 
 - [ ] Implement `GET /salary?month=YYYY-MM` (returns active salary for month)
 - [ ] Implement `POST /salary` (create new salary history record)
