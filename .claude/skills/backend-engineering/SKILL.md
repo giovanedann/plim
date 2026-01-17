@@ -266,6 +266,31 @@ apps/api/src/
 
 ## Code Style
 
+### No Comments Unless Strictly Necessary
+
+Code should be self-documenting through clear naming and structure. Only add comments when:
+- Explaining **why** something unusual is done (not what)
+- Documenting complex algorithms or business rules
+- Warning about non-obvious side effects
+
+```typescript
+// BAD: Explains what code does
+// Loop through expenses and sum amounts
+const total = expenses.reduce((sum, e) => sum + e.amount, 0)
+
+// BAD: Obvious from function name
+// Creates a new expense
+async function createExpense(data: CreateExpenseInput) {}
+
+// GOOD: Explains why
+// Using integer cents to avoid floating-point precision issues with currency
+const amountCents = Math.round(amount * 100)
+
+// GOOD: Business rule context
+// Installments must be at least 2 — single payment is a one-time expense
+if (installments < 2) throw new Error('Invalid installment count')
+```
+
 ### Readability Over Micro-Optimizations
 
 ```typescript

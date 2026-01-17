@@ -286,6 +286,33 @@ function ExpenseList() {
 - Debounce search inputs
 - Avoid unnecessary re-renders (React DevTools Profiler)
 
+## Code Style
+
+### No Comments Unless Strictly Necessary
+
+Code should be self-documenting through clear naming and structure. Only add comments when:
+- Explaining **why** something unusual is done (not what)
+- Documenting complex algorithms or business rules
+- Warning about non-obvious side effects
+
+```typescript
+// BAD: Obvious from code
+// Check if user is logged in
+if (!user) return <Navigate to="/login" />
+
+// BAD: Describes what hook does
+// Custom hook for expense form
+function useExpenseForm() {}
+
+// GOOD: Explains workaround
+// Workaround for React 19 StrictMode double-mount in dev
+const mountedRef = useRef(false)
+
+// GOOD: Non-obvious business logic
+// Must match backend validation: max 12 installments for credit card
+const MAX_INSTALLMENTS = 12
+```
+
 ## Animations (Aceternity UI)
 
 - Use for delight, not distraction
