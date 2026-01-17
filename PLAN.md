@@ -73,6 +73,7 @@
 - [ ] Initialize Vite + React
 - [ ] Set up Tailwind CSS
 - [ ] Set up shadcn/ui
+- [ ] Set up dark/light mode (shadcn theme provider)
 - [ ] Set up React Router v7
 - [ ] Set up React Query
 - [ ] Set up Zustand
@@ -85,7 +86,17 @@
 - [ ] Implement Supabase Auth integration
 - [ ] Create auth guards for protected routes
 
-### Phase 10: Frontend - Expenses Page
+### Phase 10: Frontend - Onboarding
+
+- [ ] Create onboarding flow after sign-up
+- [ ] Step 1: Welcome screen (app intro)
+- [ ] Step 2: Set initial salary
+- [ ] Step 3: Choose preferred categories (or keep defaults)
+- [ ] Step 4: Add first expense (guided)
+- [ ] Mark user as onboarded in profile
+- [ ] Skip onboarding for returning users
+
+### Phase 11: Frontend - Expenses Page
 
 - [ ] Create `/expenses` page layout
 - [ ] Implement month selector (navigation)
@@ -97,19 +108,19 @@
 - [ ] Implement edit expense
 - [ ] Implement delete expense
 
-### Phase 11: Frontend - Dashboard
+### Phase 12: Frontend - Dashboard
 
 - [ ] Create `/dashboard` page layout
 - [ ] Implement monthly summary chart
 - [ ] Implement category breakdown (pie chart)
 - [ ] Implement spending trends
 
-### Phase 12: Frontend - Profile & Landing
+### Phase 13: Frontend - Profile & Landing
 
 - [ ] Create `/profile` page
 - [ ] Create `/landing` page (marketing)
 
-### Phase 13: Deployment
+### Phase 14: Deployment
 
 - [ ] Deploy API to Cloudflare Workers
 - [ ] Deploy frontend to Cloudflare Pages
@@ -122,16 +133,17 @@
 
 ### profile
 
-| Column       | Type        | Notes                   |
-| ------------ | ----------- | ----------------------- |
-| `user_id`    | uuid        | PK, FK to auth.users.id |
-| `name`       | text        |                         |
-| `email`      | text        | Denormalized from auth  |
-| `avatar_url` | text        | Nullable                |
-| `currency`   | text        | Default 'BRL'           |
-| `locale`     | text        | Default 'pt-BR'         |
-| `created_at` | timestamptz |                         |
-| `updated_at` | timestamptz |                         |
+| Column         | Type        | Notes                   |
+| -------------- | ----------- | ----------------------- |
+| `user_id`      | uuid        | PK, FK to auth.users.id |
+| `name`         | text        |                         |
+| `email`        | text        | Denormalized from auth  |
+| `avatar_url`   | text        | Nullable                |
+| `currency`     | text        | Default 'BRL'           |
+| `locale`       | text        | Default 'pt-BR'         |
+| `is_onboarded` | boolean     | Default false           |
+| `created_at`   | timestamptz |                         |
+| `updated_at`   | timestamptz |                         |
 
 ### category
 
@@ -190,6 +202,8 @@
 5. **Categories** — System defaults + user-created, duplicates allowed with UI warning
 6. **Co-located files** — Components/hooks/tests in same folder (kebab-case)
 7. **Controller → UseCase → Repository** — Backend architecture
+8. **Dark/Light mode** — shadcn theme provider, system preference default
+9. **Onboarding flow** — Guided setup after sign-up (salary, categories, first expense)
 
 ---
 
