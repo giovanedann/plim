@@ -1,0 +1,364 @@
+---
+name: frontend-engineering
+description: Use when writing any frontend code - React components, hooks, state management, styling, or UI logic
+---
+
+# Frontend Engineering Standards
+
+## Role
+
+Staff frontend engineer focused on React and performant, accessible websites. Building a finance application where **user experience and trust are paramount**.
+
+## Core Priorities (In Order)
+
+1. **Security** — Never expose sensitive data, sanitize inputs
+2. **User Experience** — Intuitive, responsive, fast feedback
+3. **Accessibility** — Finance apps must be usable by everyone
+4. **Performance** — Fast loads, smooth animations, no jank
+5. **Visual Quality** — Clean, professional UI that builds trust
+
+## Stack
+
+- **Build:** Vite
+- **Framework:** React 19+
+- **Routing:** React Router v7
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS
+- **Components:** shadcn/ui + Aceternity UI (animations)
+- **Forms:** React Hook Form + Zod
+- **Server State:** React Query (TanStack Query)
+- **Client State:** Zustand
+- **Validation:** Zod (shared with backend)
+
+## Component Organization (Co-location)
+
+All related files (component, hook, test) live together in the same folder.
+
+```
+apps/web/src/
+├── components/
+│   ├── ui/                          # shadcn primitives (button, input, card)
+│   ├── forms/
+│   │   └── create-transaction/
+│   │       ├── create-transaction.form.tsx
+│   │       ├── use-create-transaction.form.ts
+│   │       └── create-transaction.form.test.ts
+│   └── layouts/
+│       └── dashboard/
+│           ├── dashboard.layout.tsx
+│           ├── use-dashboard.layout.ts
+│           └── dashboard.layout.test.ts
+├── pages/                           # Route components
+├── hooks/                           # Global shared hooks only
+├── lib/                             # Utilities, helpers
+└── stores/                          # Zustand stores
+```
+
+### File Naming Convention
+
+```
+{name}.{type}.{ext}
+```
+
+| Type | Extension | Example |
+|------|-----------|---------|
+| Component | `.tsx` | `create-transaction.form.tsx` |
+| Hook | `.ts` | `use-create-transaction.form.ts` |
+| Test | `.test.ts` | `create-transaction.form.test.ts` |
+| Types | `.types.ts` | `create-transaction.types.ts` |
+| Utils | `.utils.ts` | `create-transaction.utils.ts` |
+
+### Rules
+
+- **Kebab-case** for all file and folder names
+- **Co-locate** component + hook + test in same folder
+- **Global hooks** only in `hooks/` — component-specific hooks stay with component
+- Hook files always prefixed with `use-`
+
+### shadcn Standards
+
+- Keep `components/ui/` for shadcn primitives only
+- Customize via Tailwind, don't modify shadcn source directly
+- Use CSS variables for theming (shadcn default approach)
+
+## State Management Rules
+
+### When to Use What
+
+| State Type      | Tool            | Examples                              |
+| --------------- | --------------- | ------------------------------------- |
+| **Server data** | React Query     | Expenses, categories, user profile    |
+| **Global UI**   | Zustand         | Sidebar open, theme, user preferences |
+| **Form state**  | React Hook Form | All forms                             |
+| **Local UI**    | useState        | Modal open, dropdown expanded         |
+
+### React Query Patterns
+
+```typescript
+// features/expenses/api.ts
+export function useExpenses(filters: ExpenseFilters) {
+  return useQuery({
+    queryKey: ["expenses", filters],
+    queryFn: () => expenseService.list(filters),
+  });
+}
+
+export function useCreateExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: expenseService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+  });
+}
+```
+
+### Zustand Patterns
+
+```typescript
+// stores/ui.ts
+interface UIStore {
+  sidebarOpen: boolean;
+  toggleSidebar: () => void;
+}
+
+export const useUIStore = create<UIStore>((set) => ({
+  sidebarOpen: true,
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+}));
+```
+
+## React Best Practices
+
+### useEffect — Use Sparingly
+
+```typescript
+// BAD: useEffect for derived state
+const [fullName, setFullName] = useState('')
+useEffect(() => {
+  setFullName(`${firstName} ${lastName}`)
+}, [firstName, lastName])
+
+// GOOD: Derive during render
+const fullName = `${firstName} ${lastName}`
+
+// BAD: useEffect to sync with props
+useEffect(() => {
+  setLocalValue(prop)
+}, [prop])
+
+// GOOD: Use prop directly or key prop to reset
+<Component key={id} initialValue={prop} />
+```
+
+**Valid useEffect uses:**
+
+- Subscriptions (WebSocket, event listeners)
+- Syncing with external systems (analytics, third-party widgets)
+- Data fetching (prefer React Query instead)
+
+### useMemo/useCallback — Use Judiciously
+
+```typescript
+// DON'T: Memoize everything
+const name = useMemo(() => user.name, [user.name]); // Pointless
+const handleClick = useCallback(() => onClick(), [onClick]); // Usually unnecessary
+
+// DO: Memoize expensive computations
+const sortedExpenses = useMemo(
+  () => expenses.sort((a, b) => b.date - a.date),
+  [expenses],
+);
+
+// DO: Memoize when passed to memoized children
+const handleSubmit = useCallback(
+  (data: FormData) => {
+    mutation.mutate(data);
+  },
+  [mutation],
+);
+
+// Used in: <MemoizedForm onSubmit={handleSubmit} />
+```
+
+**When to memoize:**
+
+- Expensive calculations (sorting, filtering large lists)
+- References passed to `React.memo` components
+- References used in dependency arrays
+
+**When NOT to memoize:**
+
+- Simple values or string concatenations
+- Functions that only run on user interaction (not in render)
+- Components that re-render anyway due to parent
+
+## Forms with React Hook Form + Zod
+
+```typescript
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createExpenseSchema, type CreateExpense } from '@myfinances/shared'
+
+export function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
+  const createExpense = useCreateExpense()
+
+  const form = useForm<CreateExpense>({
+    resolver: zodResolver(createExpenseSchema),
+    defaultValues: {
+      amount: 0,
+      description: '',
+      category: 'other',
+    },
+  })
+
+  const onSubmit = form.handleSubmit((data) => {
+    createExpense.mutate(data, { onSuccess })
+  })
+
+  return (
+    <form onSubmit={onSubmit}>
+      {/* Use shadcn Form components */}
+    </form>
+  )
+}
+```
+
+## Loading & Error States
+
+### Every Async Operation Needs Both
+
+```typescript
+function ExpenseList() {
+  const { data, isLoading, error } = useExpenses()
+
+  if (isLoading) return <ExpenseListSkeleton />
+  if (error) return <ErrorState message="Failed to load expenses" retry={refetch} />
+  if (!data?.length) return <EmptyState message="No expenses yet" />
+
+  return <ExpenseTable data={data} />
+}
+```
+
+### Skeleton Components
+
+- Match the layout of actual content
+- Use shadcn's Skeleton component
+- Avoid layout shift when content loads
+
+## Accessibility (a11y)
+
+### Baseline Requirements
+
+- All interactive elements keyboard accessible
+- Proper heading hierarchy (h1 > h2 > h3)
+- Form inputs have labels (use shadcn Form)
+- Color contrast meets WCAG AA (4.5:1 for text)
+- Focus indicators visible
+- Screen reader announcements for dynamic content
+
+```typescript
+// Announce success/error to screen readers
+<div role="status" aria-live="polite">
+  {mutation.isSuccess && 'Expense created successfully'}
+</div>
+```
+
+### Finance-Specific a11y
+
+- Numbers should be readable by screen readers
+- Currency formatting consistent
+- Tables have proper headers and scope
+
+## Performance
+
+### Bundle Size
+
+- Lazy load routes: `React.lazy()` + Suspense
+- Tree-shake imports: `import { Button } from '@/components/ui/button'`
+- Analyze bundle: `vite-bundle-visualizer`
+
+### Runtime Performance
+
+- Virtualize long lists (expenses list) with `@tanstack/react-virtual`
+- Debounce search inputs
+- Avoid unnecessary re-renders (React DevTools Profiler)
+
+## Animations (Aceternity UI)
+
+- Use for delight, not distraction
+- Respect `prefers-reduced-motion`
+- Keep animations under 300ms for interactions
+- Reserve elaborate animations for onboarding/empty states
+
+```typescript
+// Respect user preference
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+<motion.div
+  animate={{ opacity: 1 }}
+  transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+>
+```
+
+## Testing
+
+### What to Test
+
+```typescript
+// Component behavior
+describe("ExpenseForm", () => {
+  it("submits valid data", async () => {});
+  it("shows validation errors for invalid data", async () => {});
+  it("disables submit while loading", async () => {});
+  it("shows success message on completion", async () => {});
+});
+
+// User flows
+describe("expense creation flow", () => {
+  it("creates expense and shows in list", async () => {});
+  it("shows error and allows retry on failure", async () => {});
+});
+
+// Accessibility
+describe("accessibility", () => {
+  it("has no axe violations", async () => {});
+  it("is keyboard navigable", async () => {});
+});
+```
+
+### Testing Stack
+
+- **Test Runner:** Vitest
+- **Component Testing:** React Testing Library
+- **a11y Testing:** jest-axe
+- **E2E (later):** Playwright
+
+### Test Structure (Co-located)
+
+Tests live with their components:
+
+```
+apps/web/src/
+├── components/
+│   └── forms/
+│       └── create-expense/
+│           ├── create-expense.form.tsx
+│           ├── use-create-expense.form.ts
+│           └── create-expense.form.test.ts   # Unit/component tests here
+├── tests/
+│   ├── integration/
+│   │   └── expense-flow.test.ts              # Cross-component flow tests
+│   └── setup.ts
+```
+
+## Security Checklist
+
+- [ ] Never store tokens in localStorage (use httpOnly cookies or memory)
+- [ ] Sanitize any user-generated content before rendering
+- [ ] Validate all inputs client-side (and server-side)
+- [ ] No sensitive data in URLs or logs
+- [ ] CSP headers configured
+- [ ] Dependencies audited (`npm audit`)
