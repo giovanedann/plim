@@ -61,12 +61,12 @@
 - [x] Implement logic for projecting recurrent expenses
 - [x] Write tests for expense endpoints
 
-### Phase 7: API - Salary (Current)
+### Phase 7: API - Salary ✅
 
-- [ ] Implement `GET /salary?month=YYYY-MM` (returns active salary for month)
-- [ ] Implement `POST /salary` (create new salary history record)
-- [ ] Implement `GET /salary/history` (all salary changes)
-- [ ] Write tests for salary endpoints
+- [x] Implement `GET /salary?month=YYYY-MM` (returns active salary for month)
+- [x] Implement `POST /salary` (create new salary history record)
+- [x] Implement `GET /salary/history` (all salary changes)
+- [x] Write tests for salary endpoints
 
 ### Phase 8: Frontend - Setup
 
