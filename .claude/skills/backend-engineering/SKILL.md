@@ -264,6 +264,71 @@ apps/api/src/
 │   └── setup.ts
 ```
 
+### Mocking Strategy by Layer
+
+Each test layer mocks only its direct dependencies:
+
+| Test Layer | Mocks | Does NOT Mock |
+|------------|-------|---------------|
+| Controller | UseCases | Supabase, Repository |
+| UseCase | Repository | Supabase |
+| Repository | Supabase client | Nothing |
+
+**Controller tests mock UseCases:**
+
+```typescript
+import { CreateExpenseUseCase } from './create-expense.usecase'
+
+vi.mock('./create-expense.usecase')
+
+it('creates expense with valid data', async () => {
+  const mockExecute = vi.fn().mockResolvedValue(expense)
+  vi.mocked(CreateExpenseUseCase).mockImplementation(
+    () => ({ execute: mockExecute }) as unknown as CreateExpenseUseCase
+  )
+
+  const res = await app.request('/expenses', { method: 'POST', body })
+  expect(res.status).toBe(201)
+  expect(mockExecute).toHaveBeenCalledWith('user-123', input)
+})
+```
+
+**UseCase tests mock Repository:**
+
+```typescript
+const mockRepository = {
+  create: vi.fn(),
+  findById: vi.fn(),
+}
+
+it('creates expense', async () => {
+  mockRepository.create.mockResolvedValue(expense)
+  const useCase = new CreateExpenseUseCase(mockRepository)
+  const result = await useCase.execute('user-123', input)
+  expect(result).toEqual(expense)
+})
+```
+
+### Error Mocking with AppError
+
+When testing error scenarios, always use `AppError` instances — the error handler checks `instanceof AppError`:
+
+```typescript
+import { AppError } from '../../middleware/error-handler.middleware'
+
+it('returns 404 when not found', async () => {
+  const mockExecute = vi.fn().mockRejectedValue(
+    new AppError(ERROR_CODES.NOT_FOUND, 'Expense not found', HTTP_STATUS.NOT_FOUND)
+  )
+  vi.mocked(GetExpenseUseCase).mockImplementation(
+    () => ({ execute: mockExecute }) as unknown as GetExpenseUseCase
+  )
+
+  const res = await app.request('/expenses/123', { method: 'GET' })
+  expect(res.status).toBe(404)
+})
+```
+
 ## Code Style
 
 ### No Comments Unless Strictly Necessary
