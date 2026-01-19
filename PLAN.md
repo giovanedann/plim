@@ -79,12 +79,12 @@
 - [x] Set up Zustand
 - [x] Create base layout components
 
-### Phase 9: Frontend - Auth Pages
+### Phase 9: Frontend - Auth Pages ✅
 
-- [ ] Create `/sign-in` page
-- [ ] Create `/sign-up` page
-- [ ] Implement Supabase Auth integration (Google OAuth)
-- [ ] Create auth guards for protected routes
+- [x] Create `/sign-in` page
+- [x] Create `/sign-up` page
+- [x] Implement Supabase Auth integration (Google OAuth)
+- [x] Create auth guards for protected routes
 
 **Auth UI Design**: Split-screen layout
 - Left side: Dark panel (`bg-slate-950`) with floating animated Lucide finance icons (Wallet, CreditCard, PiggyBank, etc.) using CSS keyframe animations
