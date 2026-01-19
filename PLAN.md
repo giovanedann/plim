@@ -83,8 +83,12 @@
 
 - [ ] Create `/sign-in` page
 - [ ] Create `/sign-up` page
-- [ ] Implement Supabase Auth integration
+- [ ] Implement Supabase Auth integration (Google OAuth)
 - [ ] Create auth guards for protected routes
+
+**Auth UI Design**: Split-screen layout
+- Left side: Dark panel (`bg-slate-950`) with floating animated Lucide finance icons (Wallet, CreditCard, PiggyBank, etc.) using CSS keyframe animations
+- Right side: Themed form area with logo, form card, social sign-in buttons, and link to alternate auth page
 
 ### Phase 10: Frontend - Onboarding
 
