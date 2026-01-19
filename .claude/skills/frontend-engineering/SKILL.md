@@ -81,6 +81,122 @@ apps/web/src/
 - Customize via Tailwind, don't modify shadcn source directly
 - Use CSS variables for theming (shadcn default approach)
 
+## Theming & Dark Mode
+
+### Styling Approach
+
+**Use standard shadcn/ui styles initially.** Do not customize the default CSS variables or color palette until explicitly requested. This ensures:
+- Consistent, battle-tested design out of the box
+- Faster development without design decisions
+- Easy future customization by updating CSS variables in `globals.css`
+
+### Dark Mode Implementation
+
+Use shadcn's recommended `next-themes` pattern (works with Vite/React too):
+
+```typescript
+// components/theme-provider.tsx
+import { createContext, useContext, useEffect, useState } from 'react'
+
+type Theme = 'dark' | 'light' | 'system'
+
+interface ThemeContextType {
+  theme: Theme
+  setTheme: (theme: Theme) => void
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as Theme) || 'system'
+    }
+    return 'system'
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.remove('light', 'dark')
+
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      root.classList.add(systemTheme)
+    } else {
+      root.classList.add(theme)
+    }
+
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext)
+  if (!context) throw new Error('useTheme must be used within ThemeProvider')
+  return context
+}
+```
+
+### Theme Toggle Component
+
+```typescript
+// components/ui/theme-toggle.tsx
+import { Moon, Sun } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useTheme } from '@/components/theme-provider'
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      aria-label="Toggle theme"
+    >
+      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    </Button>
+  )
+}
+```
+
+### CSS Setup
+
+Ensure `globals.css` includes both light and dark variables (shadcn CLI generates these):
+
+```css
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    /* ... other light mode variables */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    /* ... other dark mode variables */
+  }
+}
+```
+
+### Rules
+
+- **Default to system preference** — Respect user's OS setting on first visit
+- **Persist choice** — Save to localStorage after manual toggle
+- **No flash** — Add `class="dark"` to `<html>` in index.html with inline script if needed
+- **Accessible toggle** — Always include aria-label on theme toggle button
+
 ## State Management Rules
 
 ### When to Use What
