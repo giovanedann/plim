@@ -90,15 +90,17 @@
 - Left side: Dark panel (`bg-slate-950`) with floating animated Lucide finance icons (Wallet, CreditCard, PiggyBank, etc.) using CSS keyframe animations
 - Right side: Themed form area with logo, form card, social sign-in buttons, and link to alternate auth page
 
-### Phase 10: Frontend - Onboarding
+### Phase 10: Frontend - Onboarding ✅
 
-- [ ] Create onboarding flow after sign-up
-- [ ] Step 1: Welcome screen (app intro)
-- [ ] Step 2: Set initial salary
-- [ ] Step 3: Choose preferred categories (or keep defaults)
-- [ ] Step 4: Add first expense (guided)
-- [ ] Mark user as onboarded in profile
-- [ ] Skip onboarding for returning users
+**Status:** ✅ Complete (2026-01-19)
+
+- [x] Create onboarding flow after sign-up
+- [x] Step 1: Welcome screen (app intro)
+- [x] Step 2: Set initial salary
+- [x] Step 3: Choose preferred categories (or keep defaults)
+- [x] Step 4: Add first expense (guided)
+- [x] Mark user as onboarded in profile
+- [x] Skip onboarding for returning users
 
 ### Phase 11: Frontend - Expenses Page
 
