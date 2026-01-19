@@ -7,9 +7,103 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useAuthStore } from '@/stores/auth.store'
+import { Check, Eye, EyeOff, X } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 
+function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      {met ? (
+        <Check className="h-3 w-3 text-emerald-500" />
+      ) : (
+        <X className="h-3 w-3 text-destructive" />
+      )}
+      <span className={met ? 'text-emerald-500' : 'text-muted-foreground'}>{label}</span>
+    </div>
+  )
+}
+
 export function SignUpPage() {
+  const { signInWithGoogle, signUpWithEmail, isLoading, error, clearError } = useAuthStore()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const passwordRequirements = {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSymbol: /[^A-Za-z0-9]/.test(password),
+  }
+
+  const allRequirementsMet = Object.values(passwordRequirements).every(Boolean)
+  const passwordsMatch =
+    password.length > 0 && confirmPassword.length > 0 && password === confirmPassword
+
+  const handleGoogleSignUp = async () => {
+    try {
+      await signInWithGoogle()
+    } catch (err) {
+      console.error('Sign up error:', err)
+    }
+  }
+
+  const handleEmailSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLocalError(null)
+    clearError()
+
+    if (!allRequirementsMet) {
+      setLocalError('A senha não atende todos os requisitos')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setLocalError('As senhas não coincidem')
+      return
+    }
+
+    try {
+      await signUpWithEmail(email, password)
+      setSuccess(true)
+    } catch {
+      // Error is handled by the store
+    }
+  }
+
+  if (success) {
+    return (
+      <>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Verifique seu email</h1>
+          <p className="text-muted-foreground">Enviamos um link de confirmação para {email}</p>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-sm text-muted-foreground">
+              Clique no link no email para ativar sua conta. Depois, você poderá entrar.
+            </p>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <Link to="/sign-in" className="text-primary hover:underline">
+              Voltar para login
+            </Link>
+          </CardFooter>
+        </Card>
+      </>
+    )
+  }
+
   return (
     <>
       <div className="text-center">
@@ -20,10 +114,125 @@ export function SignUpPage() {
       <Card>
         <CardHeader>
           <CardTitle>Registrar</CardTitle>
-          <CardDescription>Use sua conta Google para se registrar</CardDescription>
+          <CardDescription>Crie sua conta com email e senha</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button className="w-full" variant="outline">
+        <CardContent className="space-y-4">
+          <form onSubmit={handleEmailSignUp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {password.length > 0 && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
+                  <PasswordRequirement met={passwordRequirements.minLength} label="8+ caracteres" />
+                  <PasswordRequirement
+                    met={passwordRequirements.hasUppercase}
+                    label="Letra maiúscula"
+                  />
+                  <PasswordRequirement
+                    met={passwordRequirements.hasLowercase}
+                    label="Letra minúscula"
+                  />
+                  <PasswordRequirement met={passwordRequirements.hasNumber} label="Número" />
+                  <PasswordRequirement
+                    met={passwordRequirements.hasSymbol}
+                    label="Símbolo (!@#$...)"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar senha</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              {confirmPassword.length > 0 && (
+                <PasswordRequirement
+                  met={passwordsMatch}
+                  label={passwordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
+                />
+              )}
+            </div>
+
+            {(localError || error) && (
+              <p className="text-sm text-destructive">{localError || error}</p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : null}
+              Criar conta
+            </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">ou continue com</span>
+            </div>
+          </div>
+
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={handleGoogleSignUp}
+            disabled={isLoading}
+            type="button"
+          >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
