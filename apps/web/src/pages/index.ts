@@ -1,0 +1,4 @@
+export { SignInPage } from './sign-in.page'
+export { SignUpPage } from './sign-up.page'
+export { AuthCallbackPage } from './auth-callback.page'
+export { DashboardPage } from './dashboard.page'
