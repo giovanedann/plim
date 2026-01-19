@@ -1,7 +1,6 @@
 import { OnboardingOverlay } from '@/components/onboarding'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { api } from '@/lib/api-client'
-import type { Profile } from '@/lib/api-types'
+import { profileService, salaryService } from '@/services'
 import { useAuthStore } from '@/stores/auth.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useCallback, useEffect, useState } from 'react'
@@ -12,18 +11,15 @@ export function AppLayout() {
   const { open } = useOnboardingStore()
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
 
-  // Fetch profile to check onboarded status
   useEffect(() => {
     async function fetchProfile() {
       if (!user) return
 
-      const { data, error } = await api.get<Profile>('/profile')
+      const { data, error } = await profileService.getProfile()
 
       if (error || !data) {
-        // Profile might not exist yet or error occurred, show onboarding
         open(false)
       } else if (!data.onboarded) {
-        // User hasn't completed onboarding
         open(false)
       }
 
@@ -34,17 +30,11 @@ export function AppLayout() {
   }, [user, open])
 
   const handleSaveSalary = useCallback(async (salaryInCents: number) => {
-    const now = new Date()
-    const effectiveDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-
-    await api.post('/salary', {
-      amount: salaryInCents,
-      effective_date: effectiveDate,
-    })
+    await salaryService.createCurrentMonthSalary(salaryInCents)
   }, [])
 
   const handleComplete = useCallback(async () => {
-    await api.patch('/profile', { onboarded: true })
+    await profileService.markOnboarded()
   }, [])
 
   if (isLoadingProfile) {
