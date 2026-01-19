@@ -1,0 +1,6 @@
+export { CategoriesStep } from './categories-step'
+export { DashboardStep } from './dashboard-step'
+export { ExpenseTypesStep } from './expense-types-step'
+export { ReadyStep } from './ready-step'
+export { SalaryStep } from './salary-step'
+export { WelcomeStep } from './welcome-step'
