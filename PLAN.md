@@ -68,16 +68,16 @@
 - [x] Implement `GET /salary/history` (all salary changes)
 - [x] Write tests for salary endpoints
 
-### Phase 8: Frontend - Setup
+### Phase 8: Frontend - Setup ✅
 
-- [ ] Initialize Vite + React
-- [ ] Set up Tailwind CSS
-- [ ] Set up shadcn/ui
-- [ ] Set up dark/light mode (shadcn theme provider)
-- [ ] Set up React Router v7
-- [ ] Set up React Query
-- [ ] Set up Zustand
-- [ ] Create base layout components
+- [x] Initialize Vite + React
+- [x] Set up Tailwind CSS
+- [x] Set up shadcn/ui
+- [x] Set up dark/light mode (shadcn theme provider)
+- [x] Set up React Router v7
+- [x] Set up React Query
+- [x] Set up Zustand
+- [x] Create base layout components
 
 ### Phase 9: Frontend - Auth Pages
 
