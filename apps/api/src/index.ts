@@ -14,7 +14,7 @@ app.use('*', cors())
 app.onError(errorHandler)
 
 app.get('/', (c) => {
-  return c.json({ message: 'MyFinances API', version: '0.0.1' })
+  return c.json({ message: 'Plim API', version: '0.0.1' })
 })
 
 app.get('/health', (c) => {
