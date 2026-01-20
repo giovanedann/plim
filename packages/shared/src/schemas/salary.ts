@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
 export const salaryHistorySchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  id: z.uuid(),
+  user_id: z.uuid(),
   amount_cents: z.number().int().nonnegative(),
-  effective_from: z.string().date(),
-  created_at: z.string().datetime(),
+  effective_from: z.iso.date(),
+  created_at: z.iso.datetime(),
 })
 
 export const createSalarySchema = salaryHistorySchema.pick({
