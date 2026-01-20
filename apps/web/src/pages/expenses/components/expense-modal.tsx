@@ -1,3 +1,4 @@
+import { CategoryIcon } from '@/components/category-icon'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,9 +27,11 @@ import {
 } from '@myfinances/shared'
 import type { Category, CreateExpense, Expense, UpdateExpense } from '@myfinances/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { QuickCategoryModal } from './quick-category-modal'
 
 interface ExpenseModalProps {
   open: boolean
@@ -80,6 +83,8 @@ function getDefaultDate(selectedMonth: string): string {
   return `${selectedMonth}-01`
 }
 
+const CREATE_NEW_CATEGORY_VALUE = '__create_new__'
+
 export function ExpenseModal({
   open,
   onOpenChange,
@@ -89,6 +94,7 @@ export function ExpenseModal({
 }: ExpenseModalProps) {
   const isEditing = !!expense
   const queryClient = useQueryClient()
+  const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false)
 
   const {
     register,
@@ -96,6 +102,7 @@ export function ExpenseModal({
     control,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -297,7 +304,16 @@ export function ExpenseModal({
                 name="category_id"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      if (value === CREATE_NEW_CATEGORY_VALUE) {
+                        setShowQuickCategoryModal(true)
+                      } else {
+                        field.onChange(value)
+                      }
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -305,16 +321,17 @@ export function ExpenseModal({
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           <div className="flex items-center gap-2">
-                            {category.color && (
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{ backgroundColor: category.color }}
-                              />
-                            )}
+                            <CategoryIcon name={category.icon} color={category.color} size="sm" />
                             {category.name}
                           </div>
                         </SelectItem>
                       ))}
+                      <SelectItem value={CREATE_NEW_CATEGORY_VALUE}>
+                        <div className="flex items-center gap-2 text-primary">
+                          <Plus className="h-3 w-3" />
+                          Criar nova categoria
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -414,6 +431,14 @@ export function ExpenseModal({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <QuickCategoryModal
+        open={showQuickCategoryModal}
+        onOpenChange={setShowQuickCategoryModal}
+        onCategoryCreated={(category) => {
+          setValue('category_id', category.id)
+        }}
+      />
     </Dialog>
   )
 }
