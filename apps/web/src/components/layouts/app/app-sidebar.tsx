@@ -1,3 +1,12 @@
+import { PlimIcon } from '@/components/icons'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +21,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth.store'
-import { LayoutDashboard, LogOut, Receipt, Tags, Wallet } from 'lucide-react'
+import { ChevronsUpDown, LayoutDashboard, LogOut, Receipt, Tags, User } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 
 const navigation = [
@@ -44,8 +53,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Wallet className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                  <PlimIcon className="size-8" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Plim</span>
@@ -84,28 +93,43 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <div className="flex items-center gap-2">
-                {user?.user_metadata?.avatar_url ? (
-                  <img
-                    src={user.user_metadata.avatar_url}
-                    alt="Avatar"
-                    className="size-6 rounded-full"
-                  />
-                ) : (
-                  <div className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                    {user?.email?.charAt(0).toUpperCase()}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="Avatar"
+                      className="size-8 rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-sm font-medium">
+                      {user?.email?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex flex-col items-start text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{user?.email?.split('@')[0]}</span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                   </div>
-                )}
-                <span className="truncate text-sm">{user?.email}</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => signOut()} tooltip="Sair">
-              <LogOut />
-              <span>Sair</span>
-            </SidebarMenuButton>
+                  <ChevronsUpDown className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
