@@ -1,3 +1,4 @@
+import { PlimIcon } from '@/components/icons'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { Outlet } from 'react-router'
 import { AnimatedPanel } from './animated-panel'
@@ -17,6 +18,12 @@ export function AuthLayout() {
 
         {/* Auth form content */}
         <div className="w-full max-w-md space-y-6">
+          {/* Mobile branding - only shown when AnimatedPanel is hidden */}
+          <div className="flex flex-col items-center gap-2 lg:hidden">
+            <PlimIcon className="size-16" />
+            <h1 className="text-xl font-bold">Plim</h1>
+          </div>
+
           <Outlet />
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { PlimIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import {
   BadgeDollarSign,
@@ -172,10 +173,22 @@ export function AnimatedPanel() {
         glowColor="#ef4444"
       />
 
-      {/* Branding */}
-      <div className="absolute bottom-8 left-8 z-10">
-        <h2 className="text-2xl font-bold text-white">Plim</h2>
-        <p className="text-slate-400">Gerencie suas finanças com simplicidade</p>
+      {/* Centered Plim branding */}
+      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="drop-shadow-[0_0_30px_rgba(255,193,7,0.5)]"
+            style={{
+              animation: 'float-wave 6s ease-in-out infinite',
+            }}
+          >
+            <PlimIcon className="size-32" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-white">Plim</h2>
+            <p className="text-slate-400">Finanças pessoais</p>
+          </div>
+        </div>
       </div>
     </div>
   )
