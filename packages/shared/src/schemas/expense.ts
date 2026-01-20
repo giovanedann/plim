@@ -67,14 +67,18 @@ export const updateExpenseSchema = expenseSchema
   })
   .partial()
 
+export const expenseTypeSchema = z.enum(['one_time', 'recurrent', 'installment'])
+
 export const expenseFiltersSchema = z.object({
   start_date: z.string().date().optional(),
   end_date: z.string().date().optional(),
   category_id: z.string().uuid().optional(),
   payment_method: paymentMethodSchema.optional(),
+  expense_type: expenseTypeSchema.optional(),
 })
 
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
+export type ExpenseType = z.infer<typeof expenseTypeSchema>
 export type Expense = z.infer<typeof expenseSchema>
 export type CreateExpense = z.infer<typeof createExpenseSchema>
 export type UpdateExpense = z.infer<typeof updateExpenseSchema>
