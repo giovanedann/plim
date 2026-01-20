@@ -1,5 +1,5 @@
 import { PartyPopperIcon } from '@/components/ui/party-popper'
-import { OnboardingStep } from '../onboarding-step'
+import { OnboardingStep } from '../onboarding.step'
 
 export function ReadyStep() {
   return (

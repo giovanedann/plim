@@ -93,7 +93,7 @@ export function OnboardingStep({
         initial={titleAnimation.initial}
         animate={titleAnimation.animate}
         transition={titleAnimation.transition}
-        className="text-3xl font-bold text-white mb-6"
+        className="text-3xl font-bold text-foreground mb-6"
       >
         {title}
       </motion.h2>
@@ -102,7 +102,7 @@ export function OnboardingStep({
         initial={descriptionAnimation.initial}
         animate={descriptionAnimation.animate}
         transition={descriptionAnimation.transition}
-        className="text-slate-300 text-lg leading-relaxed mb-10"
+        className="text-muted-foreground text-lg leading-relaxed mb-10"
       >
         {description}
       </motion.p>

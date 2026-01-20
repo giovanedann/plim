@@ -1,3 +1,4 @@
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import {
   Car,
   Gamepad2,
@@ -10,7 +11,7 @@ import {
   Utensils,
 } from 'lucide-react'
 import { motion } from 'motion/react'
-import { OnboardingStep } from '../onboarding-step'
+import { OnboardingStep } from '../onboarding.step'
 
 const DEFAULT_CATEGORIES = [
   { name: 'Alimentação', icon: Utensils, color: 'text-orange-400' },
@@ -24,6 +25,8 @@ const DEFAULT_CATEGORIES = [
 ]
 
 export function CategoriesStep() {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
     <OnboardingStep
       icon={<Tags className="h-20 w-20" />}
@@ -37,13 +40,16 @@ export function CategoriesStep() {
           return (
             <motion.div
               key={category.name}
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.25 + index * 0.05, duration: 0.2 }}
-              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+              transition={{
+                delay: prefersReducedMotion ? 0 : 0.25 + index * 0.05,
+                duration: prefersReducedMotion ? 0 : 0.2,
+              }}
+              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-muted/50 border border-border"
             >
               <Icon className={`h-6 w-6 ${category.color}`} />
-              <span className="text-xs text-slate-300 text-center leading-tight">
+              <span className="text-xs text-muted-foreground text-center leading-tight">
                 {category.name}
               </span>
             </motion.div>

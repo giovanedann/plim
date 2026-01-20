@@ -1,5 +1,5 @@
 import { SparklesIcon } from '@/components/ui/sparkles'
-import { OnboardingStep } from '../onboarding-step'
+import { OnboardingStep } from '../onboarding.step'
 
 export function WelcomeStep() {
   return (

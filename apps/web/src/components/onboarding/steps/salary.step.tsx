@@ -4,7 +4,7 @@ import { TrendingUpIcon } from '@/components/ui/trending-up'
 import { Check } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
-import { OnboardingStep } from '../onboarding-step'
+import { OnboardingStep } from '../onboarding.step'
 
 interface SalaryStepProps {
   existingSalary?: number | null
@@ -106,14 +106,14 @@ export function SalaryStep({ existingSalary, onSave, isReplay }: SalaryStepProps
                 placeholder="R$ 0,00"
                 value={value ? formatBRL(value) : ''}
                 onChange={handleChange}
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
               <Button onClick={handleSave} disabled={isLoading || !value}>
                 {isLoading ? 'Salvando...' : 'Adicionar'}
               </Button>
             </div>
             {error && <p className="text-sm text-red-400">{error}</p>}
-            <p className="text-sm text-slate-500 text-center">
+            <p className="text-sm text-muted-foreground text-center">
               Você pode configurar isso depois nas configurações
             </p>
           </motion.div>
