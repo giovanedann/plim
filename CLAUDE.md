@@ -5,3 +5,15 @@
 
 *No recent activity*
 </claude-mem-context>
+
+## Auto-Invoke Skills
+
+When working on this project, automatically invoke the appropriate skill:
+
+| Task Type | Skill to Invoke |
+|-----------|-----------------|
+| Writing React components, hooks, styling, UI | `frontend-engineering` |
+| Writing API endpoints, controllers, use cases, repositories | `backend-engineering` |
+| Designing API routes, request/response formats | `api-design` |
+
+**Invoke before writing code** - Read the skill first to ensure compliance with standards.
