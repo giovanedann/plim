@@ -1,4 +1,4 @@
-import { CategoryIcon } from '@/components/category-icon'
+import { CategoryIcon } from '@/components/icons'
 import {
   AlertDialog,
   AlertDialogCancel,

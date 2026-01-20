@@ -1,5 +1,5 @@
 import { ColorPicker, PRESET_COLORS } from '@/components/color-picker'
-import { IconPicker } from '@/components/icon-picker'
+import { IconPicker } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,

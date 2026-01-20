@@ -1,4 +1,4 @@
-import { CategoryIcon } from '@/components/category-icon'
+import { CategoryIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Category } from '@plim/shared'

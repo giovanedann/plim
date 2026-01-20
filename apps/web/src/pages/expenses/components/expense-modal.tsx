@@ -1,4 +1,4 @@
-import { CategoryIcon } from '@/components/category-icon'
+import { CategoryIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import {
