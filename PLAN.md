@@ -87,6 +87,7 @@
 - [x] Create auth guards for protected routes
 
 **Auth UI Design**: Split-screen layout
+
 - Left side: Dark panel (`bg-slate-950`) with floating animated Lucide finance icons (Wallet, CreditCard, PiggyBank, etc.) using CSS keyframe animations
 - Right side: Themed form area with logo, form card, social sign-in buttons, and link to alternate auth page
 
@@ -122,9 +123,23 @@
 ### Phase 13: Frontend - Profile & Landing
 
 - [ ] Create `/profile` page
-- [ ] Create `/landing` page (marketing)
+- [ ] User should be able to edit every profile information
 
-### Phase 14: Frontend - Categories Management ✅
+### Phase 14
+
+#### IMPORTANT FOR PHASE 14: I want a different landing page. I want to show 1 page/functionality at the time while users scrolls
+
+#### to implement that, i want to add something like: 1st section: image on the left (animated, floating), and a description on the right. When the user scrolls to the next section, the image animate to the right, and the description now is on the left, on that transition, i want to switch images
+
+- [ ] Create `/landing` page (marketing)
+- [ ] Add marketing elements (with mocked prices for now)
+- [ ] Add image/text switching mock
+- [ ] add dashboard section
+- [ ] add expenses section
+- [ ] add categories section
+- [ ] add profile section
+
+### Phase 15: Frontend - Categories Management ✅
 
 - [x] Create icon registry with type-safe Lucide mapping (54 icons in 10 groups)
 - [x] Create CategoryIcon component with color and hover animation support
@@ -136,7 +151,7 @@
 - [x] Separate system categories (read-only) from user categories (editable)
 - [x] Add categories link to sidebar navigation
 
-### Phase 15: Deployment
+### Phase 16: Deployment
 
 - [ ] Deploy API to Cloudflare Workers
 - [ ] Deploy frontend to Cloudflare Pages
@@ -226,8 +241,9 @@
 ## UI/Layout Style Guide
 
 **Reference:** shadcn/ui examples
-- Dashboard layout: https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard
-- Tasks/table layout: https://ui.shadcn.com/examples/tasks
+
+- Dashboard layout: <https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard>
+- Tasks/table layout: <https://ui.shadcn.com/examples/tasks>
 
 ### App Shell Structure
 
@@ -248,14 +264,11 @@ SidebarProvider
    - Keyboard shortcut: `Ctrl/Cmd + B` to toggle
 
 2. **Page Content** — Consistent spacing:
+
    ```tsx
    <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-     <div className="px-4 lg:px-6">
-       {/* Page description */}
-     </div>
-     <div className="px-4 lg:px-6">
-       {/* Content sections */}
-     </div>
+     <div className="px-4 lg:px-6">{/* Page description */}</div>
+     <div className="px-4 lg:px-6">{/* Content sections */}</div>
    </div>
    ```
 
