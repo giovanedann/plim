@@ -1,8 +1,13 @@
 export function DashboardPage() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p className="text-muted-foreground mt-2">Em breve: visão geral das suas finanças</p>
+    <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+      <div className="px-4 lg:px-6">
+        <p className="text-sm text-muted-foreground">Visão geral das suas finanças pessoais</p>
+      </div>
+
+      <div className="flex flex-1 items-center justify-center px-4 lg:px-6">
+        <p className="text-muted-foreground">Em breve: gráficos e resumo financeiro</p>
+      </div>
     </div>
   )
 }
