@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client'
-import type { Profile } from '@myfinances/shared'
+import type { Profile } from '@plim/shared'
 
 export const profileService = {
   async getProfile() {

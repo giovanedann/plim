@@ -1,5 +1,5 @@
 import { categoryService } from '@/services/category.service'
-import type { CreateCategory, UpdateCategory } from '@myfinances/shared'
+import type { CreateCategory, UpdateCategory } from '@plim/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 

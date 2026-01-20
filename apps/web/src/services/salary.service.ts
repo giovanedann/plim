@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client'
-import type { CreateSalary, SalaryHistory } from '@myfinances/shared'
+import type { CreateSalary, SalaryHistory } from '@plim/shared'
 
 export const salaryService = {
   async getSalary(month: string) {

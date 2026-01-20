@@ -174,7 +174,7 @@ export function AnimatedPanel() {
 
       {/* Branding */}
       <div className="absolute bottom-8 left-8 z-10">
-        <h2 className="text-2xl font-bold text-white">MyFinances</h2>
+        <h2 className="text-2xl font-bold text-white">Plim</h2>
         <p className="text-slate-400">Gerencie suas finanças com simplicidade</p>
       </div>
     </div>

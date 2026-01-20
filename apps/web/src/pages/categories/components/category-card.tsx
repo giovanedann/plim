@@ -1,7 +1,7 @@
 import { CategoryIcon } from '@/components/category-icon'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import type { Category } from '@myfinances/shared'
+import type { Category } from '@plim/shared'
 import { Pencil, Trash2 } from 'lucide-react'
 
 interface CategoryCardProps {

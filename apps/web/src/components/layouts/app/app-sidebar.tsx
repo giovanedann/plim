@@ -48,7 +48,7 @@ export function AppSidebar() {
                   <Wallet className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">MyFinances</span>
+                  <span className="font-semibold">Plim</span>
                   <span className="text-xs text-muted-foreground">Finanças pessoais</span>
                 </div>
               </Link>

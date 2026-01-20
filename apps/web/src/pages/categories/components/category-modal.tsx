@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { CategoryIconName } from '@/lib/icons'
-import type { Category, CreateCategory } from '@myfinances/shared'
+import type { Category, CreateCategory } from '@plim/shared'
 import { useEffect, useState } from 'react'
 
 interface CategoryModalProps {

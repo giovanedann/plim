@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { salaryService } from '@/services'
 import { categoryService } from '@/services/category.service'
 import { expenseService } from '@/services/expense.service'
-import type { ExpenseFilters } from '@myfinances/shared'
+import type { ExpenseFilters } from '@plim/shared'
 
 function parseMonth(month: string): [number, number] {
   const parts = month.split('-').map(Number)

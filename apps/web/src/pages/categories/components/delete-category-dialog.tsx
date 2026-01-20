@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import type { Category } from '@myfinances/shared'
+import type { Category } from '@plim/shared'
 
 interface DeleteCategoryDialogProps {
   open: boolean

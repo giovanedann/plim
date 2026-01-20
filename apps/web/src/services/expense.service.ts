@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client'
-import type { CreateExpense, Expense, ExpenseFilters, UpdateExpense } from '@myfinances/shared'
+import type { CreateExpense, Expense, ExpenseFilters, UpdateExpense } from '@plim/shared'
 
 function buildQueryString(filters?: ExpenseFilters): string {
   if (!filters) return ''

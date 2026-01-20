@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useUIStore } from '@/stores'
-import type { Category, ExpenseFilters as ExpenseFiltersType } from '@myfinances/shared'
+import type { Category, ExpenseFilters as ExpenseFiltersType } from '@plim/shared'
 import { Eye, EyeOff, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { ExpenseModal } from './expense-modal'

@@ -6,7 +6,7 @@ export function WelcomeStep() {
     <OnboardingStep
       icon={<SparklesIcon size={80} />}
       iconColorClass="text-yellow-400"
-      title="Bem-vindo ao MyFinances!"
+      title="Bem-vindo ao Plim!"
       description="Seu novo parceiro para organizar suas finanças pessoais. Vamos te mostrar como aproveitar ao máximo a plataforma em poucos passos."
     />
   )

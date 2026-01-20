@@ -25,8 +25,8 @@ import {
   createExpenseSchema,
   decimalToCents,
   updateExpenseSchema,
-} from '@myfinances/shared'
-import type { Category, CreateExpense, Expense, UpdateExpense } from '@myfinances/shared'
+} from '@plim/shared'
+import type { Category, CreateExpense, Expense, UpdateExpense } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'

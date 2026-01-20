@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client'
-import type { Category, CreateCategory, UpdateCategory } from '@myfinances/shared'
+import type { Category, CreateCategory, UpdateCategory } from '@plim/shared'
 
 export const categoryService = {
   async listCategories() {

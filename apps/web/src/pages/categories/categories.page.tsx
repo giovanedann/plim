@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import type { Category } from '@myfinances/shared'
+import type { Category } from '@plim/shared'
 import { Plus, Tags } from 'lucide-react'
 import { useState } from 'react'
 import { CategoryCard } from './components/category-card'

@@ -4,8 +4,8 @@ import { Input } from '@/components/ui/input'
 import { useCountUp } from '@/hooks/use-count-up'
 import { salaryService } from '@/services'
 import { useUIStore } from '@/stores'
-import { centsToDecimal, formatBRL, parseBRL } from '@myfinances/shared'
-import type { SalaryHistory } from '@myfinances/shared'
+import { centsToDecimal, formatBRL, parseBRL } from '@plim/shared'
+import type { SalaryHistory } from '@plim/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDown,
