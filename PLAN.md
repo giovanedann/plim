@@ -124,7 +124,19 @@
 - [ ] Create `/profile` page
 - [ ] Create `/landing` page (marketing)
 
-### Phase 14: Deployment
+### Phase 14: Frontend - Categories Management ✅
+
+- [x] Create icon registry with type-safe Lucide mapping (54 icons in 10 groups)
+- [x] Create CategoryIcon component with color and hover animation support
+- [x] Show category icons in expense modal and table
+- [x] Create IconPicker component with search and grouped display
+- [x] Create ColorPicker component with 12-color preset palette
+- [x] Implement inline category creation from expense modal ("Criar nova categoria")
+- [x] Create `/categories` management page with CRUD operations
+- [x] Separate system categories (read-only) from user categories (editable)
+- [x] Add categories link to sidebar navigation
+
+### Phase 15: Deployment
 
 - [ ] Deploy API to Cloudflare Workers
 - [ ] Deploy frontend to Cloudflare Pages
@@ -231,7 +243,7 @@ SidebarProvider
 
 1. **Sidebar** — Collapsible navigation with:
    - Logo/brand in header
-   - Main navigation links (Dashboard, Despesas)
+   - Main navigation links (Dashboard, Despesas, Categorias)
    - User profile + logout in footer
    - Keyboard shortcut: `Ctrl/Cmd + B` to toggle
 
