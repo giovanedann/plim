@@ -55,7 +55,7 @@ export function CategoriesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="h-8 w-32 animate-pulse rounded bg-muted" />
@@ -72,7 +72,7 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
+    <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Categorias</h1>
