@@ -28,7 +28,7 @@ export const authMiddleware: MiddlewareHandler<{
 
   const accessToken = authHeader.slice(7)
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY, {
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_PUBLISHABLE_KEY, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`,

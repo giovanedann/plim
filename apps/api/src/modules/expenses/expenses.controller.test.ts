@@ -44,8 +44,7 @@ const baseExpense: Expense = {
 
 const testEnv = {
   SUPABASE_URL: 'http://test.supabase.co',
-  SUPABASE_ANON_KEY: 'test-key',
-  SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
+  SUPABASE_PUBLISHABLE_KEY: 'test-key',
 }
 
 function createTestApp() {
