@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useCountUp } from '@/hooks/use-count-up'
 import { salaryService } from '@/services'
+import { useUIStore } from '@/stores'
 import { centsToDecimal, formatBRL, parseBRL } from '@myfinances/shared'
 import type { SalaryHistory } from '@myfinances/shared'
 import { useQueryClient } from '@tanstack/react-query'
@@ -55,6 +56,8 @@ export function SalaryDisplay({
   isLoading,
   comparison,
 }: SalaryDisplayProps) {
+  const hideValues = useUIStore((state) => state.hideValues)
+  const maskValue = (value: number) => (hideValues ? '••••••' : formatBRL(value))
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -206,7 +209,7 @@ export function SalaryDisplay({
               {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
           ) : (
-            <p className="mt-2 text-2xl font-bold">{formatBRL(animatedSalary)}</p>
+            <p className="mt-2 text-2xl font-bold">{maskValue(animatedSalary)}</p>
           )}
         </CardContent>
       </Card>
@@ -217,7 +220,7 @@ export function SalaryDisplay({
             <TrendingDown className="h-5 w-5 text-red-500" />
             <span className="text-sm font-medium text-muted-foreground">Total de Despesas</span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-red-500">{formatBRL(animatedExpenses)}</p>
+          <p className="mt-2 text-2xl font-bold text-red-500">{maskValue(animatedExpenses)}</p>
           {comparison && (
             <div className="mt-1 flex items-center gap-1 text-xs">
               {expenseComparison.value !== null ? (
@@ -252,7 +255,7 @@ export function SalaryDisplay({
           <p
             className={`mt-2 text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
           >
-            {formatBRL(animatedBalance)}
+            {maskValue(animatedBalance)}
           </p>
           {comparison && (
             <div className="mt-1 flex items-center gap-1 text-xs">

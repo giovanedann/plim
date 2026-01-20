@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { expenseService } from '@/services/expense.service'
+import { useUIStore } from '@/stores'
 import { formatBRL } from '@myfinances/shared'
 import type { Category, Expense } from '@myfinances/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -64,6 +65,7 @@ export function ExpenseTable({
   isLoading,
   selectedMonth,
 }: ExpenseTableProps) {
+  const hideValues = useUIStore((state) => state.hideValues)
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
   const queryClient = useQueryClient()
@@ -225,7 +227,7 @@ export function ExpenseTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="py-2 px-4 text-right font-medium">
-                    {formatBRL(expense.amount_cents)}
+                    {hideValues ? '••••••' : formatBRL(expense.amount_cents)}
                   </TableCell>
                   <TableCell className="py-2 px-4">
                     <DropdownMenu>
