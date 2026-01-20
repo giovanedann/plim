@@ -12,7 +12,11 @@ interface IconPickerProps {
   color?: string
 }
 
-export function IconPicker({ value, onChange, color = '#6b7280' }: IconPickerProps) {
+export function IconPicker({
+  value,
+  onChange,
+  color = 'hsl(var(--muted-foreground))',
+}: IconPickerProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 

@@ -45,7 +45,7 @@ const PAYMENT_METHOD_CONFIG: Record<string, { label: string; className: string }
   credit_card: { label: 'Crédito', className: 'border-amber-500/50 text-amber-400' },
   debit_card: { label: 'Débito', className: 'border-cyan-500/50 text-cyan-400' },
   pix: { label: 'PIX', className: 'border-emerald-500/50 text-emerald-400' },
-  cash: { label: 'Dinheiro', className: 'border-slate-500/50 text-slate-400' },
+  cash: { label: 'Dinheiro', className: 'border-muted-foreground/50 text-muted-foreground' },
 }
 
 function formatDate(dateString: string) {
@@ -71,6 +71,8 @@ export function ExpenseTable({
   const queryClient = useQueryClient()
 
   const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.is_projected
+  const isInstallmentExpense =
+    expenseToDelete?.installment_total && expenseToDelete.installment_total > 1
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => expenseService.deleteExpense(id),
@@ -274,13 +276,23 @@ export function ExpenseTable({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {isRecurrentExpense ? 'Excluir despesa recorrente' : 'Excluir despesa'}
+              {isRecurrentExpense
+                ? 'Excluir despesa recorrente'
+                : isInstallmentExpense
+                  ? 'Excluir despesa parcelada'
+                  : 'Excluir despesa'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isRecurrentExpense ? (
                 <>
                   A despesa &quot;{expenseToDelete?.description}&quot; é recorrente. Como deseja
                   proceder?
+                </>
+              ) : isInstallmentExpense ? (
+                <>
+                  A despesa &quot;{expenseToDelete?.description}&quot; é parcelada (
+                  {expenseToDelete?.installment_current}/{expenseToDelete?.installment_total}). Como
+                  deseja proceder?
                 </>
               ) : (
                 <>
@@ -290,7 +302,11 @@ export function ExpenseTable({
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className={isRecurrentExpense ? 'flex-col gap-2 sm:flex-col' : ''}>
+          <AlertDialogFooter
+            className={
+              isRecurrentExpense || isInstallmentExpense ? 'flex-col gap-2 sm:flex-col' : ''
+            }
+          >
             <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
             {isRecurrentExpense ? (
               <>
@@ -301,6 +317,15 @@ export function ExpenseTable({
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteAll} disabled={isPending}>
                   {deleteMutation.isPending ? 'Excluindo...' : 'Excluir todas as ocorrências'}
+                </Button>
+              </>
+            ) : isInstallmentExpense ? (
+              <>
+                <Button variant="outline" onClick={handleDeleteSingle} disabled={isPending}>
+                  {deleteMutation.isPending ? 'Excluindo...' : 'Excluir apenas esta parcela'}
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteAll} disabled={isPending}>
+                  {deleteMutation.isPending ? 'Excluindo...' : 'Excluir todas as parcelas'}
                 </Button>
               </>
             ) : (

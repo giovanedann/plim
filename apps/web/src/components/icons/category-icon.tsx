@@ -42,7 +42,7 @@ export function CategoryIcon({
     return (
       <span
         className={cn('inline-block shrink-0 rounded-full', DOT_SIZE_MAP[size], className)}
-        style={{ backgroundColor: color ?? '#6b7280' }}
+        style={{ backgroundColor: color ?? 'hsl(var(--muted-foreground))' }}
         aria-hidden="true"
       />
     )
@@ -56,7 +56,7 @@ export function CategoryIcon({
         shouldAnimate && 'transition-transform duration-200 hover:scale-110',
         className
       )}
-      style={{ color: color ?? '#6b7280' }}
+      style={{ color: color ?? 'hsl(var(--muted-foreground))' }}
       aria-hidden="true"
     />
   )

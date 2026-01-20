@@ -69,7 +69,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                 style={{ backgroundColor: color }}
                 title={color}
               >
-                {isSelected && <Check className="h-4 w-4 text-white drop-shadow-md" />}
+                {isSelected && <Check className="h-4 w-4 text-primary-foreground drop-shadow-md" />}
               </button>
             )
           })}

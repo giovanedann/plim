@@ -106,7 +106,7 @@ export function QuickCategoryModal({
 
           <div className="space-y-2">
             <Label>Ícone</Label>
-            <IconPicker value={icon} onChange={setIcon} color={color ?? '#6b7280'} />
+            <IconPicker value={icon} onChange={setIcon} color={color ?? undefined} />
           </div>
 
           <div className="space-y-2">
