@@ -16,6 +16,7 @@ export function ExpensesPage() {
     isLoading,
     totalExpenses,
     balance,
+    comparison,
   } = useExpensesPage()
 
   return (
@@ -32,6 +33,7 @@ export function ExpensesPage() {
           balance={balance}
           selectedMonth={selectedMonth}
           isLoading={isLoading}
+          comparison={comparison}
         />
       </div>
 

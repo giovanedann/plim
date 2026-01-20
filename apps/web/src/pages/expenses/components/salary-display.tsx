@@ -1,13 +1,28 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useCountUp } from '@/hooks/use-count-up'
 import { salaryService } from '@/services'
 import { centsToDecimal, formatBRL, parseBRL } from '@myfinances/shared'
 import type { SalaryHistory } from '@myfinances/shared'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, Pencil, TrendingDown, TrendingUp, Wallet, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Pencil,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+
+interface ComparisonData {
+  previousExpenses: number | null
+  previousBalance: number | null
+}
 
 interface SalaryDisplayProps {
   salary: SalaryHistory | null
@@ -15,6 +30,21 @@ interface SalaryDisplayProps {
   balance: number
   selectedMonth: string
   isLoading: boolean
+  comparison?: ComparisonData
+}
+
+function calculatePercentageChange(
+  current: number,
+  previous: number | null
+): { value: number | null; label: string } {
+  if (previous === null) {
+    return { value: null, label: 'Primeiro mês registrado' }
+  }
+  if (previous === 0) {
+    return { value: null, label: 'N/A' }
+  }
+  const change = ((current - previous) / Math.abs(previous)) * 100
+  return { value: change, label: `${Math.abs(change).toFixed(1)}% vs mês anterior` }
 }
 
 export function SalaryDisplay({
@@ -23,12 +53,25 @@ export function SalaryDisplay({
   balance,
   selectedMonth,
   isLoading,
+  comparison,
 }: SalaryDisplayProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
+
+  // Animated values
+  const animatedSalary = useCountUp(salary?.amount_cents ?? 0)
+  const animatedExpenses = useCountUp(totalExpenses)
+  const animatedBalance = useCountUp(balance)
+
+  // Comparison calculations
+  const expenseComparison = calculatePercentageChange(
+    totalExpenses,
+    comparison?.previousExpenses ?? null
+  )
+  const balanceComparison = calculatePercentageChange(balance, comparison?.previousBalance ?? null)
 
   const handleStartEdit = () => {
     const currentValue = salary?.amount_cents ?? 0
@@ -100,11 +143,9 @@ export function SalaryDisplay({
     )
   }
 
-  const salaryAmount = salary?.amount_cents ?? 0
-
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card>
+      <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -165,22 +206,42 @@ export function SalaryDisplay({
               {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
           ) : (
-            <p className="mt-2 text-2xl font-bold">{formatBRL(salaryAmount)}</p>
+            <p className="mt-2 text-2xl font-bold">{formatBRL(animatedSalary)}</p>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center gap-2">
             <TrendingDown className="h-5 w-5 text-red-500" />
             <span className="text-sm font-medium text-muted-foreground">Total de Despesas</span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-red-500">{formatBRL(totalExpenses)}</p>
+          <p className="mt-2 text-2xl font-bold text-red-500">{formatBRL(animatedExpenses)}</p>
+          {comparison && (
+            <div className="mt-1 flex items-center gap-1 text-xs">
+              {expenseComparison.value !== null ? (
+                <>
+                  {expenseComparison.value > 0 ? (
+                    <ArrowUp className="h-3 w-3 text-red-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 text-emerald-500" />
+                  )}
+                  <span
+                    className={expenseComparison.value > 0 ? 'text-red-500' : 'text-emerald-500'}
+                  >
+                    {expenseComparison.label}
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">{expenseComparison.label}</span>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center gap-2">
             <TrendingUp
@@ -191,8 +252,28 @@ export function SalaryDisplay({
           <p
             className={`mt-2 text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
           >
-            {formatBRL(balance)}
+            {formatBRL(animatedBalance)}
           </p>
+          {comparison && (
+            <div className="mt-1 flex items-center gap-1 text-xs">
+              {balanceComparison.value !== null ? (
+                <>
+                  {balanceComparison.value > 0 ? (
+                    <ArrowUp className="h-3 w-3 text-emerald-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 text-red-500" />
+                  )}
+                  <span
+                    className={balanceComparison.value > 0 ? 'text-emerald-500' : 'text-red-500'}
+                  >
+                    {balanceComparison.label}
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">{balanceComparison.label}</span>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

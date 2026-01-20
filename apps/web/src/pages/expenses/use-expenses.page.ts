@@ -22,6 +22,12 @@ function getMonthBounds(month: string) {
   }
 }
 
+function getPreviousMonth(month: string): string {
+  const [year, monthNum] = parseMonth(month)
+  const prevDate = new Date(year, monthNum - 2, 1)
+  return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+}
+
 function getCurrentMonth() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -32,6 +38,8 @@ export function useExpensesPage() {
   const [filters, setFilters] = useState<Omit<ExpenseFilters, 'start_date' | 'end_date'>>({})
 
   const monthBounds = useMemo(() => getMonthBounds(selectedMonth), [selectedMonth])
+  const previousMonth = useMemo(() => getPreviousMonth(selectedMonth), [selectedMonth])
+  const previousMonthBounds = useMemo(() => getMonthBounds(previousMonth), [previousMonth])
 
   const expenseFilters: ExpenseFilters = useMemo(
     () => ({
@@ -53,6 +61,18 @@ export function useExpensesPage() {
     queryFn: () => expenseService.listExpenses(monthBounds),
   })
 
+  // Previous month expenses for comparison
+  const { data: previousExpensesResponse } = useQuery({
+    queryKey: ['expenses', previousMonthBounds],
+    queryFn: () => expenseService.listExpenses(previousMonthBounds),
+  })
+
+  // Previous month salary for comparison
+  const { data: previousSalaryResponse } = useQuery({
+    queryKey: ['salary', previousMonth],
+    queryFn: () => salaryService.getSalary(previousMonth),
+  })
+
   const { data: categoriesResponse, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.listCategories(),
@@ -65,8 +85,10 @@ export function useExpensesPage() {
 
   const expenses = expensesResponse?.data ?? []
   const allExpenses = allExpensesResponse?.data ?? []
+  const previousExpenses = previousExpensesResponse?.data ?? []
   const categories = categoriesResponse?.data ?? []
   const salary = salaryResponse?.data ?? null
+  const previousSalary = previousSalaryResponse?.data ?? null
 
   // Calculate totals from ALL expenses (not filtered)
   const totalExpenses = useMemo(
@@ -78,6 +100,32 @@ export function useExpensesPage() {
     () => (salary?.amount_cents ?? 0) - totalExpenses,
     [salary, totalExpenses]
   )
+
+  // Calculate previous month totals for comparison
+  const previousTotalExpenses = useMemo(
+    () => previousExpenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
+    [previousExpenses]
+  )
+
+  const previousBalance = useMemo(
+    () => (previousSalary?.amount_cents ?? 0) - previousTotalExpenses,
+    [previousSalary, previousTotalExpenses]
+  )
+
+  // Comparison data - null if no previous expenses exist
+  const comparison = useMemo(() => {
+    const hasPreviousData = previousExpenses.length > 0 || previousSalary !== null
+    if (!hasPreviousData) {
+      return {
+        previousExpenses: null,
+        previousBalance: null,
+      }
+    }
+    return {
+      previousExpenses: previousTotalExpenses,
+      previousBalance: previousBalance,
+    }
+  }, [previousExpenses.length, previousSalary, previousTotalExpenses, previousBalance])
 
   const isLoading =
     isLoadingExpenses || isLoadingAllExpenses || isLoadingCategories || isLoadingSalary
@@ -93,5 +141,6 @@ export function useExpensesPage() {
     isLoading,
     totalExpenses,
     balance,
+    comparison,
   }
 }
