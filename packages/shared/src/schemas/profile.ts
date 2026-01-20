@@ -18,6 +18,7 @@ export const updateProfileSchema = profileSchema
     avatar_url: true,
     currency: true,
     locale: true,
+    is_onboarded: true,
   })
   .partial()
 
