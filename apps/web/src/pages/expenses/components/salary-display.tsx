@@ -7,6 +7,7 @@ import type { SalaryHistory } from '@myfinances/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, Pencil, TrendingDown, TrendingUp, Wallet, X } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface SalaryDisplayProps {
   salary: SalaryHistory | null
@@ -26,37 +27,52 @@ export function SalaryDisplay({
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const handleStartEdit = () => {
     const currentValue = salary?.amount_cents ?? 0
     setEditValue(centsToDecimal(currentValue).toFixed(2).replace('.', ','))
     setIsEditing(true)
+    setError(null)
   }
 
   const handleCancelEdit = () => {
     setIsEditing(false)
     setEditValue('')
+    setError(null)
   }
 
   const handleSave = async () => {
     try {
       setIsSaving(true)
+      setError(null)
+
       const amountCents = parseBRL(editValue)
       const parts = selectedMonth.split('-').map(Number)
       const year = parts[0] ?? 0
       const month = parts[1] ?? 1
       const effectiveFrom = new Date(year, month - 1, 1).toISOString().split('T')[0] as string
 
-      await salaryService.createSalary({
+      const response = await salaryService.createSalary({
         amount_cents: amountCents,
         effective_from: effectiveFrom,
       })
 
+      if (response.error) {
+        const errorMsg = response.error.message || 'Erro ao salvar salário'
+        setError(errorMsg)
+        toast.error(errorMsg)
+        return
+      }
+
       await queryClient.invalidateQueries({ queryKey: ['salary', selectedMonth] })
+      toast.success('Salário atualizado com sucesso!')
       setIsEditing(false)
-    } catch {
-      // Error handling via React Query
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Erro ao salvar salário'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setIsSaving(false)
     }
@@ -108,42 +124,45 @@ export function SalaryDisplay({
             )}
           </div>
           {isEditing ? (
-            <div className="mt-2 flex items-center gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  R$
-                </span>
-                <Input
-                  type="text"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="pl-10"
-                  placeholder="0,00"
-                  autoFocus
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    R$
+                  </span>
+                  <Input
+                    type="text"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="pl-10"
+                    placeholder="0,00"
+                    autoFocus
+                    disabled={isSaving}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleSave}
                   disabled={isSaving}
-                />
+                  aria-label="Salvar"
+                >
+                  <Check className="h-4 w-4 text-emerald-500" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  aria-label="Cancelar"
+                >
+                  <X className="h-4 w-4 text-destructive" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleSave}
-                disabled={isSaving}
-                aria-label="Salvar"
-              >
-                <Check className="h-4 w-4 text-emerald-500" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                aria-label="Cancelar"
-              >
-                <X className="h-4 w-4 text-destructive" />
-              </Button>
+              {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
           ) : (
             <p className="mt-2 text-2xl font-bold">{formatBRL(salaryAmount)}</p>

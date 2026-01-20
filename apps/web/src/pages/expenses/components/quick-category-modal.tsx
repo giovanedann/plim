@@ -16,6 +16,7 @@ import { categoryService } from '@/services/category.service'
 import type { Category } from '@myfinances/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface QuickCategoryModalProps {
   open: boolean
@@ -42,10 +43,13 @@ export function QuickCategoryModal({
       if (response.data) {
         onCategoryCreated(response.data)
       }
+      toast.success('Categoria criada com sucesso!')
       handleClose()
     },
-    onError: () => {
-      setError('Erro ao criar categoria. Tente novamente.')
+    onError: (error) => {
+      const errorMsg = error.message || 'Erro ao criar categoria. Tente novamente.'
+      setError(errorMsg)
+      toast.error(errorMsg)
     },
   })
 

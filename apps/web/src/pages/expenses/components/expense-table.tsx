@@ -29,6 +29,7 @@ import type { Category, Expense } from '@myfinances/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontal, Pencil, RefreshCw, Repeat, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { ExpenseModal } from './expense-modal'
 
 interface ExpenseTableProps {
@@ -72,7 +73,11 @@ export function ExpenseTable({
     mutationFn: (id: string) => expenseService.deleteExpense(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      toast.success('Despesa excluída com sucesso!')
       setExpenseToDelete(null)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao excluir despesa')
     },
   })
 
@@ -81,7 +86,11 @@ export function ExpenseTable({
       expenseService.cancelRecurrence(id, endDate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      toast.success('Recorrência cancelada com sucesso!')
       setExpenseToDelete(null)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao cancelar recorrência')
     },
   })
 

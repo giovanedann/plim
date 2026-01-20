@@ -1,6 +1,7 @@
 import { categoryService } from '@/services/category.service'
 import type { CreateCategory, UpdateCategory } from '@myfinances/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 export function useCategoriesPage() {
   const queryClient = useQueryClient()
@@ -20,6 +21,10 @@ export function useCategoriesPage() {
     mutationFn: (data: CreateCategory) => categoryService.createCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
+      toast.success('Categoria criada com sucesso!')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao criar categoria')
     },
   })
 
@@ -28,6 +33,10 @@ export function useCategoriesPage() {
       categoryService.updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
+      toast.success('Categoria atualizada com sucesso!')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao atualizar categoria')
     },
   })
 
@@ -35,6 +44,10 @@ export function useCategoriesPage() {
     mutationFn: (id: string) => categoryService.deleteCategory(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
+      toast.success('Categoria excluída com sucesso!')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao excluir categoria')
     },
   })
 

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { RouterProvider } from 'react-router'
+import { Toaster } from 'sonner'
 
 export function App() {
   const initialize = useAuthStore((state) => state.initialize)
@@ -17,6 +18,7 @@ export function App() {
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster richColors position="top-right" />
       </QueryClientProvider>
     </ThemeProvider>
   )

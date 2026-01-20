@@ -30,6 +30,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { QuickCategoryModal } from './quick-category-modal'
 
@@ -164,7 +165,11 @@ export function ExpenseModal({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      toast.success('Despesa criada com sucesso!')
       onOpenChange(false)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao criar despesa')
     },
   })
 
@@ -173,7 +178,11 @@ export function ExpenseModal({
       expenseService.updateExpense(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      toast.success('Despesa atualizada com sucesso!')
       onOpenChange(false)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao atualizar despesa')
     },
   })
 
