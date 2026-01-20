@@ -38,11 +38,14 @@ export class SalaryRepository {
   async create(userId: string, input: CreateSalary): Promise<SalaryHistory | null> {
     const { data, error } = await this.supabase
       .from('salary_history')
-      .insert({
-        user_id: userId,
-        amount_cents: input.amount_cents,
-        effective_from: input.effective_from,
-      })
+      .upsert(
+        {
+          user_id: userId,
+          amount_cents: input.amount_cents,
+          effective_from: input.effective_from,
+        },
+        { onConflict: 'user_id,effective_from' }
+      )
       .select(SALARY_COLUMNS)
       .single()
 
