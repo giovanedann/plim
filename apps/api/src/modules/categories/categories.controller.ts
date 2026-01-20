@@ -1,5 +1,5 @@
-import { zValidator } from '@hono/zod-validator'
-import { HTTP_STATUS, createCategorySchema, updateCategorySchema } from '@myfinances/shared'
+import { sValidator } from '@hono/standard-validator'
+import { HTTP_STATUS, createCategorySchema, updateCategorySchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
 import type { AuthVariables } from '../../middleware/auth.middleware'
@@ -29,7 +29,7 @@ categoriesController.get('/', async (c) => {
   return c.json({ data: categories }, HTTP_STATUS.OK)
 })
 
-categoriesController.post('/', zValidator('json', createCategorySchema), async (c) => {
+categoriesController.post('/', sValidator('json', createCategorySchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const input = c.req.valid('json')
@@ -43,7 +43,7 @@ categoriesController.post('/', zValidator('json', createCategorySchema), async (
   return c.json({ data: category }, HTTP_STATUS.CREATED)
 })
 
-categoriesController.patch('/:id', zValidator('json', updateCategorySchema), async (c) => {
+categoriesController.patch('/:id', sValidator('json', updateCategorySchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const categoryId = c.req.param('id')

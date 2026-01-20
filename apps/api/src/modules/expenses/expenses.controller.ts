@@ -1,10 +1,10 @@
-import { zValidator } from '@hono/zod-validator'
+import { sValidator } from '@hono/standard-validator'
 import {
   HTTP_STATUS,
   createExpenseSchema,
   expenseFiltersSchema,
   updateExpenseSchema,
-} from '@myfinances/shared'
+} from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
 import type { AuthVariables } from '../../middleware/auth.middleware'
@@ -22,7 +22,7 @@ type ExpensesEnv = {
 
 const expensesController = new Hono<ExpensesEnv>()
 
-expensesController.get('/', zValidator('query', expenseFiltersSchema), async (c) => {
+expensesController.get('/', sValidator('query', expenseFiltersSchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const filters = c.req.valid('query')
@@ -50,7 +50,7 @@ expensesController.get('/:id', async (c) => {
   return c.json({ data: expense }, HTTP_STATUS.OK)
 })
 
-expensesController.post('/', zValidator('json', createExpenseSchema), async (c) => {
+expensesController.post('/', sValidator('json', createExpenseSchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const input = c.req.valid('json')
@@ -64,7 +64,7 @@ expensesController.post('/', zValidator('json', createExpenseSchema), async (c) 
   return c.json({ data: expense }, HTTP_STATUS.CREATED)
 })
 
-expensesController.patch('/:id', zValidator('json', updateExpenseSchema), async (c) => {
+expensesController.patch('/:id', sValidator('json', updateExpenseSchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const expenseId = c.req.param('id')

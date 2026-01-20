@@ -1,5 +1,5 @@
-import { zValidator } from '@hono/zod-validator'
-import { HTTP_STATUS, createSalarySchema, salaryQuerySchema } from '@myfinances/shared'
+import { sValidator } from '@hono/standard-validator'
+import { HTTP_STATUS, createSalarySchema, salaryQuerySchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
 import type { AuthVariables } from '../../middleware/auth.middleware'
@@ -15,7 +15,7 @@ type SalaryEnv = {
 
 const salaryController = new Hono<SalaryEnv>()
 
-salaryController.get('/', zValidator('query', salaryQuerySchema), async (c) => {
+salaryController.get('/', sValidator('query', salaryQuerySchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const { month } = c.req.valid('query')
@@ -42,7 +42,7 @@ salaryController.get('/history', async (c) => {
   return c.json({ data: history }, HTTP_STATUS.OK)
 })
 
-salaryController.post('/', zValidator('json', createSalarySchema), async (c) => {
+salaryController.post('/', sValidator('json', createSalarySchema), async (c) => {
   const userId = c.get('userId')
   const accessToken = c.get('accessToken')
   const input = c.req.valid('json')
