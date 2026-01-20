@@ -1,0 +1,419 @@
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { expenseService } from '@/services/expense.service'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  centsToDecimal,
+  createExpenseSchema,
+  decimalToCents,
+  updateExpenseSchema,
+} from '@myfinances/shared'
+import type { Category, CreateExpense, Expense, UpdateExpense } from '@myfinances/shared'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { z } from 'zod'
+
+interface ExpenseModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  categories: Category[]
+  selectedMonth: string
+  expense?: Expense
+}
+
+type ExpenseType = 'one_time' | 'recurrent' | 'installment'
+
+const PAYMENT_METHODS = [
+  { value: 'credit_card', label: 'Cartão de Crédito' },
+  { value: 'debit_card', label: 'Cartão de Débito' },
+  { value: 'pix', label: 'Pix' },
+  { value: 'cash', label: 'Dinheiro' },
+] as const
+
+const EXPENSE_TYPES = [
+  { value: 'one_time', label: 'Única', description: 'Despesa pontual' },
+  { value: 'recurrent', label: 'Recorrente', description: 'Repete todo mês' },
+  { value: 'installment', label: 'Parcelada', description: 'Dividida em parcelas' },
+] as const
+
+const formSchema = z.object({
+  type: z.enum(['one_time', 'recurrent', 'installment']),
+  description: z.string().min(1, 'Descrição é obrigatória').max(255),
+  amount: z.string().min(1, 'Valor é obrigatório'),
+  category_id: z.string().uuid('Selecione uma categoria'),
+  payment_method: z.enum(['credit_card', 'debit_card', 'pix', 'cash']),
+  date: z.string().min(1, 'Data é obrigatória'),
+  recurrence_day: z.string().optional(),
+  recurrence_start: z.string().optional(),
+  recurrence_end: z.string().optional(),
+  installment_total: z.string().optional(),
+})
+
+type FormData = z.infer<typeof formSchema>
+
+function getDefaultDate(selectedMonth: string): string {
+  const today = new Date()
+  const [year, month] = selectedMonth.split('-').map(Number)
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month
+
+  if (isCurrentMonth) {
+    return today.toISOString().split('T')[0] as string
+  }
+
+  return `${selectedMonth}-01`
+}
+
+export function ExpenseModal({
+  open,
+  onOpenChange,
+  categories,
+  selectedMonth,
+  expense,
+}: ExpenseModalProps) {
+  const isEditing = !!expense
+  const queryClient = useQueryClient()
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      type: 'one_time',
+      description: '',
+      amount: '',
+      category_id: '',
+      payment_method: 'credit_card',
+      date: getDefaultDate(selectedMonth),
+      recurrence_day: '',
+      recurrence_start: '',
+      recurrence_end: '',
+      installment_total: '',
+    },
+  })
+
+  const expenseType = watch('type')
+
+  useEffect(() => {
+    if (open) {
+      if (expense) {
+        let type: ExpenseType = 'one_time'
+        if (expense.is_recurrent) type = 'recurrent'
+        else if (expense.installment_total) type = 'installment'
+
+        reset({
+          type,
+          description: expense.description,
+          amount: centsToDecimal(expense.amount_cents).toFixed(2).replace('.', ','),
+          category_id: expense.category_id,
+          payment_method: expense.payment_method,
+          date: expense.date,
+          recurrence_day: expense.recurrence_day?.toString() ?? '',
+          recurrence_start: expense.recurrence_start ?? '',
+          recurrence_end: expense.recurrence_end ?? '',
+          installment_total: expense.installment_total?.toString() ?? '',
+        })
+      } else {
+        const defaultDate = getDefaultDate(selectedMonth)
+        const monthStart = `${selectedMonth}-01`
+        reset({
+          type: 'one_time',
+          description: '',
+          amount: '',
+          category_id: '',
+          payment_method: 'credit_card',
+          date: defaultDate,
+          recurrence_day: new Date(defaultDate).getDate().toString(),
+          recurrence_start: monthStart,
+          recurrence_end: '',
+          installment_total: '',
+        })
+      }
+    }
+  }, [open, expense, selectedMonth, reset])
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      onOpenChange(false)
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateExpense }) =>
+      expenseService.updateExpense(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      onOpenChange(false)
+    },
+  })
+
+  const onSubmit = (data: FormData) => {
+    const amountCents = decimalToCents(
+      Number.parseFloat(data.amount.replace(/\./g, '').replace(',', '.'))
+    )
+
+    if (isEditing && expense) {
+      const updateData: UpdateExpense = {
+        description: data.description,
+        amount_cents: amountCents,
+        category_id: data.category_id,
+        payment_method: data.payment_method,
+        date: data.date,
+      }
+
+      const validated = updateExpenseSchema.safeParse(updateData)
+      if (validated.success) {
+        updateMutation.mutate({ id: expense.id, data: validated.data })
+      }
+    } else {
+      let createData: CreateExpense
+
+      if (data.type === 'one_time') {
+        createData = {
+          type: 'one_time',
+          description: data.description,
+          amount_cents: amountCents,
+          category_id: data.category_id,
+          payment_method: data.payment_method,
+          date: data.date,
+        }
+      } else if (data.type === 'recurrent') {
+        createData = {
+          type: 'recurrent',
+          description: data.description,
+          amount_cents: amountCents,
+          category_id: data.category_id,
+          payment_method: data.payment_method,
+          recurrence_day: Number.parseInt(data.recurrence_day || '1', 10),
+          recurrence_start: data.recurrence_start || data.date,
+          recurrence_end: data.recurrence_end || undefined,
+        }
+      } else {
+        createData = {
+          type: 'installment',
+          description: data.description,
+          amount_cents: amountCents,
+          category_id: data.category_id,
+          payment_method: data.payment_method,
+          date: data.date,
+          installment_total: Number.parseInt(data.installment_total || '2', 10),
+        }
+      }
+
+      const validated = createExpenseSchema.safeParse(createData)
+      if (validated.success) {
+        createMutation.mutate(validated.data)
+      }
+    }
+  }
+
+  const isPending = createMutation.isPending || updateMutation.isPending
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? 'Editar Despesa' : 'Nova Despesa'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Edite os dados da despesa abaixo.' : 'Preencha os dados da nova despesa.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label>Tipo de Despesa</Label>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPENSE_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex flex-col">
+                            <span>{type.label}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {type.description}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Input
+              id="description"
+              placeholder="Ex: Almoço no restaurante"
+              {...register('description')}
+            />
+            {errors.description && (
+              <p className="text-sm text-destructive">{errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor (R$)</Label>
+              <Input id="amount" placeholder="0,00" {...register('amount')} />
+              {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Controller
+                name="category_id"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            {category.color && (
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: category.color }}
+                              />
+                            )}
+                            {category.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.category_id && (
+                <p className="text-sm text-destructive">{errors.category_id.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Forma de Pagamento</Label>
+              <Controller
+                name="payment_method"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method.value} value={method.value}>
+                          {method.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            {expenseType !== 'recurrent' && (
+              <div className="space-y-2">
+                <Label htmlFor="date">Data</Label>
+                <Input id="date" type="date" {...register('date')} />
+                {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
+              </div>
+            )}
+          </div>
+
+          {expenseType === 'recurrent' && !isEditing && (
+            <div className="space-y-4 rounded-lg border p-4">
+              <h4 className="font-medium">Configuração de Recorrência</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="recurrence_day">Dia do mês</Label>
+                  <Input
+                    id="recurrence_day"
+                    type="number"
+                    min={1}
+                    max={31}
+                    placeholder="1-31"
+                    {...register('recurrence_day')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recurrence_start">Início</Label>
+                  <Input id="recurrence_start" type="date" {...register('recurrence_start')} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recurrence_end">Fim (opcional)</Label>
+                  <Input id="recurrence_end" type="date" {...register('recurrence_end')} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {expenseType === 'installment' && !isEditing && (
+            <div className="space-y-4 rounded-lg border p-4">
+              <h4 className="font-medium">Configuração de Parcelas</h4>
+              <div className="space-y-2">
+                <Label htmlFor="installment_total">Número de parcelas</Label>
+                <Input
+                  id="installment_total"
+                  type="number"
+                  min={2}
+                  max={48}
+                  placeholder="2-48"
+                  {...register('installment_total')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  O valor informado será o valor de cada parcela.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Salvando...' : isEditing ? 'Salvar' : 'Criar Despesa'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

@@ -1,7 +1,7 @@
 import { AuthGuard, GuestGuard } from '@/components/guards'
 import { AppLayout } from '@/components/layouts/app'
 import { AuthLayout } from '@/components/layouts/auth'
-import { AuthCallbackPage, DashboardPage, SignInPage, SignUpPage } from '@/pages'
+import { AuthCallbackPage, DashboardPage, ExpensesPage, SignInPage, SignUpPage } from '@/pages'
 import { Navigate, createBrowserRouter } from 'react-router'
 
 export const router = createBrowserRouter([
@@ -26,7 +26,10 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppLayout />,
-        children: [{ path: '/dashboard', element: <DashboardPage /> }],
+        children: [
+          { path: '/dashboard', element: <DashboardPage /> },
+          { path: '/expenses', element: <ExpensesPage /> },
+        ],
       },
     ],
   },
