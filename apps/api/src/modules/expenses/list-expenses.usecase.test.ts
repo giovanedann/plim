@@ -1,4 +1,4 @@
-import type { Expense, ExpenseFilters } from '@myfinances/shared'
+import type { Expense, ExpenseFilters } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ExpensesRepository } from './expenses.repository'
 import { ListExpensesUseCase } from './list-expenses.usecase'

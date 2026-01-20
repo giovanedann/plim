@@ -1,4 +1,4 @@
-import type { Profile, UpdateProfile } from '@myfinances/shared'
+import type { Profile, UpdateProfile } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export class ProfileRepository {

@@ -1,4 +1,4 @@
-import { type ApiError, type Category, ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
+import { type ApiError, type Category, ERROR_CODES, HTTP_STATUS } from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError, errorHandler } from '../../middleware/error-handler.middleware'

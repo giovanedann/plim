@@ -1,4 +1,4 @@
-import { type ApiError, ERROR_CODES, type Expense, HTTP_STATUS } from '@myfinances/shared'
+import { type ApiError, ERROR_CODES, type Expense, HTTP_STATUS } from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError, errorHandler } from '../../middleware/error-handler.middleware'
@@ -19,9 +19,9 @@ vi.mock('./delete-expense.usecase')
 type SuccessResponse<T> = { data: T }
 type ErrorResponse = { error: ApiError }
 
-const CATEGORY_ID = '11111111-1111-1111-1111-111111111111'
-const EXPENSE_ID = '22222222-2222-2222-2222-222222222222'
-const USER_ID = '33333333-3333-3333-3333-333333333333'
+const CATEGORY_ID = '11111111-1111-4111-8111-111111111111'
+const EXPENSE_ID = '22222222-2222-4222-8222-222222222222'
+const USER_ID = '33333333-3333-4333-8333-333333333333'
 
 const baseExpense: Expense = {
   id: EXPENSE_ID,

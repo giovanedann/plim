@@ -1,4 +1,4 @@
-import { type Category, type CreateCategory, ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
+import { type Category, type CreateCategory, ERROR_CODES, HTTP_STATUS } from '@plim/shared'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { CategoriesRepository } from './categories.repository'
 

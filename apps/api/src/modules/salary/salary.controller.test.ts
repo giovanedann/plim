@@ -1,4 +1,4 @@
-import { HTTP_STATUS, type SalaryHistory } from '@myfinances/shared'
+import { HTTP_STATUS, type SalaryHistory } from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorHandler } from '../../middleware/error-handler.middleware'
@@ -14,8 +14,8 @@ vi.mock('./list-salary-history.usecase')
 
 type SuccessResponse<T> = { data: T }
 
-const USER_ID = '22222222-2222-2222-2222-222222222222'
-const SALARY_ID = '11111111-1111-1111-1111-111111111111'
+const USER_ID = '22222222-2222-4222-8222-222222222222'
+const SALARY_ID = '11111111-1111-4111-8111-111111111111'
 
 const baseSalary: SalaryHistory = {
   id: SALARY_ID,
@@ -95,7 +95,7 @@ describe('Salary Controller', () => {
     it('returns salary history', async () => {
       const history = [
         baseSalary,
-        { ...baseSalary, id: '33333333-3333-3333-3333-333333333333', amount_cents: 400000 },
+        { ...baseSalary, id: '33333333-3333-4333-8333-333333333333', amount_cents: 400000 },
       ]
       const mockExecute = vi.fn().mockResolvedValue(history)
       vi.mocked(ListSalaryHistoryUseCase).mockImplementation(

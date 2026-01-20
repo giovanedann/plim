@@ -1,4 +1,4 @@
-import { ERROR_CODES, HTTP_STATUS, type Profile, type UpdateProfile } from '@myfinances/shared'
+import { ERROR_CODES, HTTP_STATUS, type Profile, type UpdateProfile } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { ProfileRepository } from './profile.repository'

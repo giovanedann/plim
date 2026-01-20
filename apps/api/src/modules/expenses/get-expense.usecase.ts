@@ -1,5 +1,5 @@
-import { ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
-import type { Expense } from '@myfinances/shared'
+import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
+import type { Expense } from '@plim/shared'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { ExpensesRepository } from './expenses.repository'
 

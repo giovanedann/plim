@@ -1,4 +1,4 @@
-import type { Category, CreateCategory, UpdateCategory } from '@myfinances/shared'
+import type { Category, CreateCategory, UpdateCategory } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, is_active, created_at, updated_at'

@@ -1,4 +1,4 @@
-import { ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
+import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
 import { createClient } from '@supabase/supabase-js'
 import type { MiddlewareHandler } from 'hono'
 import type { Bindings } from '../lib/supabase'

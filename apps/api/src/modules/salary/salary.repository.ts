@@ -1,4 +1,4 @@
-import type { CreateSalary, SalaryHistory } from '@myfinances/shared'
+import type { CreateSalary, SalaryHistory } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const SALARY_COLUMNS = 'id, user_id, amount_cents, effective_from, created_at'

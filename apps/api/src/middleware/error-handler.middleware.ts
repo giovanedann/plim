@@ -1,4 +1,4 @@
-import { type ApiError, ERROR_CODES, HTTP_STATUS, type HttpErrorStatus } from '@myfinances/shared'
+import { type ApiError, ERROR_CODES, HTTP_STATUS, type HttpErrorStatus } from '@plim/shared'
 import type { ErrorHandler } from 'hono'
 import { ZodError } from 'zod'
 import type { Env } from '../types'

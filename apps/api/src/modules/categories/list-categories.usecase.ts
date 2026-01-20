@@ -1,4 +1,4 @@
-import type { Category } from '@myfinances/shared'
+import type { Category } from '@plim/shared'
 import type { CategoriesRepository } from './categories.repository'
 
 export class ListCategoriesUseCase {

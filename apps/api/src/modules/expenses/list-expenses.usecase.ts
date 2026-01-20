@@ -1,4 +1,4 @@
-import type { Expense, ExpenseFilters } from '@myfinances/shared'
+import type { Expense, ExpenseFilters } from '@plim/shared'
 import type { ExpensesRepository } from './expenses.repository'
 
 export interface ProjectedExpense extends Expense {

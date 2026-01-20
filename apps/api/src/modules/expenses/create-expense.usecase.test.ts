@@ -1,5 +1,5 @@
-import { ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
-import type { CreateExpense, Expense } from '@myfinances/shared'
+import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
+import type { CreateExpense, Expense } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
 import { CreateExpenseUseCase } from './create-expense.usecase'

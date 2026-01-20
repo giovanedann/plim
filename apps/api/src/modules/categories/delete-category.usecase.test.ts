@@ -1,4 +1,4 @@
-import { type Category, ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
+import { type Category, ERROR_CODES, HTTP_STATUS } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CategoriesRepository } from './categories.repository'
 import { DeleteCategoryUseCase } from './delete-category.usecase'

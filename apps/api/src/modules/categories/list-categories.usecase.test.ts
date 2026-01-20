@@ -1,4 +1,4 @@
-import type { Category } from '@myfinances/shared'
+import type { Category } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CategoriesRepository } from './categories.repository'
 import { ListCategoriesUseCase } from './list-categories.usecase'

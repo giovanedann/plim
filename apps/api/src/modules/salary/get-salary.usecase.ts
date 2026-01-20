@@ -1,4 +1,4 @@
-import type { SalaryHistory } from '@myfinances/shared'
+import type { SalaryHistory } from '@plim/shared'
 import type { SalaryRepository } from './salary.repository'
 
 export class GetSalaryUseCase {

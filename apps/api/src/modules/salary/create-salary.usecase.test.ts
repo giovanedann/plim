@@ -1,12 +1,12 @@
-import { type CreateSalary, ERROR_CODES, HTTP_STATUS, type SalaryHistory } from '@myfinances/shared'
+import { type CreateSalary, ERROR_CODES, HTTP_STATUS, type SalaryHistory } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
 import { CreateSalaryUseCase } from './create-salary.usecase'
 import type { SalaryRepository } from './salary.repository'
 
 const createdSalary: SalaryHistory = {
-  id: '11111111-1111-1111-1111-111111111111',
-  user_id: '22222222-2222-2222-2222-222222222222',
+  id: '11111111-1111-4111-8111-111111111111',
+  user_id: '22222222-2222-4222-8222-222222222222',
   amount_cents: 500000,
   effective_from: '2024-01-01',
   created_at: '2024-01-01T00:00:00Z',

@@ -1,4 +1,4 @@
-import type { Expense, ExpenseFilters, UpdateExpense } from '@myfinances/shared'
+import type { Expense, ExpenseFilters, UpdateExpense } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const EXPENSE_COLUMNS = `

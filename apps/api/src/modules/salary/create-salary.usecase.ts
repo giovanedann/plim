@@ -1,5 +1,5 @@
-import { ERROR_CODES, HTTP_STATUS } from '@myfinances/shared'
-import type { CreateSalary, SalaryHistory } from '@myfinances/shared'
+import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
+import type { CreateSalary, SalaryHistory } from '@plim/shared'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { SalaryRepository } from './salary.repository'
 
