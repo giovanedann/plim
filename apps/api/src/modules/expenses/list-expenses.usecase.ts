@@ -16,6 +16,11 @@ export class ListExpensesUseCase {
       .filter((e) => !e.is_recurrent)
       .map((e) => ({ ...e, is_projected: false }))
 
+    // If filtering for one_time or installment, skip recurrent projection
+    if (filters?.expense_type && filters.expense_type !== 'recurrent') {
+      return regularExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    }
+
     if (!filters?.start_date || !filters?.end_date) {
       const recurrentExpenses: ProjectedExpense[] = expenses
         .filter((e) => e.is_recurrent)

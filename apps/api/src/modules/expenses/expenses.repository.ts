@@ -57,6 +57,20 @@ export class ExpensesRepository {
       query = query.eq('payment_method', filters.payment_method)
     }
 
+    if (filters?.expense_type) {
+      switch (filters.expense_type) {
+        case 'one_time':
+          query = query.eq('is_recurrent', false).is('installment_total', null)
+          break
+        case 'recurrent':
+          query = query.eq('is_recurrent', true)
+          break
+        case 'installment':
+          query = query.not('installment_total', 'is', null)
+          break
+      }
+    }
+
     const { data, error } = await query.order('date', { ascending: false })
 
     if (error) return []

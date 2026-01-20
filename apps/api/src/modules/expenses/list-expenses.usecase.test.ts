@@ -41,6 +41,25 @@ const recurrentExpense: Expense = {
   updated_at: '2024-01-01T00:00:00Z',
 }
 
+const installmentExpense: Expense = {
+  id: 'expense-3',
+  user_id: 'user-123',
+  category_id: 'cat-1',
+  description: 'Installment Expense',
+  amount_cents: 10000,
+  payment_method: 'credit_card',
+  date: '2024-01-20',
+  is_recurrent: false,
+  recurrence_day: null,
+  recurrence_start: null,
+  recurrence_end: null,
+  installment_current: 1,
+  installment_total: 3,
+  installment_group_id: 'group-1',
+  created_at: '2024-01-20T00:00:00Z',
+  updated_at: '2024-01-20T00:00:00Z',
+}
+
 describe('ListExpensesUseCase', () => {
   let useCase: ListExpensesUseCase
   let mockRepository: {
@@ -163,6 +182,68 @@ describe('ListExpensesUseCase', () => {
       expect(result.length).toBeGreaterThan(1)
       const dates = result.map((e) => new Date(e.date).getTime())
       expect(dates).toEqual([...dates].sort((a, b) => b - a))
+    })
+  })
+
+  describe('expense_type filtering', () => {
+    it('returns only one-time expenses when filtering by one_time', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-01-31',
+        expense_type: 'one_time',
+      }
+      mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({ ...oneTimeExpense, is_projected: false })
+      expect(mockRepository.findRecurrentByUserId).not.toHaveBeenCalled()
+    })
+
+    it('returns only installment expenses when filtering by installment', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-01-31',
+        expense_type: 'installment',
+      }
+      mockRepository.findByUserId.mockResolvedValue([installmentExpense])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({ ...installmentExpense, is_projected: false })
+      expect(mockRepository.findRecurrentByUserId).not.toHaveBeenCalled()
+    })
+
+    it('projects recurrent expenses when filtering by recurrent', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        expense_type: 'recurrent',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result.length).toBeGreaterThan(0)
+      expect(result.every((e) => e.is_projected)).toBe(true)
+      expect(mockRepository.findRecurrentByUserId).toHaveBeenCalled()
+    })
+
+    it('skips recurrent projection when filtering by one_time even with date range', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        expense_type: 'one_time',
+      }
+      mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findRecurrentByUserId).not.toHaveBeenCalled()
     })
   })
 })
