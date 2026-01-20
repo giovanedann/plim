@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useUIStore } from '@/stores'
+import { EXPENSE_TYPES, PAYMENT_METHODS } from '@plim/shared'
 import type { Category, ExpenseFilters as ExpenseFiltersType } from '@plim/shared'
 import { Eye, EyeOff, Plus, X } from 'lucide-react'
 import { useState } from 'react'
@@ -20,19 +21,6 @@ interface ExpenseFiltersProps {
   categories: Category[]
   selectedMonth: string
 }
-
-const PAYMENT_METHODS = [
-  { value: 'credit_card', label: 'Cartão de Crédito' },
-  { value: 'debit_card', label: 'Cartão de Débito' },
-  { value: 'pix', label: 'Pix' },
-  { value: 'cash', label: 'Dinheiro' },
-] as const
-
-const EXPENSE_TYPES = [
-  { value: 'one_time', label: 'Única' },
-  { value: 'recurrent', label: 'Recorrente' },
-  { value: 'installment', label: 'Parcelada' },
-] as const
 
 export function ExpenseFilters({
   filters,
@@ -85,11 +73,11 @@ export function ExpenseFilters({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="grid w-full grid-cols-1 gap-4 sm:flex sm:w-auto sm:flex-wrap sm:items-end">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Categoria</Label>
               <Select value={filters.category_id ?? 'all'} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -109,7 +97,7 @@ export function ExpenseFilters({
                 value={filters.payment_method ?? 'all'}
                 onValueChange={handlePaymentMethodChange}
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +114,7 @@ export function ExpenseFilters({
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Tipo</Label>
               <Select value={filters.expense_type ?? 'all'} onValueChange={handleExpenseTypeChange}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>

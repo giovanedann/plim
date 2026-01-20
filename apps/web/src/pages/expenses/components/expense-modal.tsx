@@ -21,12 +21,14 @@ import {
 import { expenseService } from '@/services/expense.service'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
+  EXPENSE_TYPES,
+  PAYMENT_METHODS,
   centsToDecimal,
   createExpenseSchema,
   decimalToCents,
   updateExpenseSchema,
 } from '@plim/shared'
-import type { Category, CreateExpense, Expense, UpdateExpense } from '@plim/shared'
+import type { Category, CreateExpense, Expense, ExpenseType, UpdateExpense } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -42,21 +44,6 @@ interface ExpenseModalProps {
   selectedMonth: string
   expense?: Expense
 }
-
-type ExpenseType = 'one_time' | 'recurrent' | 'installment'
-
-const PAYMENT_METHODS = [
-  { value: 'credit_card', label: 'Cartão de Crédito' },
-  { value: 'debit_card', label: 'Cartão de Débito' },
-  { value: 'pix', label: 'Pix' },
-  { value: 'cash', label: 'Dinheiro' },
-] as const
-
-const EXPENSE_TYPES = [
-  { value: 'one_time', label: 'Única', description: 'Despesa pontual' },
-  { value: 'recurrent', label: 'Recorrente', description: 'Repete todo mês' },
-  { value: 'installment', label: 'Parcelada', description: 'Dividida em parcelas' },
-] as const
 
 const formSchema = z.object({
   type: z.enum(['one_time', 'recurrent', 'installment']),
