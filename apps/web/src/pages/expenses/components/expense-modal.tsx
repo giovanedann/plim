@@ -1,5 +1,6 @@
 import { CategoryIcon } from '@/components/category-icon'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Dialog,
   DialogContent,
@@ -273,7 +274,7 @@ export function ExpenseModal({
                     <SelectContent>
                       {EXPENSE_TYPES.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
-                          <div className="flex flex-col">
+                          <div className="flex flex-col items-start">
                             <span>{type.label}</span>
                             <span className="text-xs text-muted-foreground">
                               {type.description}
@@ -376,8 +377,18 @@ export function ExpenseModal({
 
             {expenseType !== 'recurrent' && (
               <div className="space-y-2">
-                <Label htmlFor="date">Data</Label>
-                <Input id="date" type="date" {...register('date')} />
+                <Label>Data</Label>
+                <Controller
+                  name="date"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Selecione a data"
+                    />
+                  )}
+                />
                 {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
               </div>
             )}
@@ -399,12 +410,32 @@ export function ExpenseModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="recurrence_start">Início</Label>
-                  <Input id="recurrence_start" type="date" {...register('recurrence_start')} />
+                  <Label>Início</Label>
+                  <Controller
+                    name="recurrence_start"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Data início"
+                      />
+                    )}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="recurrence_end">Fim (opcional)</Label>
-                  <Input id="recurrence_end" type="date" {...register('recurrence_end')} />
+                  <Label>Fim (opcional)</Label>
+                  <Controller
+                    name="recurrence_end"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Data fim"
+                      />
+                    )}
+                  />
                 </div>
               </div>
             </div>
