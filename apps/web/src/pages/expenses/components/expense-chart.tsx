@@ -1,12 +1,16 @@
+import { Button } from '@/components/ui/button'
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import { formatBRL } from '@myfinances/shared'
 import type { Expense } from '@myfinances/shared'
+import { ChevronDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
@@ -92,6 +96,7 @@ function aggregateByWeek(expenses: Expense[], selectedMonth: string): WeeklyData
 
 export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('daily')
+  const [isOpen, setIsOpen] = useState(true)
 
   const chartData = useMemo(() => {
     if (viewMode === 'daily') {
@@ -105,56 +110,72 @@ export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChar
   }
 
   return (
-    <div className="space-y-4">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">Despesas por período</h3>
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-          <TabsList className="h-8">
-            <TabsTrigger value="daily" className="px-3 text-xs">
-              Diário
-            </TabsTrigger>
-            <TabsTrigger value="weekly" className="px-3 text-xs">
-              Semanal
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+            <TabsList className="h-8">
+              <TabsTrigger value="daily" className="px-3 text-xs">
+                Diário
+              </TabsTrigger>
+              <TabsTrigger value="weekly" className="px-3 text-xs">
+                Semanal
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label={isOpen ? 'Recolher gráfico' : 'Expandir gráfico'}
+            >
+              <ChevronDown
+                className={cn('h-4 w-4 transition-transform duration-200', isOpen && 'rotate-180')}
+              />
+            </Button>
+          </CollapsibleTrigger>
+        </div>
       </div>
 
-      <ChartContainer config={chartConfig} className="h-[250px] w-full">
-        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            fontSize={12}
-            tickFormatter={(value) => `R$${value}`}
-          />
-          <ChartTooltip
-            cursor={false}
-            content={
-              <ChartTooltipContent
-                formatter={(value) => formatBRL(Number(value) * 100)}
-                hideIndicator
-              />
-            }
-          />
-          <Area
-            type="monotone"
-            dataKey="total"
-            stroke="hsl(var(--primary))"
-            fill="url(#fillTotal)"
-            strokeWidth={2}
-          />
-        </AreaChart>
-      </ChartContainer>
-    </div>
+      <CollapsibleContent>
+        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              fontSize={12}
+              tickFormatter={(value) => `R$${value}`}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  formatter={(value) => formatBRL(Number(value) * 100)}
+                  hideIndicator
+                />
+              }
+            />
+            <Area
+              type="monotone"
+              dataKey="total"
+              stroke="hsl(var(--primary))"
+              fill="url(#fillTotal)"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ChartContainer>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

@@ -1,4 +1,6 @@
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -6,8 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useUIStore } from '@/stores'
 import type { Category, ExpenseFilters as ExpenseFiltersType } from '@myfinances/shared'
-import { Plus, X } from 'lucide-react'
+import { Eye, EyeOff, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { ExpenseModal } from './expense-modal'
 
@@ -38,6 +41,7 @@ export function ExpenseFilters({
   selectedMonth,
 }: ExpenseFiltersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { hideValues, toggleHideValues } = useUIStore()
 
   const handleCategoryChange = (value: string) => {
     onFiltersChange({
@@ -67,62 +71,89 @@ export function ExpenseFilters({
   const hasActiveFilters = filters.category_id || filters.payment_method || filters.expense_type
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap gap-2">
-        <Select value={filters.category_id ?? 'all'} onValueChange={handleCategoryChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as categorias</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <span className="text-sm font-medium">Filtros</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleHideValues}
+          aria-label={hideValues ? 'Mostrar valores' : 'Ocultar valores'}
+        >
+          {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Categoria</Label>
+              <Select value={filters.category_id ?? 'all'} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <Select value={filters.payment_method ?? 'all'} onValueChange={handlePaymentMethodChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Forma de pagamento" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as formas</SelectItem>
-            {PAYMENT_METHODS.map((method) => (
-              <SelectItem key={method.value} value={method.value}>
-                {method.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Pagamento</Label>
+              <Select
+                value={filters.payment_method ?? 'all'}
+                onValueChange={handlePaymentMethodChange}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {PAYMENT_METHODS.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <Select value={filters.expense_type ?? 'all'} onValueChange={handleExpenseTypeChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tipo de despesa" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            {EXPENSE_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Tipo</Label>
+              <Select value={filters.expense_type ?? 'all'} onValueChange={handleExpenseTypeChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {EXPENSE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-            <X className="h-4 w-4" />
-            Limpar filtros
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                <X className="h-4 w-4" />
+                Limpar
+              </Button>
+            )}
+          </div>
+
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Despesa
           </Button>
-        )}
-      </div>
-
-      <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-        <Plus className="h-4 w-4" />
-        Nova Despesa
-      </Button>
+        </div>
+      </CardContent>
 
       <ExpenseModal
         open={isModalOpen}
@@ -130,6 +161,6 @@ export function ExpenseFilters({
         categories={categories}
         selectedMonth={selectedMonth}
       />
-    </div>
+    </Card>
   )
 }
