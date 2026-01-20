@@ -1,31 +1,26 @@
 import { api } from '@/lib/api-client'
-import type { SalaryEntry } from '@/lib/api-types'
-
-export interface CreateSalaryInput {
-  amount: number
-  effective_date: string
-}
+import type { CreateSalary, SalaryHistory } from '@myfinances/shared'
 
 export const salaryService = {
   async getSalary(month: string) {
-    return api.get<SalaryEntry>(`/salary?month=${month}`)
+    return api.get<SalaryHistory>(`/salary?month=${month}`)
   },
 
   async getSalaryHistory() {
-    return api.get<SalaryEntry[]>('/salary/history')
+    return api.get<SalaryHistory[]>('/salary/history')
   },
 
-  async createSalary(data: CreateSalaryInput) {
-    return api.post<SalaryEntry>('/salary', data)
+  async createSalary(data: CreateSalary) {
+    return api.post<SalaryHistory>('/salary', data)
   },
 
   async createCurrentMonthSalary(amountInCents: number) {
     const now = new Date()
-    const effectiveDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const effectiveFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-    return api.post<SalaryEntry>('/salary', {
-      amount: amountInCents,
-      effective_date: effectiveDate,
+    return api.post<SalaryHistory>('/salary', {
+      amount_cents: amountInCents,
+      effective_from: effectiveFrom,
     })
   },
 }

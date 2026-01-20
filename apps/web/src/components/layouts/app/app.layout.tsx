@@ -19,7 +19,7 @@ export function AppLayout() {
 
       if (error || !data) {
         open(false)
-      } else if (!data.onboarded) {
+      } else if (!data.is_onboarded) {
         open(false)
       }
 

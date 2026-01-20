@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client'
-import type { Profile } from '@/lib/api-types'
+import type { Profile } from '@myfinances/shared'
 
 export const profileService = {
   async getProfile() {
@@ -7,12 +7,12 @@ export const profileService = {
   },
 
   async updateProfile(
-    data: Partial<Pick<Profile, 'display_name' | 'currency' | 'locale' | 'onboarded'>>
+    data: Partial<Pick<Profile, 'name' | 'avatar_url' | 'currency' | 'locale' | 'is_onboarded'>>
   ) {
     return api.patch<Profile>('/profile', data)
   },
 
   async markOnboarded() {
-    return api.patch<Profile>('/profile', { onboarded: true })
+    return api.patch<Profile>('/profile', { is_onboarded: true })
   },
 }

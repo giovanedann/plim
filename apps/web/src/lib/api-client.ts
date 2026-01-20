@@ -51,8 +51,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     return { data: undefined as T }
   }
 
-  const data = await response.json()
-  return { data }
+  const json = await response.json()
+  // API returns { data: T }, so we extract it
+  return { data: json.data }
 }
 
 export const api = {
