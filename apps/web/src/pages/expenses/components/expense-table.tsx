@@ -1,3 +1,4 @@
+import { CategoryIcon } from '@/components/category-icon'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -104,14 +105,8 @@ export function ExpenseTable({
 
   const isPending = deleteMutation.isPending || cancelRecurrenceMutation.isPending
 
-  const getCategoryName = (categoryId: string) => {
-    const category = categories.find((c) => c.id === categoryId)
-    return category?.name ?? 'Sem categoria'
-  }
-
-  const getCategoryColor = (categoryId: string) => {
-    const category = categories.find((c) => c.id === categoryId)
-    return category?.color ?? '#6b7280'
+  const getCategory = (categoryId: string) => {
+    return categories.find((c) => c.id === categoryId)
   }
 
   if (isLoading) {
@@ -189,11 +184,12 @@ export function ExpenseTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <div
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: getCategoryColor(expense.category_id) }}
+                    <CategoryIcon
+                      name={getCategory(expense.category_id)?.icon}
+                      color={getCategory(expense.category_id)?.color}
+                      size="sm"
                     />
-                    {getCategoryName(expense.category_id)}
+                    {getCategory(expense.category_id)?.name ?? 'Sem categoria'}
                   </div>
                 </TableCell>
                 <TableCell>{PAYMENT_METHOD_LABELS[expense.payment_method]}</TableCell>
