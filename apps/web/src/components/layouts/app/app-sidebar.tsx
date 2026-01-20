@@ -12,7 +12,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth.store'
-import { LayoutDashboard, LogOut, Receipt, Wallet } from 'lucide-react'
+import { LayoutDashboard, LogOut, Receipt, Tags, Wallet } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 
 const navigation = [
@@ -25,6 +25,11 @@ const navigation = [
     title: 'Despesas',
     url: '/expenses',
     icon: Receipt,
+  },
+  {
+    title: 'Categorias',
+    url: '/categories',
+    icon: Tags,
   },
 ]
 
