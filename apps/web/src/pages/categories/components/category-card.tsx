@@ -1,5 +1,4 @@
 import { CategoryIcon } from '@/components/category-icon'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Category } from '@myfinances/shared'
@@ -18,14 +17,7 @@ export function CategoryCard({ category, isSystem, onEdit, onDelete }: CategoryC
       <CardContent className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <CategoryIcon name={category.icon} color={category.color} size="lg" animated />
-          <div>
-            <p className="font-medium">{category.name}</p>
-            {isSystem && (
-              <Badge variant="secondary" className="mt-1 text-xs">
-                Sistema
-              </Badge>
-            )}
-          </div>
+          <p className="font-medium">{category.name}</p>
         </div>
 
         {!isSystem && (
