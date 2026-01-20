@@ -19,6 +19,8 @@ export const expenseSchema = z.object({
   installment_group_id: z.string().uuid().nullable(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
+  is_projected: z.boolean().optional(),
+  source_expense_id: z.string().uuid().optional(),
 })
 
 export const createExpenseSchema = z.discriminatedUnion('type', [
@@ -61,6 +63,7 @@ export const updateExpenseSchema = expenseSchema
     amount_cents: true,
     payment_method: true,
     date: true,
+    recurrence_end: true,
   })
   .partial()
 
