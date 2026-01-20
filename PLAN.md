@@ -102,17 +102,15 @@
 - [x] Mark user as onboarded in profile
 - [x] Skip onboarding for returning users
 
-### Phase 11: Frontend - Expenses Page
+### Phase 11: Frontend - Expenses Page ✅
 
-- [ ] Create `/expenses` page layout
-- [ ] Implement month selector (navigation)
-- [ ] Implement salary display + inline edit
-- [ ] Implement expenses table with filters
-- [ ] Create add expense form (one-time)
-- [ ] Create add expense form (recurrent)
-- [ ] Create add expense form (installments)
-- [ ] Implement edit expense
-- [ ] Implement delete expense
+- [x] Create `/expenses` page layout
+- [x] Implement month selector (navigation)
+- [x] Implement salary display + inline edit
+- [x] Implement expenses table with filters
+- [x] Create add/edit expense modal with type selector (one-time, recurrent, installments)
+- [x] Implement conditional form fields per expense type
+- [x] Implement delete expense confirmation
 
 ### Phase 12: Frontend - Dashboard
 
@@ -210,6 +208,55 @@
 7. **Controller → UseCase → Repository** — Backend architecture
 8. **Dark/Light mode** — shadcn theme provider, system preference default
 9. **Onboarding flow** — Guided setup after sign-up (salary, categories, first expense)
+
+---
+
+## UI/Layout Style Guide
+
+**Reference:** shadcn/ui examples
+- Dashboard layout: https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard
+- Tasks/table layout: https://ui.shadcn.com/examples/tasks
+
+### App Shell Structure
+
+```
+SidebarProvider
+├── AppSidebar (collapsible sidebar with navigation)
+└── SidebarInset
+    ├── SiteHeader (page title + theme toggle)
+    └── Main Content Area
+```
+
+### Layout Patterns
+
+1. **Sidebar** — Collapsible navigation with:
+   - Logo/brand in header
+   - Main navigation links (Dashboard, Despesas)
+   - User profile + logout in footer
+   - Keyboard shortcut: `Ctrl/Cmd + B` to toggle
+
+2. **Page Content** — Consistent spacing:
+   ```tsx
+   <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+     <div className="px-4 lg:px-6">
+       {/* Page description */}
+     </div>
+     <div className="px-4 lg:px-6">
+       {/* Content sections */}
+     </div>
+   </div>
+   ```
+
+3. **Card Grids** — Responsive columns:
+   - Summary cards: `grid-cols-1 md:grid-cols-2 lg:grid-cols-4`
+   - Charts: `grid-cols-1 md:grid-cols-2`
+
+4. **Tables** — Use shadcn Table component with rounded borders
+
+### Page-Specific Guidelines
+
+- **Dashboard** — Summary cards at top, charts below (Phase 12)
+- **Expenses** — Salary cards, filters bar, data table
 
 ---
 
