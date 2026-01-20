@@ -1,15 +1,25 @@
 import { OnboardingOverlay } from '@/components/onboarding'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { profileService, salaryService } from '@/services'
 import { useAuthStore } from '@/stores/auth.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useCallback, useEffect, useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
+import { AppSidebar } from './app-sidebar'
+import { SiteHeader } from './site-header'
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/expenses': 'Despesas',
+}
 
 export function AppLayout() {
   const { user } = useAuthStore()
   const { open } = useOnboardingStore()
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const location = useLocation()
+
+  const pageTitle = PAGE_TITLES[location.pathname]
 
   useEffect(() => {
     async function fetchProfile() {
@@ -46,23 +56,20 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="font-semibold">MyFinances</div>
-          <ThemeToggle />
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SiteHeader title={pageTitle} />
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <Outlet />
         </div>
-      </header>
-
-      <main className="container py-6">
-        <Outlet />
-      </main>
+      </SidebarInset>
 
       <OnboardingOverlay
         existingSalary={null}
         onSaveSalary={handleSaveSalary}
         onComplete={handleComplete}
       />
-    </div>
+    </SidebarProvider>
   )
 }
