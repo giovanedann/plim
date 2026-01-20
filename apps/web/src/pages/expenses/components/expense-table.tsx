@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -27,7 +28,7 @@ import { expenseService } from '@/services/expense.service'
 import { formatBRL } from '@myfinances/shared'
 import type { Category, Expense } from '@myfinances/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal, Pencil, RefreshCw, Repeat, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { ExpenseModal } from './expense-modal'
@@ -39,11 +40,11 @@ interface ExpenseTableProps {
   selectedMonth: string
 }
 
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  credit_card: 'Cartão de Crédito',
-  debit_card: 'Cartão de Débito',
-  pix: 'Pix',
-  cash: 'Dinheiro',
+const PAYMENT_METHOD_CONFIG: Record<string, { label: string; className: string }> = {
+  credit_card: { label: 'Crédito', className: 'border-amber-500/50 text-amber-400' },
+  debit_card: { label: 'Débito', className: 'border-cyan-500/50 text-cyan-400' },
+  pix: { label: 'PIX', className: 'border-emerald-500/50 text-emerald-400' },
+  cash: { label: 'Dinheiro', className: 'border-slate-500/50 text-slate-400' },
 }
 
 function formatDate(dateString: string) {
@@ -172,64 +173,86 @@ export function ExpenseTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell className="font-medium">{formatDate(expense.date)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {expense.description}
-                    {expense.is_recurrent && (
-                      <span title="Despesa recorrente">
-                        <Repeat className="h-4 w-4 text-blue-500" />
-                      </span>
-                    )}
-                    {expense.installment_total && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs">
-                        <RefreshCw className="h-3 w-3" />
-                        {expense.installment_current}/{expense.installment_total}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon
-                      name={getCategory(expense.category_id)?.icon}
-                      color={getCategory(expense.category_id)?.color}
-                      size="sm"
-                    />
-                    {getCategory(expense.category_id)?.name ?? 'Sem categoria'}
-                  </div>
-                </TableCell>
-                <TableCell>{PAYMENT_METHOD_LABELS[expense.payment_method]}</TableCell>
-                <TableCell className="text-right font-medium">
-                  {formatBRL(expense.amount_cents)}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Abrir menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setExpenseToEdit(expense)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setExpenseToDelete(expense)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {expenses.map((expense) => {
+              const category = getCategory(expense.category_id)
+              const paymentConfig = PAYMENT_METHOD_CONFIG[expense.payment_method]
+              return (
+                <TableRow
+                  key={expense.id}
+                  className="transition-colors duration-150 hover:bg-muted border-l-2 border-l-transparent hover:border-l-primary"
+                >
+                  <TableCell className="py-2 px-4 font-medium">
+                    {formatDate(expense.date)}
+                  </TableCell>
+                  <TableCell className="py-2 px-4">
+                    <div className="flex items-center gap-2">
+                      <span>{expense.description}</span>
+                      {expense.is_recurrent && (
+                        <Badge
+                          variant="outline"
+                          className="border-blue-500/50 text-blue-400 text-xs px-1.5"
+                        >
+                          Recorrente
+                        </Badge>
+                      )}
+                      {expense.installment_total && (
+                        <Badge
+                          variant="outline"
+                          className="border-purple-500/50 text-purple-400 text-xs px-1.5"
+                        >
+                          {expense.installment_current}/{expense.installment_total}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 px-4">
+                    <Badge
+                      variant="secondary"
+                      className="gap-1.5"
+                      style={{
+                        backgroundColor: category?.color ? `${category.color}20` : undefined,
+                        borderColor: category?.color ? `${category.color}50` : undefined,
+                        borderWidth: '1px',
+                      }}
+                    >
+                      <CategoryIcon name={category?.icon} color={category?.color} size="sm" />
+                      {category?.name ?? 'Sem categoria'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-2 px-4">
+                    <Badge variant="outline" className={paymentConfig?.className}>
+                      {paymentConfig?.label ?? expense.payment_method}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-2 px-4 text-right font-medium">
+                    {formatBRL(expense.amount_cents)}
+                  </TableCell>
+                  <TableCell className="py-2 px-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Abrir menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setExpenseToEdit(expense)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => setExpenseToDelete(expense)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </div>
