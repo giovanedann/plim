@@ -41,9 +41,16 @@ export function useExpensesPage() {
     [monthBounds, filters]
   )
 
+  // Filtered expenses for table display
   const { data: expensesResponse, isLoading: isLoadingExpenses } = useQuery({
     queryKey: ['expenses', expenseFilters],
     queryFn: () => expenseService.listExpenses(expenseFilters),
+  })
+
+  // All expenses for the month (unfiltered) for totals calculation
+  const { data: allExpensesResponse, isLoading: isLoadingAllExpenses } = useQuery({
+    queryKey: ['expenses', monthBounds],
+    queryFn: () => expenseService.listExpenses(monthBounds),
   })
 
   const { data: categoriesResponse, isLoading: isLoadingCategories } = useQuery({
@@ -57,12 +64,14 @@ export function useExpensesPage() {
   })
 
   const expenses = expensesResponse?.data ?? []
+  const allExpenses = allExpensesResponse?.data ?? []
   const categories = categoriesResponse?.data ?? []
   const salary = salaryResponse?.data ?? null
 
+  // Calculate totals from ALL expenses (not filtered)
   const totalExpenses = useMemo(
-    () => expenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
-    [expenses]
+    () => allExpenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
+    [allExpenses]
   )
 
   const balance = useMemo(
@@ -70,7 +79,8 @@ export function useExpensesPage() {
     [salary, totalExpenses]
   )
 
-  const isLoading = isLoadingExpenses || isLoadingCategories || isLoadingSalary
+  const isLoading =
+    isLoadingExpenses || isLoadingAllExpenses || isLoadingCategories || isLoadingSalary
 
   return {
     selectedMonth,

@@ -25,6 +25,12 @@ const PAYMENT_METHODS = [
   { value: 'cash', label: 'Dinheiro' },
 ] as const
 
+const EXPENSE_TYPES = [
+  { value: 'one_time', label: 'Única' },
+  { value: 'recurrent', label: 'Recorrente' },
+  { value: 'installment', label: 'Parcelada' },
+] as const
+
 export function ExpenseFilters({
   filters,
   onFiltersChange,
@@ -47,11 +53,18 @@ export function ExpenseFilters({
     })
   }
 
+  const handleExpenseTypeChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      expense_type: value === 'all' ? undefined : (value as ExpenseFiltersType['expense_type']),
+    })
+  }
+
   const clearFilters = () => {
     onFiltersChange({})
   }
 
-  const hasActiveFilters = filters.category_id || filters.payment_method
+  const hasActiveFilters = filters.category_id || filters.payment_method || filters.expense_type
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -79,6 +92,20 @@ export function ExpenseFilters({
             {PAYMENT_METHODS.map((method) => (
               <SelectItem key={method.value} value={method.value}>
                 {method.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.expense_type ?? 'all'} onValueChange={handleExpenseTypeChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tipo de despesa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            {EXPENSE_TYPES.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                {type.label}
               </SelectItem>
             ))}
           </SelectContent>
