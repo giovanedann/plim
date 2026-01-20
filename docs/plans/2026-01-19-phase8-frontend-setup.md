@@ -19,21 +19,21 @@
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm add lucide-react clsx tailwind-merge class-variance-authority
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm add lucide-react clsx tailwind-merge class-variance-authority
 ```
 
 **Step 2: Install shadcn/ui dependencies**
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm add @radix-ui/react-slot @radix-ui/react-label
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm add @radix-ui/react-slot @radix-ui/react-label
 ```
 
 **Step 3: Verify installation**
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm list lucide-react clsx tailwind-merge
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm list lucide-react clsx tailwind-merge
 ```
 Expected: All packages listed with versions
 
@@ -157,7 +157,7 @@ Replace `apps/web/src/index.css` with:
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm build
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm build
 ```
 Expected: Build succeeds without errors
 
@@ -192,7 +192,7 @@ export function cn(...inputs: ClassValue[]) {
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm typecheck
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm typecheck
 ```
 Expected: No errors
 
@@ -474,7 +474,7 @@ export default defineConfig({
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm typecheck
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm typecheck
 ```
 Expected: No errors
 
@@ -573,7 +573,7 @@ Replace `apps/web/index.html`:
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MyFinances</title>
+    <title>Plim</title>
     <script>
       const theme = localStorage.getItem("theme");
       if (theme === "dark" || (!theme && matchMedia("(prefers-color-scheme: dark)").matches)) {
@@ -630,7 +630,7 @@ export function ThemeToggle() {
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm typecheck
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm typecheck
 ```
 Expected: No errors
 
@@ -874,7 +874,7 @@ export function AnimatedPanel() {
 
       {/* Branding */}
       <div className="absolute bottom-8 left-8">
-        <h2 className="text-2xl font-bold text-white">MyFinances</h2>
+        <h2 className="text-2xl font-bold text-white">Plim</h2>
         <p className="text-slate-400">Gerencie suas finanças com simplicidade</p>
       </div>
     </div>
@@ -927,7 +927,7 @@ export { AnimatedPanel } from "./animated-panel"
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm typecheck
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm typecheck
 ```
 Expected: No errors
 
@@ -959,7 +959,7 @@ export function AppLayout() {
       {/* Header placeholder */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
-          <div className="font-semibold">MyFinances</div>
+          <div className="font-semibold">Plim</div>
           <ThemeToggle />
         </div>
       </header>
@@ -1211,7 +1211,7 @@ export { DashboardPage } from "./dashboard.page"
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm typecheck
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm typecheck
 ```
 Expected: No errors
 
@@ -1330,7 +1330,7 @@ createRoot(rootElement).render(
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm typecheck
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm typecheck
 ```
 Expected: No errors
 
@@ -1338,7 +1338,7 @@ Expected: No errors
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm build
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm build
 ```
 Expected: Build succeeds
 
@@ -1366,7 +1366,7 @@ VITE_SUPABASE_ANON_KEY=<your-anon-key>
 
 Run:
 ```bash
-cd /Users/giovanedaniel/projects/myfinances-app/apps/web && pnpm dev
+cd /Users/giovanedaniel/projects/plim-app/apps/web && pnpm dev
 ```
 
 **Step 3: Verify in browser**

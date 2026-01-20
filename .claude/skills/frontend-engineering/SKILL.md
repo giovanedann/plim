@@ -32,7 +32,7 @@ Staff frontend engineer focused on React and performant, accessible websites. Bu
 
 ## Type Safety — Single Source of Truth
 
-**ALL domain types and schemas MUST come from `@myfinances/shared`.** Never create duplicate type definitions in the frontend.
+**ALL domain types and schemas MUST come from `@plim/shared`.** Never create duplicate type definitions in the frontend.
 
 ### Why This Matters
 
@@ -45,8 +45,8 @@ Staff frontend engineer focused on React and performant, accessible websites. Bu
 
 ```typescript
 // CORRECT: Import types from shared package
-import type { Profile, CreateSalary, SalaryHistory } from '@myfinances/shared'
-import { createExpenseSchema } from '@myfinances/shared'
+import type { Profile, CreateSalary, SalaryHistory } from '@plim/shared'
+import { createExpenseSchema } from '@plim/shared'
 
 // WRONG: Never create local type definitions for API entities
 // apps/web/src/lib/api-types.ts  ← DELETE THIS FILE
@@ -57,7 +57,7 @@ interface Profile { ... }  // ← NEVER DO THIS
 
 | Location | What |
 |----------|------|
-| `@myfinances/shared` | All entity types (Profile, Expense, Category, Salary), Zod schemas, validation rules, constants |
+| `@plim/shared` | All entity types (Profile, Expense, Category, Salary), Zod schemas, validation rules, constants |
 | Frontend only | UI-specific types (component props, form state), React Query types, Zustand store types |
 
 ### Service Layer Pattern
@@ -65,7 +65,7 @@ interface Profile { ... }  // ← NEVER DO THIS
 ```typescript
 // apps/web/src/services/profile.service.ts
 import { api } from '@/lib/api-client'
-import type { Profile, UpdateProfile } from '@myfinances/shared'
+import type { Profile, UpdateProfile } from '@plim/shared'
 
 export const profileService = {
   async getProfile() {
@@ -389,7 +389,7 @@ const handleSubmit = useCallback(
 ```typescript
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createExpenseSchema, type CreateExpense } from '@myfinances/shared'
+import { createExpenseSchema, type CreateExpense } from '@plim/shared'
 
 export function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
   const createExpense = useCreateExpense()

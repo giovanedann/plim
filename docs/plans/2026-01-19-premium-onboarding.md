@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Build a 6-step animated onboarding experience that educates new users about MyFinances features and optionally collects salary data.
+**Goal:** Build a 6-step animated onboarding experience that educates new users about Plim features and optionally collects salary data.
 
 **Architecture:** Full-screen overlay rendered inside AppLayout, controlled by Zustand store with localStorage persistence. Uses Framer Motion for step transitions and Lucide-Animated for icon animations. Integrates with existing Supabase profile to check/set `onboarded` flag.
 
@@ -218,7 +218,7 @@ export { useOnboardingStore, type OnboardingStep } from './onboarding.store'
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -321,7 +321,7 @@ export function OnboardingStep({
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -386,7 +386,7 @@ export function OnboardingProgress({
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -487,7 +487,7 @@ export function OnboardingNavigation({
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -576,7 +576,7 @@ export function SkipConfirmationModal({
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -606,7 +606,7 @@ export function WelcomeStep() {
   return (
     <OnboardingStep
       icon={<Sparkles className="h-20 w-20" />}
-      title="Bem-vindo ao MyFinances!"
+      title="Bem-vindo ao Plim!"
       description="Seu novo parceiro para organizar suas finanças pessoais. Vamos te mostrar como aproveitar ao máximo a plataforma em poucos passos."
     />
   )
@@ -619,7 +619,7 @@ Note: If Lucide-Animated Sparkles was installed, import from `@/components/icons
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -701,7 +701,7 @@ export function ExpenseTypesStep() {
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -854,7 +854,7 @@ export function SalaryStep({ existingSalary, onSave, isReplay }: SalaryStepProps
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -937,7 +937,7 @@ export function CategoriesStep() {
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1033,7 +1033,7 @@ export function DashboardStep() {
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1074,7 +1074,7 @@ export function ReadyStep() {
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1109,7 +1109,7 @@ export { ReadyStep } from './ready-step'
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1304,7 +1304,7 @@ export function OnboardingOverlay({
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1335,7 +1335,7 @@ export { useOnboardingStore } from '@/stores/onboarding.store'
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1443,7 +1443,7 @@ export function AppLayout() {
       {/* Header placeholder */}
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
-          <div className="font-semibold">MyFinances</div>
+          <div className="font-semibold">Plim</div>
           <ThemeToggle />
         </div>
       </header>
@@ -1468,7 +1468,7 @@ export function AppLayout() {
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 
@@ -1476,7 +1476,7 @@ Expected: No errors
 
 Run:
 ```bash
-pnpm --filter @myfinances/web build
+pnpm --filter @plim/web build
 ```
 Expected: Build succeeds
 
@@ -1553,7 +1553,7 @@ And use `{...animationProps}` on motion components.
 
 Run:
 ```bash
-pnpm --filter @myfinances/web typecheck
+pnpm --filter @plim/web typecheck
 ```
 Expected: No errors
 

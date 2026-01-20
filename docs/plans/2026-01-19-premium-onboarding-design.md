@@ -6,7 +6,7 @@
 
 ## Overview
 
-A premium, animated onboarding experience that educates new users about MyFinances features while optionally collecting initial setup data (salary). The flow is skippable and can be replayed from Settings.
+A premium, animated onboarding experience that educates new users about Plim features while optionally collecting initial setup data (salary). The flow is skippable and can be replayed from Settings.
 
 ## Design Decisions
 
@@ -26,7 +26,7 @@ A premium, animated onboarding experience that educates new users about MyFinanc
 
 | Step | Icon | Title | Optional Action |
 |------|------|-------|-----------------|
-| 1 | Sparkles | Bem-vindo ao MyFinances! | — |
+| 1 | Sparkles | Bem-vindo ao Plim! | — |
 | 2 | Wallet | Controle todos os tipos de gastos | — |
 | 3 | TrendingUp | Por que registrar seu salário? | Salary input |
 | 4 | Tags | Organize por categorias | Customize categories |

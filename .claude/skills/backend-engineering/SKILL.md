@@ -28,7 +28,7 @@ Staff backend engineer focused on PostgreSQL systems. Building a finance trackin
 
 ## Type Safety — Single Source of Truth
 
-**ALL domain types and Zod schemas MUST be defined in `@myfinances/shared`.** Both backend and frontend import from this single source.
+**ALL domain types and Zod schemas MUST be defined in `@plim/shared`.** Both backend and frontend import from this single source.
 
 ### Why This Matters
 
@@ -41,7 +41,7 @@ Staff backend engineer focused on PostgreSQL systems. Building a finance trackin
 
 ```typescript
 // CORRECT: Import schemas and types from shared package
-import { createSalarySchema, type CreateSalary, type SalaryHistory } from '@myfinances/shared'
+import { createSalarySchema, type CreateSalary, type SalaryHistory } from '@plim/shared'
 
 // Use in controller
 salaryController.post('/', zValidator('json', createSalarySchema), async (c) => {
@@ -58,7 +58,7 @@ const createSalarySchema = z.object({ ... })  // ← NEVER DUPLICATE
 
 | Location | What |
 |----------|------|
-| `@myfinances/shared` | All entity types, Zod schemas, validation rules, error codes, HTTP status constants |
+| `@plim/shared` | All entity types, Zod schemas, validation rules, error codes, HTTP status constants |
 | Backend only | Use cases, repositories, middleware, database-specific code |
 
 ### Schema Location
@@ -86,7 +86,7 @@ apps/api/src/
 │       ├── create-expense.usecase.test.ts
 │       ├── list-expenses.usecase.ts
 │       ├── expenses.repository.ts       # Database access
-│       └── expenses.repository.test.ts  # Schemas live in @myfinances/shared
+│       └── expenses.repository.test.ts  # Schemas live in @plim/shared
 ├── middleware/
 │   ├── auth.middleware.ts
 │   └── error-handler.middleware.ts
@@ -118,7 +118,7 @@ apps/api/src/
 | Middleware | `.middleware.ts` | `auth.middleware.ts` |
 | Test | `.test.ts` | `create-expense.usecase.test.ts` |
 
-> **Note:** Zod schemas are NOT defined in the API. Import them from `@myfinances/shared`.
+> **Note:** Zod schemas are NOT defined in the API. Import them from `@plim/shared`.
 
 ### Rules
 

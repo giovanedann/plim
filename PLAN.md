@@ -1,4 +1,4 @@
-# MyFinances App - Implementation Plan
+# Plim App - Implementation Plan
 
 ## Progress Tracker
 

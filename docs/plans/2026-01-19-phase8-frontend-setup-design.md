@@ -2,7 +2,7 @@
 
 ## Overview
 
-Set up the frontend foundation for MyFinances App including shadcn/ui, dark mode, routing, and the auth layout with animated panel.
+Set up the frontend foundation for Plim App including shadcn/ui, dark mode, routing, and the auth layout with animated panel.
 
 ## Project Structure
 

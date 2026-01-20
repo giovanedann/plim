@@ -115,7 +115,7 @@ import {
   createExpenseSchema,
   updateExpenseSchema,
   expenseQuerySchema
-} from '@myfinances/shared'
+} from '@plim/shared'
 
 const expenses = new Hono()
 
