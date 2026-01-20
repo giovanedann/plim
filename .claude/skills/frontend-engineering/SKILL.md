@@ -30,6 +30,53 @@ Staff frontend engineer focused on React and performant, accessible websites. Bu
 - **Client State:** Zustand
 - **Validation:** Zod (shared with backend)
 
+## Type Safety — Single Source of Truth
+
+**ALL domain types and schemas MUST come from `@myfinances/shared`.** Never create duplicate type definitions in the frontend.
+
+### Why This Matters
+
+- Prevents field name mismatches (e.g., `amount` vs `amount_cents`)
+- Zod schemas validate at runtime AND provide TypeScript types
+- Changes propagate to both frontend and backend automatically
+- No drift between what API expects and what frontend sends
+
+### Rules
+
+```typescript
+// CORRECT: Import types from shared package
+import type { Profile, CreateSalary, SalaryHistory } from '@myfinances/shared'
+import { createExpenseSchema } from '@myfinances/shared'
+
+// WRONG: Never create local type definitions for API entities
+// apps/web/src/lib/api-types.ts  ← DELETE THIS FILE
+interface Profile { ... }  // ← NEVER DO THIS
+```
+
+### What Goes in Shared vs Frontend
+
+| Location | What |
+|----------|------|
+| `@myfinances/shared` | All entity types (Profile, Expense, Category, Salary), Zod schemas, validation rules, constants |
+| Frontend only | UI-specific types (component props, form state), React Query types, Zustand store types |
+
+### Service Layer Pattern
+
+```typescript
+// apps/web/src/services/profile.service.ts
+import { api } from '@/lib/api-client'
+import type { Profile, UpdateProfile } from '@myfinances/shared'
+
+export const profileService = {
+  async getProfile() {
+    return api.get<Profile>('/profile')
+  },
+  async updateProfile(data: UpdateProfile) {
+    return api.patch<Profile>('/profile', data)
+  },
+}
+```
+
 ## Component Organization (Co-location)
 
 All related files (component, hook, test) live together in the same folder.
@@ -196,6 +243,32 @@ Ensure `globals.css` includes both light and dark variables (shadcn CLI generate
 - **Persist choice** — Save to localStorage after manual toggle
 - **No flash** — Add `class="dark"` to `<html>` in index.html with inline script if needed
 - **Accessible toggle** — Always include aria-label on theme toggle button
+
+### Theme-Aware Styling (CRITICAL)
+
+**NEVER use hardcoded colors.** All components MUST work in both light and dark modes.
+
+```typescript
+// WRONG: Hardcoded colors that only work in dark mode
+className="bg-slate-800 border-slate-700 text-white text-slate-400"
+
+// CORRECT: CSS variables that adapt to theme
+className="bg-muted border-border text-foreground text-muted-foreground"
+```
+
+| Hardcoded (WRONG) | CSS Variable (CORRECT) |
+|-------------------|------------------------|
+| `bg-slate-800`, `bg-slate-900` | `bg-background`, `bg-muted` |
+| `bg-slate-800/50` | `bg-muted/50` |
+| `border-slate-700` | `border-border` |
+| `text-white` | `text-foreground` |
+| `text-slate-300`, `text-slate-400` | `text-muted-foreground` |
+| `text-slate-500` | `text-muted-foreground` |
+| `placeholder:text-slate-500` | `placeholder:text-muted-foreground` |
+
+**Accent colors are OK:** Colors like `text-emerald-500`, `text-amber-400`, `text-blue-400` for icons and highlights are acceptable since they work in both modes.
+
+**Rule of thumb:** If a Tailwind class contains a specific shade number (e.g., `slate-800`), replace it with a CSS variable equivalent.
 
 ## State Management Rules
 

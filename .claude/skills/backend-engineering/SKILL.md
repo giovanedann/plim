@@ -26,6 +26,54 @@ Staff backend engineer focused on PostgreSQL systems. Building a finance trackin
 - **Validation:** Zod (always)
 - **Auth:** Supabase Auth
 
+## Type Safety — Single Source of Truth
+
+**ALL domain types and Zod schemas MUST be defined in `@myfinances/shared`.** Both backend and frontend import from this single source.
+
+### Why This Matters
+
+- Prevents field name mismatches between API and frontend
+- Zod schemas validate at runtime AND provide TypeScript types
+- Changes propagate to both ends automatically
+- Single place to update validation rules
+
+### Rules
+
+```typescript
+// CORRECT: Import schemas and types from shared package
+import { createSalarySchema, type CreateSalary, type SalaryHistory } from '@myfinances/shared'
+
+// Use in controller
+salaryController.post('/', zValidator('json', createSalarySchema), async (c) => {
+  const input = c.req.valid('json')  // Type is CreateSalary
+  // ...
+})
+
+// WRONG: Never define duplicate schemas in the API
+// apps/api/src/modules/salary/salary.schema.ts  ← DON'T CREATE THIS
+const createSalarySchema = z.object({ ... })  // ← NEVER DUPLICATE
+```
+
+### What Goes in Shared vs Backend
+
+| Location | What |
+|----------|------|
+| `@myfinances/shared` | All entity types, Zod schemas, validation rules, error codes, HTTP status constants |
+| Backend only | Use cases, repositories, middleware, database-specific code |
+
+### Schema Location
+
+All Zod schemas live in `packages/shared/src/schemas/`:
+
+```
+packages/shared/src/schemas/
+├── index.ts          # Re-exports all schemas
+├── profile.ts        # profileSchema, updateProfileSchema
+├── expense.ts        # expenseSchema, createExpenseSchema
+├── category.ts       # categorySchema, createCategorySchema
+└── salary.ts         # salaryHistorySchema, createSalarySchema
+```
+
 ## File Organization (Controller → UseCase → Repository)
 
 ```
@@ -38,8 +86,7 @@ apps/api/src/
 │       ├── create-expense.usecase.test.ts
 │       ├── list-expenses.usecase.ts
 │       ├── expenses.repository.ts       # Database access
-│       ├── expenses.repository.test.ts
-│       └── expenses.schema.ts           # Zod schemas for this module
+│       └── expenses.repository.test.ts  # Schemas live in @myfinances/shared
 ├── middleware/
 │   ├── auth.middleware.ts
 │   └── error-handler.middleware.ts
@@ -69,8 +116,9 @@ apps/api/src/
 | UseCase | `.usecase.ts` | `create-expense.usecase.ts` |
 | Repository | `.repository.ts` | `expenses.repository.ts` |
 | Middleware | `.middleware.ts` | `auth.middleware.ts` |
-| Schema | `.schema.ts` | `expenses.schema.ts` |
 | Test | `.test.ts` | `create-expense.usecase.test.ts` |
+
+> **Note:** Zod schemas are NOT defined in the API. Import them from `@myfinances/shared`.
 
 ### Rules
 
