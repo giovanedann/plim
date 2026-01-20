@@ -1,3 +1,4 @@
+import { ExpenseChart } from './components/expense-chart'
 import { ExpenseFilters } from './components/expense-filters'
 import { ExpenseTable } from './components/expense-table'
 import { MonthSelector } from './components/month-selector'
@@ -35,6 +36,10 @@ export function ExpensesPage() {
           isLoading={isLoading}
           comparison={comparison}
         />
+      </div>
+
+      <div className="px-4 lg:px-6">
+        <ExpenseChart expenses={expenses} selectedMonth={selectedMonth} isLoading={isLoading} />
       </div>
 
       <div className="px-4 lg:px-6">
