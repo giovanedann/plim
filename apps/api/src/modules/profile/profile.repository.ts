@@ -7,7 +7,9 @@ export class ProfileRepository {
   async findByUserId(userId: string): Promise<Profile | null> {
     const { data, error } = await this.supabase
       .from('profile')
-      .select('user_id, name, email, avatar_url, currency, locale, created_at, updated_at')
+      .select(
+        'user_id, name, email, avatar_url, currency, locale, is_onboarded, created_at, updated_at'
+      )
       .eq('user_id', userId)
       .single()
 
@@ -24,7 +26,9 @@ export class ProfileRepository {
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId)
-      .select('user_id, name, email, avatar_url, currency, locale, created_at, updated_at')
+      .select(
+        'user_id, name, email, avatar_url, currency, locale, is_onboarded, created_at, updated_at'
+      )
       .single()
 
     if (error || !data) return null
