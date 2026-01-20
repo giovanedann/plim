@@ -20,7 +20,7 @@ function MockCard({
       transition={{ delay, duration: 0.2 }}
       className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700"
     >
-      <div className="text-primary">{icon}</div>
+      <div className="text-blue-400">{icon}</div>
       <div className="text-left">
         <p className="text-xs text-slate-400">{title}</p>
         <p className="text-sm font-semibold text-white">{value}</p>
@@ -33,6 +33,7 @@ export function DashboardStep() {
   return (
     <OnboardingStep
       icon={<BarChart3 className="h-20 w-20" />}
+      iconColorClass="text-blue-400"
       title="Insights que fazem diferença"
       description="Acompanhe seus gastos por categoria, veja a evolução mensal e entenda para onde seu dinheiro está indo. Informação clara para decisões melhores."
     >

@@ -18,7 +18,7 @@ function ExpenseTypeBadge({
       transition={{ delay, duration: 0.2 }}
       className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-800/50 border border-slate-700"
     >
-      <div className="text-primary">{icon}</div>
+      <div className="text-amber-400">{icon}</div>
       <span className="text-sm text-slate-300">{label}</span>
     </motion.div>
   )
@@ -28,6 +28,7 @@ export function ExpenseTypesStep() {
   return (
     <OnboardingStep
       icon={<Wallet className="h-20 w-20" />}
+      iconColorClass="text-amber-500"
       title="Controle todos os tipos de gastos"
       description="Registre despesas únicas, contas recorrentes como aluguel e streaming, ou compras parceladas no cartão. Tudo organizado em um só lugar."
     >

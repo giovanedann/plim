@@ -27,6 +27,7 @@ export function CategoriesStep() {
   return (
     <OnboardingStep
       icon={<Tags className="h-20 w-20" />}
+      iconColorClass="text-purple-500"
       title="Organize por categorias"
       description="Já criamos categorias essenciais para você: Alimentação, Transporte, Moradia e mais. Depois, você pode criar as suas próprias."
     >

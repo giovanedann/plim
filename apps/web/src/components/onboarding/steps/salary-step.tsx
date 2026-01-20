@@ -58,6 +58,7 @@ export function SalaryStep({ existingSalary, onSave, isReplay }: SalaryStepProps
   return (
     <OnboardingStep
       icon={<TrendingUpIcon size={80} />}
+      iconColorClass="text-emerald-500"
       title="Por que registrar seu salário?"
       description="Com sua renda cadastrada, você visualiza quanto sobra no fim do mês e recebe alertas quando os gastos estiverem altos. Seus dados ficam seguros e privados."
     >

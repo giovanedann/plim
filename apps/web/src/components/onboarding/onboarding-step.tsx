@@ -9,6 +9,7 @@ interface OnboardingStepProps {
   description: string
   children?: ReactNode
   className?: string
+  iconColorClass?: string
 }
 
 export function OnboardingStep({
@@ -17,6 +18,7 @@ export function OnboardingStep({
   description,
   children,
   className,
+  iconColorClass = 'text-primary',
 }: OnboardingStepProps) {
   const prefersReducedMotion = useReducedMotion()
 
@@ -72,13 +74,17 @@ export function OnboardingStep({
       animate={containerAnimation.animate}
       exit={containerAnimation.exit}
       transition={containerAnimation.transition}
-      className={cn('flex flex-col items-center text-center px-6 py-8 max-w-md mx-auto', className)}
+      className={cn(
+        'flex flex-col items-center text-center px-8 py-12 max-w-lg mx-auto',
+        className
+      )}
     >
       <motion.div
         initial={iconAnimation.initial}
         animate={iconAnimation.animate}
         transition={iconAnimation.transition}
-        className="mb-6 text-primary"
+        className={cn('mb-10', iconColorClass)}
+        style={{ filter: 'drop-shadow(0 0 20px currentColor)' }}
       >
         {icon}
       </motion.div>
@@ -87,7 +93,7 @@ export function OnboardingStep({
         initial={titleAnimation.initial}
         animate={titleAnimation.animate}
         transition={titleAnimation.transition}
-        className="text-2xl font-bold text-white mb-4"
+        className="text-3xl font-bold text-white mb-6"
       >
         {title}
       </motion.h2>
@@ -96,7 +102,7 @@ export function OnboardingStep({
         initial={descriptionAnimation.initial}
         animate={descriptionAnimation.animate}
         transition={descriptionAnimation.transition}
-        className="text-slate-300 text-lg leading-relaxed mb-8"
+        className="text-slate-300 text-lg leading-relaxed mb-10"
       >
         {description}
       </motion.p>
