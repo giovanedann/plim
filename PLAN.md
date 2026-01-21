@@ -144,15 +144,19 @@
 - [x] Create useDashboard hook with React Query integration
 - [x] Add chart color CSS variables for dark/light themes
 
-### Phase 13: Frontend - Profile & Landing
+### Phase 13: Profile Page & R2 File Storage ✅
 
-- [ ] Create `/profile` page
-- [ ] User should be able to edit every profile information
-- [ ] Set up Cloudflare R2 bucket for file storage
-- [ ] Implement profile picture upload endpoint (Workers → R2)
-- [ ] Generate signed URLs for secure image access
-- [ ] Add profile picture upload UI for email sign-up users
-- [ ] Allow Google OAuth users to override their profile picture
+**Status:** ✅ Complete (2026-01-21)
+
+- [x] Create `/profile` page with edit form (name, currency, locale)
+- [x] User can edit all profile information
+- [x] Set up Cloudflare R2 bucket for avatar storage
+- [x] Implement avatar upload endpoint (Workers → R2)
+- [x] Configure R2 public access for avatar URLs
+- [x] Add avatar upload UI with preview and confirm flow
+- [x] Allow users to override OAuth avatar with custom upload
+- [x] Update sidebar to prioritize custom avatar over OAuth avatar
+- [x] Add dev scripts for remote R2 bindings during local development
 
 ### Phase 14
 
