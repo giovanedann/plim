@@ -74,7 +74,7 @@
 - [x] Set up Tailwind CSS
 - [x] Set up shadcn/ui
 - [x] Set up dark/light mode (shadcn theme provider)
-- [x] Set up React Router v7
+- [x] Set up TanStack Router (migrated from React Router v7)
 - [x] Set up React Query
 - [x] Set up Zustand
 - [x] Create base layout components
