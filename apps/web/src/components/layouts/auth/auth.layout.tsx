@@ -1,9 +1,12 @@
 import { PlimIcon } from '@/components/icons'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { Outlet } from 'react-router'
 import { AnimatedPanel } from './animated-panel'
 
-export function AuthLayout() {
+interface AuthLayoutProps {
+  children: React.ReactNode
+}
+
+export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Left side - Animated panel (always dark) */}
@@ -24,7 +27,7 @@ export function AuthLayout() {
             <h1 className="text-xl font-bold">Plim</h1>
           </div>
 
-          <Outlet />
+          {children}
         </div>
       </div>
     </div>

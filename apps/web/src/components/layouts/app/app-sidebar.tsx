@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/sidebar'
 import { profileService } from '@/services/profile.service'
 import { useAuthStore } from '@/stores/auth.store'
+import { Link, useLocation } from '@tanstack/react-router'
 import { ChevronsUpDown, LayoutDashboard, LogOut, Receipt, Tags, User } from 'lucide-react'
-import { Link, useLocation } from 'react-router'
 
 const navigation = [
   {

@@ -3,8 +3,8 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { profileService, salaryService } from '@/services'
 import { useAuthStore } from '@/stores/auth.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
+import { useLocation } from '@tanstack/react-router'
 import { useCallback, useEffect, useState } from 'react'
-import { Outlet, useLocation } from 'react-router'
 import { AppSidebar } from './app-sidebar'
 import { SiteHeader } from './site-header'
 
@@ -13,7 +13,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/expenses': 'Despesas',
 }
 
-export function AppLayout() {
+interface AppLayoutProps {
+  children: React.ReactNode
+}
+
+export function AppLayout({ children }: AppLayoutProps) {
   const { user } = useAuthStore()
   const { open } = useOnboardingStore()
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
@@ -60,9 +64,7 @@ export function AppLayout() {
       <AppSidebar />
       <SidebarInset>
         <SiteHeader title={pageTitle} />
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Outlet />
-        </div>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>
 
       <OnboardingOverlay

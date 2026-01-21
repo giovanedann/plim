@@ -2,8 +2,8 @@ import { PlimIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
+import { Link } from '@tanstack/react-router'
 import { AlertTriangle, ArrowLeft, Compass, Home, MapPin, Search, Signpost } from 'lucide-react'
-import { Link } from 'react-router'
 
 type AnimationType = 'orbit' | 'orbit-reverse' | 'float-wave' | 'drift' | 'pulse-float' | 'swing'
 

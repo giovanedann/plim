@@ -1,25 +1,34 @@
 import { supabase } from '@/lib/supabase'
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useAuthStore } from '@/stores/auth.store'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useRef } from 'react'
 
 export function AuthCallbackPage() {
   const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
+  const hasExchangedCode = useRef(false)
 
   useEffect(() => {
     const handleCallback = async () => {
+      if (hasExchangedCode.current) return
+      hasExchangedCode.current = true
+
       const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
 
       if (error) {
         console.error('Auth callback error:', error)
-        navigate('/sign-in')
-        return
+        navigate({ to: '/sign-in' })
       }
-
-      navigate('/dashboard')
     }
 
     handleCallback()
   }, [navigate])
+
+  useEffect(() => {
+    if (user) {
+      navigate({ to: '/dashboard' })
+    }
+  }, [user, navigate])
 
   return (
     <div className="flex min-h-screen items-center justify-center">

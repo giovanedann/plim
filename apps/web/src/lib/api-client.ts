@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/stores/auth.store'
 import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
@@ -37,6 +38,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   })
 
   if (!response.ok) {
+    // Handle 401 Unauthorized - clear auth state and sign out
+    if (response.status === 401) {
+      useAuthStore.getState().setSession(null)
+      await supabase.auth.signOut()
+    }
+
     const errorData = await response.json().catch(() => ({}))
     return {
       error: errorData.error || {

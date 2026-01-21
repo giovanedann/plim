@@ -10,9 +10,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/stores/auth.store'
+import { Link } from '@tanstack/react-router'
 import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
 
 export function SignInPage() {
   const { signInWithGoogle, signInWithEmail, isLoading, error, clearError } = useAuthStore()
