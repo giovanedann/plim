@@ -1,0 +1,118 @@
+import { z } from 'zod'
+
+export const dashboardQuerySchema = z.object({
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+})
+
+export const timelineGroupBySchema = z.enum(['day', 'week', 'month'])
+
+export const expensesTimelineQuerySchema = dashboardQuerySchema.extend({
+  group_by: timelineGroupBySchema.default('day'),
+})
+
+export const summaryComparisonSchema = z.object({
+  income_change_percent: z.number(),
+  expenses_change_percent: z.number(),
+  balance_change_percent: z.number(),
+})
+
+export const dashboardSummarySchema = z.object({
+  total_income: z.number().int().nonnegative(),
+  total_expenses: z.number().int().nonnegative(),
+  balance: z.number().int(),
+  savings_rate: z.number(),
+  comparison: summaryComparisonSchema,
+})
+
+export const timelineDataPointSchema = z.object({
+  date: z.string(),
+  amount: z.number().int().nonnegative(),
+})
+
+export const expensesTimelineResponseSchema = z.object({
+  data: z.array(timelineDataPointSchema),
+  group_by: timelineGroupBySchema,
+})
+
+export const incomeExpensesDataPointSchema = z.object({
+  month: z.string(),
+  income: z.number().int().nonnegative(),
+  expenses: z.number().int().nonnegative(),
+})
+
+export const incomeVsExpensesResponseSchema = z.object({
+  data: z.array(incomeExpensesDataPointSchema),
+})
+
+export const categoryBreakdownItemSchema = z.object({
+  category_id: z.uuid(),
+  name: z.string(),
+  color: z.string().nullable(),
+  icon: z.string().nullable(),
+  amount: z.number().int().nonnegative(),
+  percentage: z.number(),
+})
+
+export const categoryBreakdownResponseSchema = z.object({
+  data: z.array(categoryBreakdownItemSchema),
+  total: z.number().int().nonnegative(),
+})
+
+export const paymentBreakdownItemSchema = z.object({
+  method: z.string(),
+  amount: z.number().int().nonnegative(),
+  percentage: z.number(),
+})
+
+export const paymentBreakdownResponseSchema = z.object({
+  data: z.array(paymentBreakdownItemSchema),
+  total: z.number().int().nonnegative(),
+})
+
+export const savingsRateDataPointSchema = z.object({
+  month: z.string(),
+  rate: z.number(),
+})
+
+export const savingsRateResponseSchema = z.object({
+  data: z.array(savingsRateDataPointSchema),
+})
+
+export const salaryTimelineDataPointSchema = z.object({
+  date: z.string(),
+  amount: z.number().int().nonnegative(),
+})
+
+export const salaryTimelineResponseSchema = z.object({
+  data: z.array(salaryTimelineDataPointSchema),
+})
+
+export const installmentForecastMonthSchema = z.object({
+  month: z.string(),
+  total: z.number().int().nonnegative(),
+})
+
+export const installmentForecastResponseSchema = z.object({
+  data: z.array(installmentForecastMonthSchema),
+})
+
+export type DashboardQuery = z.infer<typeof dashboardQuerySchema>
+export type TimelineGroupBy = z.infer<typeof timelineGroupBySchema>
+export type ExpensesTimelineQuery = z.infer<typeof expensesTimelineQuerySchema>
+export type SummaryComparison = z.infer<typeof summaryComparisonSchema>
+export type DashboardSummary = z.infer<typeof dashboardSummarySchema>
+export type TimelineDataPoint = z.infer<typeof timelineDataPointSchema>
+export type ExpensesTimelineResponse = z.infer<typeof expensesTimelineResponseSchema>
+export type IncomeExpensesDataPoint = z.infer<typeof incomeExpensesDataPointSchema>
+export type IncomeVsExpensesResponse = z.infer<typeof incomeVsExpensesResponseSchema>
+export type CategoryBreakdownItem = z.infer<typeof categoryBreakdownItemSchema>
+export type CategoryBreakdownResponse = z.infer<typeof categoryBreakdownResponseSchema>
+export type PaymentBreakdownItem = z.infer<typeof paymentBreakdownItemSchema>
+export type PaymentBreakdownResponse = z.infer<typeof paymentBreakdownResponseSchema>
+export type SavingsRateDataPoint = z.infer<typeof savingsRateDataPointSchema>
+export type SavingsRateResponse = z.infer<typeof savingsRateResponseSchema>
+export type SalaryTimelineDataPoint = z.infer<typeof salaryTimelineDataPointSchema>
+export type SalaryTimelineResponse = z.infer<typeof salaryTimelineResponseSchema>
+export type InstallmentForecastMonth = z.infer<typeof installmentForecastMonthSchema>
+export type InstallmentForecastResponse = z.infer<typeof installmentForecastResponseSchema>
