@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query'
+
 import { PlimIcon } from '@/components/icons'
 import {
   DropdownMenu,
@@ -20,6 +22,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
+import { profileService } from '@/services/profile.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { ChevronsUpDown, LayoutDashboard, LogOut, Receipt, Tags, User } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
@@ -45,6 +48,15 @@ const navigation = [
 export function AppSidebar() {
   const location = useLocation()
   const { signOut, user } = useAuthStore()
+
+  const { data: profileResponse } = useQuery({
+    queryKey: ['profile'],
+    queryFn: () => profileService.getProfile(),
+  })
+
+  const profile = profileResponse?.data
+  const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url
+  const displayName = profile?.name ?? user?.email?.split('@')[0]
 
   return (
     <Sidebar>
@@ -96,19 +108,15 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
-                  {user?.user_metadata?.avatar_url ? (
-                    <img
-                      src={user.user_metadata.avatar_url}
-                      alt="Avatar"
-                      className="size-8 rounded-lg"
-                    />
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="size-8 rounded-lg object-cover" />
                   ) : (
                     <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-sm font-medium">
-                      {user?.email?.charAt(0).toUpperCase()}
+                      {displayName?.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex flex-col items-start text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.email?.split('@')[0]}</span>
+                    <span className="truncate font-semibold">{displayName}</span>
                     <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />

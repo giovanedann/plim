@@ -6,6 +6,7 @@ import {
   CategoriesPage,
   DashboardPage,
   ExpensesPage,
+  ProfilePage,
   SignInPage,
   SignUpPage,
 } from '@/pages'
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/expenses', element: <ExpensesPage /> },
           { path: '/categories', element: <CategoriesPage /> },
+          { path: '/profile', element: <ProfilePage /> },
         ],
       },
     ],
