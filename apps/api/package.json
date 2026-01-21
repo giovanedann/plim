@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:remote": "wrangler dev -c wrangler.dev.toml",
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",

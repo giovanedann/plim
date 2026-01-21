@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
+    "dev": "pnpm --filter @plim/api dev:remote & pnpm --filter @plim/web dev",
     "build": "pnpm -r build",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
