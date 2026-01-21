@@ -23,3 +23,8 @@ export const updateProfileSchema = z.object({
 
 export type Profile = z.infer<typeof profileSchema>
 export type UpdateProfile = z.infer<typeof updateProfileSchema>
+
+export const avatarUploadResponseSchema = z.object({
+  avatar_url: z.url(),
+})
+export type AvatarUploadResponse = z.infer<typeof avatarUploadResponseSchema>
