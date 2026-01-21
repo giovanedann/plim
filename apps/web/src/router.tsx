@@ -6,6 +6,7 @@ import {
   CategoriesPage,
   DashboardPage,
   ExpensesPage,
+  NotFoundPage,
   ProfilePage,
   SignInPage,
   SignUpPage,
@@ -46,5 +47,9 @@ export const router = createBrowserRouter([
   {
     path: '/auth/callback',
     element: <AuthCallbackPage />,
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />,
   },
 ])
