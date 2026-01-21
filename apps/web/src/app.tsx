@@ -1,14 +1,28 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { queryClient } from '@/lib/query-client'
-import { router } from '@/router'
 import { useAuthStore } from '@/stores/auth.store'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { RouterProvider } from 'react-router'
-import { Toaster } from 'sonner'
+import { routeTree } from './routeTree.gen'
+
+const router = createRouter({
+  routeTree,
+  context: {
+    auth: undefined!,
+  },
+})
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
 
 export function App() {
   const initialize = useAuthStore((state) => state.initialize)
+  const user = useAuthStore((state) => state.user)
+  const isInitialized = useAuthStore((state) => state.isInitialized)
 
   useEffect(() => {
     initialize()
@@ -17,8 +31,7 @@ export function App() {
   return (
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        <Toaster richColors position="top-right" />
+        <RouterProvider router={router} context={{ auth: { user, isInitialized } }} />
       </QueryClientProvider>
     </ThemeProvider>
   )
