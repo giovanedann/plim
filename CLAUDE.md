@@ -6,9 +6,9 @@
 *No recent activity*
 </claude-mem-context>
 
-## Auto-Invoke Skills
+## Auto-Invoke Skills (MANDATORY)
 
-When working on this project, automatically invoke the appropriate skill:
+**REQUIRED: Before writing ANY code in this project, invoke the appropriate skill using the Skill tool.**
 
 | Task Type | Skill to Invoke |
 |-----------|-----------------|
@@ -16,4 +16,10 @@ When working on this project, automatically invoke the appropriate skill:
 | Writing API endpoints, controllers, use cases, repositories | `backend-engineering` |
 | Designing API routes, request/response formats | `api-design` |
 
-**Invoke before writing code** - Read the skill first to ensure compliance with standards.
+**This is NOT optional.** The skills contain project-specific standards, patterns, and conventions that MUST be followed. Skipping skill invocation results in inconsistent code.
+
+**Workflow:**
+1. Identify code type (frontend/backend/API design)
+2. Invoke the Skill tool with the appropriate skill name
+3. Read and follow the skill instructions
+4. Then write the code
