@@ -1,0 +1,7 @@
+- Improve security (how to hide user sensitive data about expenses, salary, from the database?)
+- Add docs with tutorials about how to do things on the website
+- Improve UI/UX
+- Improve onboarding with a more polished (creating an example of expense, etc)
+- Add AI features
+- Add payment options (plans and premium features)
+- Think about premium features to charge users
