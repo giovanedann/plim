@@ -167,6 +167,7 @@
 - [ ] Create `/landing` page (marketing)
 - [ ] Add marketing elements (with mocked prices for now)
 - [ ] Add image/text switching mock
+- [ ] Add onboarding section
 - [ ] add dashboard section
 - [ ] add expenses section
 - [ ] add categories section

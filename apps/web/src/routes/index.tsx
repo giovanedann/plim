@@ -1,3 +1,4 @@
+import { LandingPage } from '@/pages/landing'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
@@ -5,6 +6,6 @@ export const Route = createFileRoute('/')({
     if (context.auth.user) {
       throw redirect({ to: '/dashboard' })
     }
-    throw redirect({ to: '/sign-in' })
   },
+  component: LandingPage,
 })
