@@ -151,7 +151,11 @@
 - [x] Separate system categories (read-only) from user categories (editable)
 - [x] Add categories link to sidebar navigation
 
-### Phase 16: Deployment
+### Phase 16: Fancy 404 page
+
+- [ ] Add fancy 404 page with animations and branding
+
+### Phase 17: Deployment
 
 - [ ] Deploy API to Cloudflare Workers
 - [ ] Deploy frontend to Cloudflare Pages
