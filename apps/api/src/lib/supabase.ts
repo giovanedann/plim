@@ -3,6 +3,8 @@ import { type SupabaseClient, createClient } from '@supabase/supabase-js'
 export type Bindings = {
   SUPABASE_URL: string
   SUPABASE_PUBLISHABLE_KEY: string
+  AVATARS_BUCKET: R2Bucket
+  R2_PUBLIC_URL: string
 }
 
 /**

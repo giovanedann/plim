@@ -1,0 +1,14 @@
+# Development configuration - extends wrangler.toml
+# Use remote bindings to connect to real Cloudflare services during local dev
+
+name = "plim-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-13"
+
+[[r2_buckets]]
+binding = "AVATARS_BUCKET"
+bucket_name = "plim-avatars"
+remote = true
+
+[vars]
+R2_PUBLIC_URL = "https://pub-c949aa032b0444a2b23f93bd59ad1e4e.r2.dev"
