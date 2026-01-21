@@ -113,17 +113,46 @@
 - [x] Implement conditional form fields per expense type
 - [x] Implement delete expense confirmation
 
-### Phase 12: Frontend - Dashboard
+### Phase 12: Frontend - Dashboard ✅
 
-- [ ] Create `/dashboard` page layout
-- [ ] Implement monthly summary chart
-- [ ] Implement category breakdown (pie chart)
-- [ ] Implement spending trends
+**Status:** ✅ Complete (2026-01-21)
+
+#### API Endpoints (8 total)
+
+- [x] `GET /dashboard/summary` - KPI summary with period comparison
+- [x] `GET /dashboard/expenses-timeline` - Daily/weekly/monthly expense trends
+- [x] `GET /dashboard/income-vs-expenses` - Income vs expenses comparison
+- [x] `GET /dashboard/category-breakdown` - Expenses by category
+- [x] `GET /dashboard/payment-breakdown` - Expenses by payment method
+- [x] `GET /dashboard/savings-rate` - Monthly savings rate trends
+- [x] `GET /dashboard/salary-timeline` - Salary history over time
+- [x] `GET /dashboard/installment-forecast` - Future installment payments
+
+#### Frontend Components
+
+- [x] Create `/dashboard` page layout with responsive grid
+- [x] Implement TimeRangeSelector (7d, 30d, 90d, 12m, YTD)
+- [x] Implement SummaryCards (income, expenses, balance, savings rate)
+- [x] Implement IncomeExpensesChart (bar chart comparison)
+- [x] Implement ExpensesTimelineChart (area chart)
+- [x] Implement SavingsRateChart (line chart with trend)
+- [x] Implement CategoryBreakdownChart (pie chart)
+- [x] Implement PaymentBreakdownChart (pie chart)
+- [x] Implement TopCategoriesChart (horizontal bar chart)
+- [x] Implement SalaryTimelineChart (line chart)
+- [x] Implement InstallmentForecast (bar chart with totals)
+- [x] Create useDashboard hook with React Query integration
+- [x] Add chart color CSS variables for dark/light themes
 
 ### Phase 13: Frontend - Profile & Landing
 
 - [ ] Create `/profile` page
 - [ ] User should be able to edit every profile information
+- [ ] Set up Cloudflare R2 bucket for file storage
+- [ ] Implement profile picture upload endpoint (Workers → R2)
+- [ ] Generate signed URLs for secure image access
+- [ ] Add profile picture upload UI for email sign-up users
+- [ ] Allow Google OAuth users to override their profile picture
 
 ### Phase 14
 
