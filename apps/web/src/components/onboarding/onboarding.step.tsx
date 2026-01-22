@@ -75,7 +75,7 @@ export function OnboardingStep({
       exit={containerAnimation.exit}
       transition={containerAnimation.transition}
       className={cn(
-        'flex flex-col items-center text-center px-8 py-12 max-w-lg mx-auto',
+        'flex flex-col items-center text-center px-4 py-6 sm:px-8 sm:py-12 max-w-lg mx-auto',
         className
       )}
     >
@@ -83,7 +83,10 @@ export function OnboardingStep({
         initial={iconAnimation.initial}
         animate={iconAnimation.animate}
         transition={iconAnimation.transition}
-        className={cn('mb-10', iconColorClass)}
+        className={cn(
+          'mb-6 sm:mb-10 [&>svg]:h-12 [&>svg]:w-12 sm:[&>svg]:h-20 sm:[&>svg]:w-20',
+          iconColorClass
+        )}
         style={{ filter: 'drop-shadow(0 0 20px currentColor)' }}
       >
         {icon}
@@ -93,7 +96,7 @@ export function OnboardingStep({
         initial={titleAnimation.initial}
         animate={titleAnimation.animate}
         transition={titleAnimation.transition}
-        className="text-3xl font-bold text-foreground mb-6"
+        className="text-xl sm:text-3xl font-bold text-foreground mb-4 sm:mb-6"
       >
         {title}
       </motion.h2>
@@ -102,7 +105,7 @@ export function OnboardingStep({
         initial={descriptionAnimation.initial}
         animate={descriptionAnimation.animate}
         transition={descriptionAnimation.transition}
-        className="text-muted-foreground text-lg leading-relaxed mb-10"
+        className="text-muted-foreground text-sm sm:text-lg leading-relaxed mb-6 sm:mb-10"
       >
         {description}
       </motion.p>

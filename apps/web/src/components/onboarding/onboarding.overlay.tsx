@@ -139,7 +139,7 @@ export function OnboardingOverlay({
           animate={overlayAnimation.animate}
           exit={overlayAnimation.exit}
           transition={overlayAnimation.transition}
-          className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-background via-background to-muted/20"
+          className="fixed inset-0 z-50 flex flex-col bg-background"
         >
           <div className="flex-1 flex items-center justify-center overflow-y-auto">
             <AnimatePresence mode="wait">
@@ -147,8 +147,8 @@ export function OnboardingOverlay({
             </AnimatePresence>
           </div>
 
-          <div className="shrink-0 pb-8 px-6">
-            <div className="max-w-md mx-auto space-y-6">
+          <div className="shrink-0 pb-4 sm:pb-8 px-4 sm:px-6">
+            <div className="max-w-md mx-auto space-y-4 sm:space-y-6">
               <OnboardingProgress currentStep={currentStep} />
               <OnboardingNavigation
                 onNext={handleNext}
