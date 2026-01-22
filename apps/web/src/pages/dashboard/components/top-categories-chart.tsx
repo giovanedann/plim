@@ -81,7 +81,7 @@ export function TopCategoriesChart({ data, isLoading }: TopCategoriesChartProps)
         <CardTitle>Top Categorias</CardTitle>
         <CardDescription>Maiores gastos do período</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         <ChartContainer config={chartConfig} className="h-[200px] w-full">
           <BarChart
             data={chartData}
@@ -93,10 +93,10 @@ export function TopCategoriesChart({ data, isLoading }: TopCategoriesChartProps)
               type="number"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              fontSize={12}
+              tickMargin={4}
+              fontSize={11}
               tickFormatter={(value) =>
-                `R$${value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}`
+                value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`
               }
             />
             <YAxis
@@ -105,8 +105,11 @@ export function TopCategoriesChart({ data, isLoading }: TopCategoriesChartProps)
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              fontSize={12}
-              width={80}
+              fontSize={11}
+              width={60}
+              tickFormatter={(value: string) =>
+                value.length > 8 ? `${value.slice(0, 8)}...` : value
+              }
             />
             <ChartTooltip
               cursor={false}

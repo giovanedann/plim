@@ -85,7 +85,10 @@ export function PaymentBreakdownChart({ data, isLoading }: PaymentBreakdownChart
         <CardDescription>Como você está pagando</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="mx-auto h-[200px] w-full max-w-[250px]">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto h-[200px] w-full max-w-[200px] sm:max-w-[250px]"
+        >
           <PieChart>
             <ChartTooltip
               content={

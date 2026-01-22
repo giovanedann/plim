@@ -82,7 +82,10 @@ export function CategoryBreakdownChart({ data, isLoading }: CategoryBreakdownCha
         <CardDescription>Top 5 categorias do período</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="mx-auto h-[200px] w-full max-w-[250px]">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto h-[200px] w-full max-w-[200px] sm:max-w-[250px]"
+        >
           <PieChart>
             <ChartTooltip
               content={

@@ -78,7 +78,7 @@ export function ExpensesTimelineChart({ data, isLoading }: ExpensesTimelineChart
         <CardTitle>Linha do Tempo</CardTitle>
         <CardDescription>Evolução das despesas no período</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
@@ -92,9 +92,12 @@ export function ExpensesTimelineChart({ data, isLoading }: ExpensesTimelineChart
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              fontSize={12}
-              tickFormatter={(value) => `R$${value}`}
+              tickMargin={4}
+              fontSize={11}
+              width={50}
+              tickFormatter={(value) =>
+                value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`
+              }
             />
             <ChartTooltip
               cursor={false}

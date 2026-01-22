@@ -70,7 +70,7 @@ export function SavingsRateChart({ data, isLoading }: SavingsRateChartProps) {
         <CardTitle>Taxa de Economia</CardTitle>
         <CardDescription>Percentual economizado por mês</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
           <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -78,8 +78,9 @@ export function SavingsRateChart({ data, isLoading }: SavingsRateChartProps) {
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              fontSize={12}
+              tickMargin={4}
+              fontSize={11}
+              width={40}
               tickFormatter={(value) => `${value}%`}
               domain={['auto', 'auto']}
             />

@@ -106,7 +106,7 @@ export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProp
         <CardTitle>Histórico de Salário</CardTitle>
         <CardDescription>Evolução da receita mensal</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         <ChartContainer config={chartConfig} className="h-[200px] w-full">
           <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -114,10 +114,11 @@ export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProp
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              fontSize={12}
+              tickMargin={4}
+              fontSize={11}
+              width={45}
               tickFormatter={(value) =>
-                `R$${value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}`
+                value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`
               }
             />
             <ChartTooltip

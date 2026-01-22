@@ -47,19 +47,31 @@ export function DashboardPage() {
         <IncomeExpensesChart data={incomeVsExpenses} isLoading={isIncomeVsExpensesLoading} />
       </div>
 
-      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
-        <ExpensesTimelineChart data={expensesTimeline} isLoading={isExpensesTimelineLoading} />
-        <SavingsRateChart data={savingsRate} isLoading={isSavingsRateLoading} />
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <div className="min-w-0">
+          <ExpensesTimelineChart data={expensesTimeline} isLoading={isExpensesTimelineLoading} />
+        </div>
+        <div className="min-w-0">
+          <SavingsRateChart data={savingsRate} isLoading={isSavingsRateLoading} />
+        </div>
       </div>
 
-      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
-        <CategoryBreakdownChart data={categoryBreakdown} isLoading={isCategoryBreakdownLoading} />
-        <PaymentBreakdownChart data={paymentBreakdown} isLoading={isPaymentBreakdownLoading} />
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <div className="min-w-0">
+          <CategoryBreakdownChart data={categoryBreakdown} isLoading={isCategoryBreakdownLoading} />
+        </div>
+        <div className="min-w-0">
+          <PaymentBreakdownChart data={paymentBreakdown} isLoading={isPaymentBreakdownLoading} />
+        </div>
       </div>
 
-      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
-        <TopCategoriesChart data={categoryBreakdown} isLoading={isCategoryBreakdownLoading} />
-        <SalaryTimelineChart data={salaryTimeline} isLoading={isSalaryTimelineLoading} />
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <div className="min-w-0">
+          <TopCategoriesChart data={categoryBreakdown} isLoading={isCategoryBreakdownLoading} />
+        </div>
+        <div className="min-w-0">
+          <SalaryTimelineChart data={salaryTimeline} isLoading={isSalaryTimelineLoading} />
+        </div>
       </div>
 
       <div className="px-4 lg:px-6">

@@ -10,7 +10,7 @@ import {
 
 export function LandingPage() {
   return (
-    <div className="landing-container">
+    <div className="landing-container overflow-x-hidden">
       <LandingHeader />
 
       <main>
