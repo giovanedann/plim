@@ -36,18 +36,11 @@ export class SalaryRepository {
   }
 
   async create(userId: string, input: CreateSalary): Promise<SalaryHistory | null> {
-    const { data, error } = await this.supabase
-      .from('salary_history')
-      .upsert(
-        {
-          user_id: userId,
-          amount_cents: input.amount_cents,
-          effective_from: input.effective_from,
-        },
-        { onConflict: 'user_id,effective_from' }
-      )
-      .select(SALARY_COLUMNS)
-      .single()
+    const { data, error } = await this.supabase.rpc('upsert_salary', {
+      p_user_id: userId,
+      p_amount_cents: input.amount_cents,
+      p_effective_from: input.effective_from,
+    })
 
     if (error || !data) return null
 
