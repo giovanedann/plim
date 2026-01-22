@@ -13,14 +13,6 @@ export class UpdateExpenseUseCase {
       throw new AppError(ERROR_CODES.NOT_FOUND, 'Expense not found', HTTP_STATUS.NOT_FOUND)
     }
 
-    if (existing.is_recurrent) {
-      throw new AppError(
-        ERROR_CODES.FORBIDDEN,
-        'Cannot update recurrent expense directly. Delete and recreate instead.',
-        HTTP_STATUS.FORBIDDEN
-      )
-    }
-
     const updated = await this.expensesRepository.update(expenseId, userId, input)
 
     if (!updated) {

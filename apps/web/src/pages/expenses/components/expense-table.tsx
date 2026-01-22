@@ -373,14 +373,19 @@ export function ExpenseTable({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                const originalExpense = expenses.find(
-                  (e) => e.id === projectedExpenseInfo?.source_expense_id
+              onClick={async () => {
+                if (!projectedExpenseInfo?.source_expense_id) {
+                  toast.error('ID da despesa original não encontrado')
+                  setProjectedExpenseInfo(null)
+                  return
+                }
+                const result = await expenseService.getExpense(
+                  projectedExpenseInfo.source_expense_id
                 )
-                if (originalExpense) {
-                  setExpenseToEdit(originalExpense)
+                if (result.data) {
+                  setExpenseToEdit(result.data)
                 } else {
-                  toast.error('Despesa original não encontrada neste mês')
+                  toast.error('Erro ao carregar despesa original')
                 }
                 setProjectedExpenseInfo(null)
               }}

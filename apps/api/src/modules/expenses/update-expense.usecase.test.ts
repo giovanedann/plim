@@ -81,19 +81,17 @@ describe('UpdateExpenseUseCase', () => {
     })
   })
 
-  it('throws FORBIDDEN when trying to update recurrent expense', async () => {
-    const recurrentExpense = { ...baseExpense, is_recurrent: true }
+  it('updates recurrent expense successfully', async () => {
+    const recurrentExpense = { ...baseExpense, is_recurrent: true, recurrence_day: 15 }
+    const input: UpdateExpense = { description: 'Updated Recurrent', amount_cents: 7500 }
+    const updatedExpense = { ...recurrentExpense, ...input }
     mockRepository.findById.mockResolvedValue(recurrentExpense)
+    mockRepository.update.mockResolvedValue(updatedExpense)
 
-    await expect(useCase.execute('user-123', 'expense-1', { description: 'Test' })).rejects.toThrow(
-      AppError
-    )
-    await expect(
-      useCase.execute('user-123', 'expense-1', { description: 'Test' })
-    ).rejects.toMatchObject({
-      code: ERROR_CODES.FORBIDDEN,
-      status: HTTP_STATUS.FORBIDDEN,
-    })
+    const result = await useCase.execute('user-123', 'expense-1', input)
+
+    expect(result).toEqual(updatedExpense)
+    expect(mockRepository.update).toHaveBeenCalledWith('expense-1', 'user-123', input)
   })
 
   it('throws INTERNAL_ERROR when update fails', async () => {
