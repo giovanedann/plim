@@ -168,10 +168,6 @@ export function SecuritySection() {
           >
             <div className="flex items-center gap-2 text-sm text-slate-400">
               <Check className="h-4 w-4 text-emerald-400" />
-              <span>Criptografia de ponta a ponta</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <Check className="h-4 w-4 text-emerald-400" />
               <span>Dados nunca compartilhados</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-400">
