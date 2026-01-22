@@ -132,9 +132,11 @@ export function SalaryDisplay({
     }
   }
 
+  const hasSalary = salary && salary.amount_cents > 0
+
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className={`grid gap-4 ${hasSalary ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         {[1, 2, 3].map((i) => (
           <Card key={i}>
             <CardContent className="pt-6">
@@ -147,7 +149,7 @@ export function SalaryDisplay({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className={`grid gap-4 ${hasSalary ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
       <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
@@ -244,41 +246,43 @@ export function SalaryDisplay({
         </CardContent>
       </Card>
 
-      <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2">
-            <TrendingUp
-              className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-            />
-            <span className="text-sm font-medium text-muted-foreground">Saldo</span>
-          </div>
-          <p
-            className={`mt-2 text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-          >
-            {maskValue(animatedBalance)}
-          </p>
-          {comparison && (
-            <div className="mt-1 flex items-center gap-1 text-xs">
-              {balanceComparison.value !== null ? (
-                <>
-                  {balanceComparison.value > 0 ? (
-                    <ArrowUp className="h-3 w-3 text-emerald-500" />
-                  ) : (
-                    <ArrowDown className="h-3 w-3 text-red-500" />
-                  )}
-                  <span
-                    className={balanceComparison.value > 0 ? 'text-emerald-500' : 'text-red-500'}
-                  >
-                    {balanceComparison.label}
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">{balanceComparison.label}</span>
-              )}
+      {hasSalary && (
+        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <TrendingUp
+                className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+              />
+              <span className="text-sm font-medium text-muted-foreground">Saldo</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <p
+              className={`mt-2 text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+            >
+              {maskValue(animatedBalance)}
+            </p>
+            {comparison && (
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {balanceComparison.value !== null ? (
+                  <>
+                    {balanceComparison.value > 0 ? (
+                      <ArrowUp className="h-3 w-3 text-emerald-500" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={balanceComparison.value > 0 ? 'text-emerald-500' : 'text-red-500'}
+                    >
+                      {balanceComparison.label}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">{balanceComparison.label}</span>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

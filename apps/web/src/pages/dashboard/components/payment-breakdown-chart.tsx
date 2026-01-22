@@ -79,7 +79,7 @@ export function PaymentBreakdownChart({ data, isLoading }: PaymentBreakdownChart
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Formas de Pagamento</CardTitle>
         <CardDescription>Como você está pagando</CardDescription>

@@ -71,6 +71,8 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
     )
   }
 
+  const hasSalary = summary.total_income > 0
+
   const cards = [
     {
       title: 'Receita',
@@ -78,6 +80,7 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
       change: summary.comparison.income_change_percent,
       icon: TrendingUp,
       iconClass: 'text-emerald-500',
+      show: hasSalary,
     },
     {
       title: 'Despesas',
@@ -86,6 +89,7 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
       icon: TrendingDown,
       iconClass: 'text-red-500',
       invertChange: true,
+      show: true,
     },
     {
       title: 'Saldo',
@@ -93,17 +97,26 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
       change: summary.comparison.balance_change_percent,
       icon: Wallet,
       iconClass: summary.balance >= 0 ? 'text-emerald-500' : 'text-red-500',
+      show: hasSalary,
     },
     {
       title: 'Taxa de Economia',
       value: `${summary.savings_rate.toFixed(1)}%`,
       icon: PiggyBank,
       iconClass: summary.savings_rate > 0 ? 'text-emerald-500' : 'text-amber-500',
+      show: hasSalary,
     },
-  ]
+  ].filter((card) => card.show)
+
+  const gridCols =
+    cards.length === 1
+      ? ''
+      : cards.length === 2
+        ? 'sm:grid-cols-2'
+        : 'sm:grid-cols-2 lg:grid-cols-4'
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className={`grid gap-4 ${gridCols}`}>
       {cards.map((card) => {
         const Icon = card.icon
         return (

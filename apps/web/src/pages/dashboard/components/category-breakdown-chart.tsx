@@ -76,7 +76,7 @@ export function CategoryBreakdownChart({ data, isLoading }: CategoryBreakdownCha
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Despesas por Categoria</CardTitle>
         <CardDescription>Top 5 categorias do período</CardDescription>

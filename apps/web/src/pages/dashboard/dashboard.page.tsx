@@ -32,6 +32,8 @@ export function DashboardPage() {
     isInstallmentForecastLoading,
   } = useDashboard()
 
+  const hasSalary = summary?.total_income && summary.total_income > 0
+
   return (
     <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
       <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
@@ -43,17 +45,21 @@ export function DashboardPage() {
         <SummaryCards summary={summary} isLoading={isSummaryLoading} />
       </div>
 
-      <div className="px-4 lg:px-6">
-        <IncomeExpensesChart data={incomeVsExpenses} isLoading={isIncomeVsExpensesLoading} />
-      </div>
+      {hasSalary && (
+        <div className="px-4 lg:px-6">
+          <IncomeExpensesChart data={incomeVsExpenses} isLoading={isIncomeVsExpensesLoading} />
+        </div>
+      )}
 
-      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+      <div className={`grid min-w-0 gap-4 px-4 lg:px-6 ${hasSalary ? 'md:grid-cols-2' : ''}`}>
         <div className="min-w-0">
           <ExpensesTimelineChart data={expensesTimeline} isLoading={isExpensesTimelineLoading} />
         </div>
-        <div className="min-w-0">
-          <SavingsRateChart data={savingsRate} isLoading={isSavingsRateLoading} />
-        </div>
+        {hasSalary && (
+          <div className="min-w-0">
+            <SavingsRateChart data={savingsRate} isLoading={isSavingsRateLoading} />
+          </div>
+        )}
       </div>
 
       <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
@@ -65,13 +71,15 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+      <div className={`grid min-w-0 gap-4 px-4 lg:px-6 ${hasSalary ? 'md:grid-cols-2' : ''}`}>
         <div className="min-w-0">
           <TopCategoriesChart data={categoryBreakdown} isLoading={isCategoryBreakdownLoading} />
         </div>
-        <div className="min-w-0">
-          <SalaryTimelineChart data={salaryTimeline} isLoading={isSalaryTimelineLoading} />
-        </div>
+        {hasSalary && (
+          <div className="min-w-0">
+            <SalaryTimelineChart data={salaryTimeline} isLoading={isSalaryTimelineLoading} />
+          </div>
+        )}
       </div>
 
       <div className="px-4 lg:px-6">
