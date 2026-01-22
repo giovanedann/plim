@@ -217,46 +217,53 @@ export function ExpenseModal({
       const validated = updateExpenseSchema.safeParse(updateData)
       if (validated.success) {
         updateMutation.mutate({ id: expense.id, data: validated.data })
+      } else {
+        console.error('Update validation failed:', validated.error)
+        toast.error('Dados inválidos. Verifique os campos.')
+      }
+      return
+    }
+
+    let createData: CreateExpense
+
+    if (data.type === 'one_time') {
+      createData = {
+        type: 'one_time',
+        description: data.description,
+        amount_cents: amountCents,
+        category_id: data.category_id,
+        payment_method: data.payment_method,
+        date: data.date,
+      }
+    } else if (data.type === 'recurrent') {
+      createData = {
+        type: 'recurrent',
+        description: data.description,
+        amount_cents: amountCents,
+        category_id: data.category_id,
+        payment_method: data.payment_method,
+        recurrence_day: Number.parseInt(data.recurrence_day || '1', 10),
+        recurrence_start: data.recurrence_start || data.date,
+        recurrence_end: data.recurrence_end || undefined,
       }
     } else {
-      let createData: CreateExpense
-
-      if (data.type === 'one_time') {
-        createData = {
-          type: 'one_time',
-          description: data.description,
-          amount_cents: amountCents,
-          category_id: data.category_id,
-          payment_method: data.payment_method,
-          date: data.date,
-        }
-      } else if (data.type === 'recurrent') {
-        createData = {
-          type: 'recurrent',
-          description: data.description,
-          amount_cents: amountCents,
-          category_id: data.category_id,
-          payment_method: data.payment_method,
-          recurrence_day: Number.parseInt(data.recurrence_day || '1', 10),
-          recurrence_start: data.recurrence_start || data.date,
-          recurrence_end: data.recurrence_end || undefined,
-        }
-      } else {
-        createData = {
-          type: 'installment',
-          description: data.description,
-          amount_cents: amountCents,
-          category_id: data.category_id,
-          payment_method: data.payment_method,
-          date: data.date,
-          installment_total: Number.parseInt(data.installment_total || '2', 10),
-        }
+      createData = {
+        type: 'installment',
+        description: data.description,
+        amount_cents: amountCents,
+        category_id: data.category_id,
+        payment_method: data.payment_method,
+        date: data.date,
+        installment_total: Number.parseInt(data.installment_total || '2', 10),
       }
+    }
 
-      const validated = createExpenseSchema.safeParse(createData)
-      if (validated.success) {
-        createMutation.mutate(validated.data)
-      }
+    const validated = createExpenseSchema.safeParse(createData)
+    if (validated.success) {
+      createMutation.mutate(validated.data)
+    } else {
+      console.error('Create validation failed:', validated.error)
+      toast.error('Dados inválidos. Verifique os campos.')
     }
   }
 

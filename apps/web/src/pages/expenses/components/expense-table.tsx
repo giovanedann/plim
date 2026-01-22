@@ -242,9 +242,12 @@ export function ExpenseTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setExpenseToEdit(expense)}>
+                        <DropdownMenuItem
+                          disabled={expense.is_projected}
+                          onClick={() => !expense.is_projected && setExpenseToEdit(expense)}
+                        >
                           <Pencil className="mr-2 h-4 w-4" />
-                          Editar
+                          {expense.is_projected ? 'Edite a despesa original' : 'Editar'}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
