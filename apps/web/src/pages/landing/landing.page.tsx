@@ -4,6 +4,7 @@ import {
   HeroSection,
   LandingFooter,
   LandingHeader,
+  OnboardingSection,
   PricingSection,
 } from './components'
 
@@ -15,6 +16,9 @@ export function LandingPage() {
       <main>
         {/* Hero */}
         <HeroSection />
+
+        {/* Onboarding steps */}
+        <OnboardingSection />
 
         {/* Features with swapping animation */}
         <FeaturesShowcase />
