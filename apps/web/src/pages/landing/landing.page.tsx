@@ -6,6 +6,7 @@ import {
   LandingHeader,
   OnboardingSection,
   PricingSection,
+  SecuritySection,
 } from './components'
 
 export function LandingPage() {
@@ -22,6 +23,9 @@ export function LandingPage() {
 
         {/* Features with swapping animation */}
         <FeaturesShowcase />
+
+        {/* Security */}
+        <SecuritySection />
 
         {/* Pricing */}
         <PricingSection />
