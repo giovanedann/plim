@@ -70,11 +70,11 @@ export function InstallmentForecast({ data, isLoading }: InstallmentForecastProp
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Previsão de Parcelas</CardTitle>
-          <CardDescription>Próximos pagamentos parcelados</CardDescription>
+          <CardTitle>Despesas Futuras</CardTitle>
+          <CardDescription>Projeção de gastos nos próximos meses</CardDescription>
         </CardHeader>
         <CardContent className="flex h-[250px] items-center justify-center">
-          <p className="text-sm text-muted-foreground">Sem parcelas futuras</p>
+          <p className="text-sm text-muted-foreground">Sem despesas futuras</p>
         </CardContent>
       </Card>
     )
@@ -83,8 +83,8 @@ export function InstallmentForecast({ data, isLoading }: InstallmentForecastProp
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Previsão de Parcelas</CardTitle>
-        <CardDescription>Total de parcelas por mês</CardDescription>
+        <CardTitle>Despesas Futuras</CardTitle>
+        <CardDescription>Total de despesas por mês</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">

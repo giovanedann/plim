@@ -89,24 +89,85 @@ export class DashboardRepository {
     return data as SalaryRow[]
   }
 
-  async getFutureInstallments(
+  async getFutureExpenses(
     userId: string,
-    currentDate: string
+    currentDate: string,
+    months = 6
   ): Promise<{ amount_cents: number; date: string }[]> {
-    const { data, error } = await this.supabase
+    const results: { amount_cents: number; date: string }[] = []
+
+    const { data: regularExpenses, error: regularError } = await this.supabase
       .from('expense')
       .select('amount_cents, date')
       .eq('user_id', userId)
-      .not('installment_group_id', 'is', null)
+      .eq('is_recurrent', false)
       .gte('date', currentDate)
       .order('date', { ascending: true })
 
-    if (error || !data) return []
+    if (!regularError && regularExpenses) {
+      for (const row of regularExpenses) {
+        results.push({
+          amount_cents: row.amount_cents,
+          date: row.date,
+        })
+      }
+    }
 
-    return data.map((row) => ({
-      amount_cents: row.amount_cents,
-      date: row.date,
-    }))
+    const { data: recurringExpenses, error: recurringError } = await this.supabase
+      .from('expense')
+      .select('amount_cents, recurrence_day, recurrence_start, recurrence_end')
+      .eq('user_id', userId)
+      .eq('is_recurrent', true)
+
+    if (!recurringError && recurringExpenses) {
+      const projectedRecurring = this.projectRecurringExpenses(
+        recurringExpenses,
+        currentDate,
+        months
+      )
+      results.push(...projectedRecurring)
+    }
+
+    return results
+  }
+
+  private projectRecurringExpenses(
+    recurringExpenses: {
+      amount_cents: number
+      recurrence_day: number
+      recurrence_start: string
+      recurrence_end: string | null
+    }[],
+    currentDate: string,
+    months: number
+  ): { amount_cents: number; date: string }[] {
+    const results: { amount_cents: number; date: string }[] = []
+    const current = new Date(currentDate)
+    const endDate = new Date(currentDate)
+    endDate.setMonth(endDate.getMonth() + months)
+
+    for (const expense of recurringExpenses) {
+      const recurrenceStart = new Date(expense.recurrence_start)
+      const recurrenceEnd = expense.recurrence_end ? new Date(expense.recurrence_end) : null
+
+      const iterDate = new Date(current.getFullYear(), current.getMonth(), expense.recurrence_day)
+
+      if (iterDate < current) {
+        iterDate.setMonth(iterDate.getMonth() + 1)
+      }
+
+      while (iterDate < endDate) {
+        if (iterDate >= recurrenceStart && (!recurrenceEnd || iterDate <= recurrenceEnd)) {
+          results.push({
+            amount_cents: expense.amount_cents,
+            date: iterDate.toISOString().slice(0, 10),
+          })
+        }
+        iterDate.setMonth(iterDate.getMonth() + 1)
+      }
+    }
+
+    return results
   }
 
   aggregateExpensesByTimeline(

@@ -86,6 +86,7 @@ export class CreateExpenseUseCase {
     const installments: CreateExpenseData[] = []
 
     const baseDate = new Date(input.date)
+    const installmentAmount = Math.ceil(input.amount_cents / input.installment_total)
 
     for (let i = 0; i < input.installment_total; i++) {
       const installmentDate = new Date(baseDate)
@@ -94,7 +95,7 @@ export class CreateExpenseUseCase {
       installments.push({
         category_id: input.category_id,
         description: input.description,
-        amount_cents: input.amount_cents,
+        amount_cents: installmentAmount,
         payment_method: input.payment_method,
         date: installmentDate.toISOString().slice(0, 10),
         is_recurrent: false,

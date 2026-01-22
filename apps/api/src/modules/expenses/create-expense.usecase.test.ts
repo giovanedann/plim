@@ -151,11 +151,12 @@ describe('CreateExpenseUseCase', () => {
   })
 
   describe('installment expense', () => {
-    it('creates multiple expenses for installments', async () => {
+    it('creates multiple expenses for installments with divided amount', async () => {
       const installmentExpenses: Expense[] = [
         {
           ...baseExpense,
           id: 'exp-1',
+          amount_cents: 1667,
           installment_current: 1,
           installment_total: 3,
           installment_group_id: 'group-1',
@@ -164,6 +165,7 @@ describe('CreateExpenseUseCase', () => {
         {
           ...baseExpense,
           id: 'exp-2',
+          amount_cents: 1667,
           installment_current: 2,
           installment_total: 3,
           installment_group_id: 'group-1',
@@ -172,6 +174,7 @@ describe('CreateExpenseUseCase', () => {
         {
           ...baseExpense,
           id: 'exp-3',
+          amount_cents: 1667,
           installment_current: 3,
           installment_total: 3,
           installment_group_id: 'group-1',
@@ -196,16 +199,47 @@ describe('CreateExpenseUseCase', () => {
         'user-123',
         expect.arrayContaining([
           expect.objectContaining({
+            amount_cents: 1667,
             installment_current: 1,
             installment_total: 3,
           }),
           expect.objectContaining({
+            amount_cents: 1667,
             installment_current: 2,
             installment_total: 3,
           }),
           expect.objectContaining({
+            amount_cents: 1667,
             installment_current: 3,
             installment_total: 3,
+          }),
+        ])
+      )
+    })
+
+    it('rounds up installment amounts to avoid losing cents', async () => {
+      const input: CreateExpense = {
+        type: 'installment',
+        category_id: 'cat-1',
+        description: 'Test Expense',
+        amount_cents: 10000,
+        payment_method: 'credit_card',
+        date: '2024-01-15',
+        installment_total: 3,
+      }
+      mockRepository.createMany.mockResolvedValue([])
+
+      try {
+        await useCase.execute('user-123', input)
+      } catch {
+        // Expected to fail due to empty return
+      }
+
+      expect(mockRepository.createMany).toHaveBeenCalledWith(
+        'user-123',
+        expect.arrayContaining([
+          expect.objectContaining({
+            amount_cents: 3334,
           }),
         ])
       )
