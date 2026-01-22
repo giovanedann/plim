@@ -1,7 +1,0 @@
-- Add docs with tutorials about how to do things on the website
-- Improve UI/UX
-- Improve onboarding with a more polished (creating an example of expense, etc)
-- Add AI features
-- Add payment options (plans and premium features)
-- Think about premium features to charge users
-- Add tests for the entire app before comercializing and turn in public
