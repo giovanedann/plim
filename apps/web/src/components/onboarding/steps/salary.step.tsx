@@ -114,7 +114,7 @@ export function SalaryStep({ existingSalary, onSave, isReplay }: SalaryStepProps
             </div>
             {error && <p className="text-sm text-red-400">{error}</p>}
             <p className="text-sm text-muted-foreground text-center">
-              Você pode configurar isso depois nas configurações
+              Digite seu salário líquido (o que cai na conta, já com descontos).
             </p>
           </motion.div>
         )}
