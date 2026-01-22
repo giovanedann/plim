@@ -29,6 +29,7 @@ function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
 
 export function SignUpPage() {
   const { signInWithGoogle, signUpWithEmail, isLoading, error, clearError } = useAuthStore()
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -73,7 +74,7 @@ export function SignUpPage() {
     }
 
     try {
-      await signUpWithEmail(email, password)
+      await signUpWithEmail(email, password, displayName || undefined)
       setSuccess(true)
     } catch {
       // Error is handled by the store
@@ -118,6 +119,17 @@ export function SignUpPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleEmailSignUp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Nome</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder="Como você quer ser chamado"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
