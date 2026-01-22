@@ -158,20 +158,22 @@
 - [x] Update sidebar to prioritize custom avatar over OAuth avatar
 - [x] Add dev scripts for remote R2 bindings during local development
 
-### Phase 14
+### Phase 14: Public Landing Page ✅
+
+**Status:** ✅ Complete (2026-01-21)
 
 #### IMPORTANT FOR PHASE 14: I want a different landing page. I want to show 1 page/functionality at the time while users scrolls
 
 #### to implement that, i want to add something like: 1st section: image on the left (animated, floating), and a description on the right. When the user scrolls to the next section, the image animate to the right, and the description now is on the left, on that transition, i want to switch images
 
-- [ ] Create `/landing` page (marketing)
-- [ ] Add marketing elements (with mocked prices for now)
-- [ ] Add image/text switching mock
-- [ ] Add onboarding section
-- [ ] add dashboard section
-- [ ] add expenses section
-- [ ] add categories section
-- [ ] add profile section
+- [x] Create `/landing` page (marketing)
+- [x] Add marketing elements (with mocked prices for now)
+- [x] Add image/text switching mock
+- [x] Add onboarding section
+- [x] add dashboard section
+- [x] add expenses section
+- [x] add categories section
+- [x] add profile section
 
 ### Phase 15: Frontend - Categories Management ✅
 
@@ -198,10 +200,84 @@
 
 ### Phase 17: Deployment
 
-- [ ] Deploy API to Cloudflare Workers
-- [ ] Deploy frontend to Cloudflare Pages
-- [ ] Configure environment variables
-- [ ] Set up CI/CD (GitHub Actions)
+#### 17.1 API Deployment
+- [ ] Set Cloudflare Workers secrets (`wrangler secret put SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`)
+- [ ] Deploy API to Cloudflare Workers (`pnpm --filter @plim/api deploy`)
+- [ ] Configure custom domain for API (`api.your-domain.com`)
+
+#### 17.2 Frontend Deployment
+- [ ] Create Cloudflare Pages project connected to GitHub
+- [ ] Configure build settings (root: `/`, build: `pnpm install && pnpm build`, output: `apps/web/dist`)
+- [ ] Set environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_API_URL`)
+- [ ] Configure custom domain for frontend (`your-domain.com`, `www.your-domain.com`)
+
+#### 17.3 Domain Configuration
+- [ ] Buy/configure domain in Cloudflare
+- [ ] Add frontend custom domains in Cloudflare Pages
+- [ ] Add API custom domain in Cloudflare Workers
+
+#### 17.4 Auth Configuration
+- [ ] Update Supabase Site URL to production domain
+- [ ] Add production redirect URLs to Supabase (`https://your-domain.com/auth/callback`)
+- [ ] (Optional) Configure Supabase custom auth domain to hide Supabase URL
+- [ ] Update Google OAuth authorized domains
+- [ ] Update Google OAuth redirect URIs
+- [ ] Update Google OAuth authorized JavaScript origins
+- [ ] Test full OAuth flow with custom domain
+
+### Phase 18: Production Hardening (Post-Beta)
+
+Track these items while collecting beta feedback. Implement before public launch.
+
+#### 18.1 Legal & Compliance
+- [ ] Create `/privacy` page (Privacy Policy)
+- [ ] Create `/terms` page (Terms of Service)
+- [ ] Add footer links to legal pages
+- [ ] Document data handling practices (LGPD compliance for Brazil)
+
+#### 18.2 Error Monitoring & Logging
+- [ ] Set up Sentry for frontend error tracking
+- [ ] Set up Sentry for API error tracking (Cloudflare Workers)
+- [ ] Add structured logging to API endpoints
+- [ ] Create error boundary components for graceful failures
+
+#### 18.3 CI/CD Pipeline
+- [ ] Create GitHub Actions workflow for linting/typecheck on PR
+- [ ] Create GitHub Actions workflow for running tests on PR
+- [ ] Create GitHub Actions workflow for API deployment on merge to main
+- [ ] Create GitHub Actions workflow for frontend deployment on merge to main
+- [ ] Add branch protection rules
+
+#### 18.4 Performance & Optimization
+- [ ] Add React Query cache configuration for dashboard data
+- [ ] Implement pagination for expenses list (currently loads all)
+- [ ] Add image optimization for avatar uploads (resize/compress)
+- [ ] Analyze and optimize bundle size (code splitting)
+- [ ] Add loading skeletons for better perceived performance
+
+#### 18.5 Security Hardening
+- [ ] Add rate limiting to API endpoints (Cloudflare rate limiting)
+- [ ] Add CORS configuration for production domain only
+- [ ] Audit RLS policies with Supabase security advisor
+- [ ] Review and document authentication token handling
+
+#### 18.6 Data & Backup
+- [ ] Set up Supabase automated backups (check plan)
+- [ ] Create data export feature (user can download their data)
+- [ ] Document data deletion procedure (account deletion)
+- [ ] Test backup restore procedure
+
+#### 18.7 Analytics & Monitoring
+- [ ] Add Plausible or similar privacy-friendly analytics
+- [ ] Set up uptime monitoring (e.g., Checkly, Better Uptime)
+- [ ] Create dashboard for key metrics (signups, active users)
+
+#### 18.8 User Experience Polish
+- [ ] Add loading states to all async operations
+- [ ] Add toast notifications for success/error feedback
+- [ ] Improve form validation error messages
+- [ ] Add keyboard shortcuts documentation
+- [ ] Test and fix mobile responsiveness issues
 
 ---
 
