@@ -1,6 +1,7 @@
 import { CategoryIcon } from '@/components/icons'
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -68,6 +69,7 @@ export function ExpenseTable({
   const hideValues = useUIStore((state) => state.hideValues)
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
+  const [projectedExpenseInfo, setProjectedExpenseInfo] = useState<Expense | null>(null)
   const queryClient = useQueryClient()
 
   const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.is_projected
@@ -243,11 +245,16 @@ export function ExpenseTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          disabled={expense.is_projected}
-                          onClick={() => !expense.is_projected && setExpenseToEdit(expense)}
+                          onClick={() => {
+                            if (expense.is_projected) {
+                              setProjectedExpenseInfo(expense)
+                            } else {
+                              setExpenseToEdit(expense)
+                            }
+                          }}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
-                          {expense.is_projected ? 'Edite a despesa original' : 'Editar'}
+                          Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
@@ -338,6 +345,48 @@ export function ExpenseTable({
                 {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
               </Button>
             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={projectedExpenseInfo !== null}
+        onOpenChange={(open) => !open && setProjectedExpenseInfo(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Despesa recorrente projetada</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Esta é uma projeção da despesa recorrente &quot;{projectedExpenseInfo?.description}
+                &quot;.
+              </p>
+              <p>
+                Despesas recorrentes são mostradas automaticamente em cada mês. Para alterar o
+                valor, descrição ou forma de pagamento, você precisa editar a despesa original.
+              </p>
+              <p className="font-medium">
+                Ao editar a original, as mudanças serão refletidas em todas as projeções futuras.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const originalExpense = expenses.find(
+                  (e) => e.id === projectedExpenseInfo?.source_expense_id
+                )
+                if (originalExpense) {
+                  setExpenseToEdit(originalExpense)
+                } else {
+                  toast.error('Despesa original não encontrada neste mês')
+                }
+                setProjectedExpenseInfo(null)
+              }}
+            >
+              Editar despesa original
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
