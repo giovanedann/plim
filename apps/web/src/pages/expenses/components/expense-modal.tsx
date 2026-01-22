@@ -26,12 +26,13 @@ import {
   centsToDecimal,
   createExpenseSchema,
   decimalToCents,
+  formatBRL,
   updateExpenseSchema,
 } from '@plim/shared'
 import type { Category, CreateExpense, Expense, ExpenseType, UpdateExpense } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -110,6 +111,29 @@ export function ExpenseModal({
   })
 
   const expenseType = watch('type')
+  const watchedAmount = watch('amount')
+  const watchedInstallmentTotal = watch('installment_total')
+
+  const installmentPreview = useMemo(() => {
+    if (expenseType !== 'installment' || !watchedAmount || !watchedInstallmentTotal) {
+      return null
+    }
+
+    const totalCents = decimalToCents(
+      Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
+    )
+    const installments = Number.parseInt(watchedInstallmentTotal, 10)
+
+    if (Number.isNaN(totalCents) || Number.isNaN(installments) || installments < 2) {
+      return null
+    }
+
+    const perInstallment = Math.ceil(totalCents / installments)
+    return {
+      perInstallment,
+      formatted: formatBRL(perInstallment),
+    }
+  }, [expenseType, watchedAmount, watchedInstallmentTotal])
 
   useEffect(() => {
     if (open) {
@@ -442,8 +466,13 @@ export function ExpenseModal({
                   {...register('installment_total')}
                 />
                 <p className="text-xs text-muted-foreground">
-                  O valor informado será o valor de cada parcela.
+                  O valor informado acima é o valor total da compra.
                 </p>
+                {installmentPreview && (
+                  <p className="text-sm font-medium text-primary">
+                    Cada parcela: {installmentPreview.formatted}
+                  </p>
+                )}
               </div>
             </div>
           )}
