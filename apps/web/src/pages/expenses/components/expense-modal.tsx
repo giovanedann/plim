@@ -177,6 +177,7 @@ export function ExpenseModal({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
       toast.success('Despesa criada com sucesso!')
       onOpenChange(false)
     },
@@ -190,6 +191,7 @@ export function ExpenseModal({
       expenseService.updateExpense(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
       toast.success('Despesa atualizada com sucesso!')
       onOpenChange(false)
     },

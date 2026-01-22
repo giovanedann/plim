@@ -78,6 +78,7 @@ export function ExpenseTable({
     mutationFn: (id: string) => expenseService.deleteExpense(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
       toast.success('Despesa excluída com sucesso!')
       setExpenseToDelete(null)
     },
@@ -91,6 +92,7 @@ export function ExpenseTable({
       expenseService.cancelRecurrence(id, endDate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
       toast.success('Recorrência cancelada com sucesso!')
       setExpenseToDelete(null)
     },
