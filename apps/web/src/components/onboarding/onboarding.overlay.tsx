@@ -42,16 +42,22 @@ export function OnboardingOverlay({
 
   const handleNext = useCallback(async () => {
     if (currentStep === 6) {
-      await onComplete()
-      complete()
+      try {
+        await onComplete()
+      } finally {
+        complete()
+      }
     } else {
       nextStep()
     }
   }, [currentStep, nextStep, complete, onComplete])
 
   const handleConfirmSkip = useCallback(async () => {
-    await onComplete()
-    confirmSkip()
+    try {
+      await onComplete()
+    } finally {
+      confirmSkip()
+    }
   }, [confirmSkip, onComplete])
 
   useEffect(() => {
@@ -135,6 +141,7 @@ export function OnboardingOverlay({
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          key="onboarding-overlay"
           initial={overlayAnimation.initial}
           animate={overlayAnimation.animate}
           exit={overlayAnimation.exit}
