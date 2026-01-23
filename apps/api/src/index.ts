@@ -7,6 +7,7 @@ import { dashboardController } from './modules/dashboard/dashboard.controller'
 import { expensesController } from './modules/expenses/expenses.controller'
 import { profileController } from './modules/profile/profile.controller'
 import { salaryController } from './modules/salary/salary.controller'
+import { spendingLimitsController } from './modules/spending-limits/spending-limits.controller'
 import type { Env } from './types'
 
 const app = new Hono<Env>()
@@ -28,6 +29,7 @@ api.route('/profile', profileController)
 api.route('/categories', categoriesController)
 api.route('/expenses', expensesController)
 api.route('/salary', salaryController)
+api.route('/spending-limits', spendingLimitsController)
 api.route('/dashboard', dashboardController)
 
 app.route('/api/v1', api)
