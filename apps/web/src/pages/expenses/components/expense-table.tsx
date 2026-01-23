@@ -414,7 +414,6 @@ export function ExpenseTable({
         open={installmentExpense !== null}
         onOpenChange={(open) => !open && setInstallmentExpense(null)}
         expense={installmentExpense}
-        selectedMonth={selectedMonth}
       />
     </>
   )

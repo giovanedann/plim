@@ -19,7 +19,6 @@ interface InstallmentGroupModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   expense: Expense | null
-  selectedMonth: string
 }
 
 function formatDate(dateString: string) {
@@ -27,22 +26,15 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
 }
 
-function isPastOrCurrentMonth(dateString: string, selectedMonth: string): boolean {
+function isFutureMonth(dateString: string): boolean {
   const expenseDate = new Date(`${dateString}T00:00:00`)
-  const parts = selectedMonth.split('-').map(Number)
-  const year = parts[0] ?? 0
-  const month = parts[1] ?? 1
-  const selectedDate = new Date(year, month - 1, 1)
+  const today = new Date()
+  const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1)
 
-  return expenseDate <= selectedDate
+  return expenseDate >= nextMonthStart
 }
 
-export function InstallmentGroupModal({
-  open,
-  onOpenChange,
-  expense,
-  selectedMonth,
-}: InstallmentGroupModalProps) {
+export function InstallmentGroupModal({ open, onOpenChange, expense }: InstallmentGroupModalProps) {
   const hideValues = useUIStore((state) => state.hideValues)
   const queryClient = useQueryClient()
 
@@ -73,11 +65,9 @@ export function InstallmentGroupModal({
   })
 
   const totalAmount = installments?.reduce((sum, i) => sum + i.amount_cents, 0) ?? 0
-  const paidCount =
-    installments?.filter((i) => isPastOrCurrentMonth(i.date, selectedMonth)).length ?? 0
+  const futureInstallments = installments?.filter((i) => isFutureMonth(i.date)) ?? []
+  const paidOrCurrentCount = (installments?.length ?? 0) - futureInstallments.length
   const totalCount = installments?.length ?? 0
-  const futureInstallments =
-    installments?.filter((i) => !isPastOrCurrentMonth(i.date, selectedMonth)) ?? []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,13 +138,13 @@ export function InstallmentGroupModal({
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progresso</span>
               <span className="font-medium">
-                {paidCount} de {totalCount} parcelas
+                {paidOrCurrentCount} de {totalCount} parcelas
               </span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${(paidCount / totalCount) * 100}%` }}
+                style={{ width: `${(paidOrCurrentCount / totalCount) * 100}%` }}
               />
             </div>
             <div className="flex justify-between text-sm pt-1">
