@@ -42,4 +42,8 @@ export const expenseService = {
   async getInstallmentGroup(groupId: string) {
     return api.get<Expense[]>(`/expenses/installments/${groupId}`)
   },
+
+  async deleteInstallmentGroup(groupId: string) {
+    return api.delete<void>(`/expenses/installments/${groupId}`)
+  },
 }

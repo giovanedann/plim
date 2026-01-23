@@ -109,10 +109,29 @@ export function ExpenseTable({
     },
   })
 
+  const deleteInstallmentGroupMutation = useMutation({
+    mutationFn: (groupId: string) => expenseService.deleteInstallmentGroup(groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: ['installment-group'] })
+      toast.success('Todas as parcelas foram excluídas!')
+      setExpenseToDelete(null)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao excluir parcelas')
+    },
+  })
+
   const handleDeleteAll = () => {
     if (!expenseToDelete) return
-    const idToDelete = expenseToDelete.source_expense_id || expenseToDelete.id
-    deleteMutation.mutate(idToDelete)
+
+    if (expenseToDelete.installment_group_id) {
+      deleteInstallmentGroupMutation.mutate(expenseToDelete.installment_group_id)
+    } else {
+      const idToDelete = expenseToDelete.source_expense_id || expenseToDelete.id
+      deleteMutation.mutate(idToDelete)
+    }
   }
 
   const handleCancelFromThisMonth = () => {
@@ -127,7 +146,10 @@ export function ExpenseTable({
     deleteMutation.mutate(expenseToDelete.id)
   }
 
-  const isPending = deleteMutation.isPending || cancelRecurrenceMutation.isPending
+  const isPending =
+    deleteMutation.isPending ||
+    cancelRecurrenceMutation.isPending ||
+    deleteInstallmentGroupMutation.isPending
 
   const getCategory = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)

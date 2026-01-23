@@ -10,6 +10,7 @@ import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CreateExpenseUseCase } from './create-expense.usecase'
 import { DeleteExpenseUseCase } from './delete-expense.usecase'
+import { DeleteInstallmentGroupUseCase } from './delete-installment-group.usecase'
 import { ExpensesRepository } from './expenses.repository'
 import { GetExpenseUseCase } from './get-expense.usecase'
 import { GetInstallmentGroupUseCase } from './get-installment-group.usecase'
@@ -92,6 +93,20 @@ expensesController.patch('/:id', sValidator('json', updateExpenseSchema), async 
   const expense = await useCase.execute(userId, expenseId, input)
 
   return c.json({ data: expense }, HTTP_STATUS.OK)
+})
+
+expensesController.delete('/installments/:groupId', async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const groupId = c.req.param('groupId')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new DeleteInstallmentGroupUseCase(repository)
+
+  await useCase.execute(userId, groupId)
+
+  return c.body(null, HTTP_STATUS.NO_CONTENT)
 })
 
 expensesController.delete('/:id', async (c) => {
