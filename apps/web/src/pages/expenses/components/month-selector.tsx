@@ -47,13 +47,22 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="icon" onClick={handlePrevious} aria-label="Mês anterior">
+    <div className="flex w-full sm:w-auto items-center gap-2">
+      <Button
+        variant="outline"
+        size="icon"
+        className="shrink-0"
+        onClick={handlePrevious}
+        aria-label="Mês anterior"
+      >
         <ChevronLeft className="h-4 w-4" />
       </Button>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="min-w-[160px] justify-center gap-2 font-medium">
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none min-w-[160px] justify-center gap-2 font-medium"
+          >
             <CalendarIcon className="h-4 w-4" />
             <span className="capitalize">{formatMonthDisplay(selectedMonth)}</span>
           </Button>
@@ -62,7 +71,13 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
           <MonthPicker value={monthToDate(selectedMonth)} onChange={handleMonthSelect} />
         </PopoverContent>
       </Popover>
-      <Button variant="outline" size="icon" onClick={handleNext} aria-label="Próximo mês">
+      <Button
+        variant="outline"
+        size="icon"
+        className="shrink-0"
+        onClick={handleNext}
+        aria-label="Próximo mês"
+      >
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
