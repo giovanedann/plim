@@ -80,11 +80,16 @@ export function CategoriesPage() {
             Gerencie as categorias para organizar suas despesas.
           </p>
         </div>
-        <Button onClick={handleCreateClick}>
+        <Button onClick={handleCreateClick} className="hidden sm:inline-flex">
           <Plus className="mr-2 h-4 w-4" />
           Nova Categoria
         </Button>
       </div>
+
+      <Button onClick={handleCreateClick} className="w-full sm:hidden">
+        <Plus className="mr-2 h-4 w-4" />
+        Nova Categoria
+      </Button>
 
       {userCategories.length > 0 && (
         <section>
