@@ -193,4 +193,17 @@ export class ExpensesRepository {
 
     return !error && (count ?? 0) > 0
   }
+
+  async findByGroupId(groupId: string, userId: string): Promise<Expense[]> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .select(EXPENSE_COLUMNS)
+      .eq('installment_group_id', groupId)
+      .eq('user_id', userId)
+      .order('installment_current', { ascending: true })
+
+    if (error) return []
+
+    return data as Expense[]
+  }
 }

@@ -38,4 +38,8 @@ export const expenseService = {
   async cancelRecurrence(id: string, endDate: string) {
     return api.patch<Expense>(`/expenses/${id}`, { recurrence_end: endDate })
   },
+
+  async getInstallmentGroup(groupId: string) {
+    return api.get<Expense[]>(`/expenses/installments/${groupId}`)
+  },
 }

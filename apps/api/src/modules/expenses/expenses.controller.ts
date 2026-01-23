@@ -12,6 +12,7 @@ import { CreateExpenseUseCase } from './create-expense.usecase'
 import { DeleteExpenseUseCase } from './delete-expense.usecase'
 import { ExpensesRepository } from './expenses.repository'
 import { GetExpenseUseCase } from './get-expense.usecase'
+import { GetInstallmentGroupUseCase } from './get-installment-group.usecase'
 import { ListExpensesUseCase } from './list-expenses.usecase'
 import { UpdateExpenseUseCase } from './update-expense.usecase'
 
@@ -34,6 +35,20 @@ expensesController.get('/', sValidator('query', expenseFiltersSchema), async (c)
   const expenses = await useCase.execute(userId, filters)
 
   return c.json({ data: expenses }, HTTP_STATUS.OK)
+})
+
+expensesController.get('/installments/:groupId', async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const groupId = c.req.param('groupId')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new ExpensesRepository(supabase)
+  const useCase = new GetInstallmentGroupUseCase(repository)
+
+  const installments = await useCase.execute(userId, groupId)
+
+  return c.json({ data: installments }, HTTP_STATUS.OK)
 })
 
 expensesController.get('/:id', async (c) => {

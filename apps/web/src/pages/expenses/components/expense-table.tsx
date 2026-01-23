@@ -30,10 +30,11 @@ import { useUIStore } from '@/stores'
 import { formatBRL } from '@plim/shared'
 import type { Category, EffectiveSpendingLimit, Expense } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { CalendarClock, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { ExpenseModal } from './expense-modal'
+import { InstallmentGroupModal } from './installment-group-modal'
 
 interface ExpenseTableProps {
   expenses: Expense[]
@@ -74,6 +75,7 @@ export function ExpenseTable({
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
   const [projectedExpenseInfo, setProjectedExpenseInfo] = useState<Expense | null>(null)
+  const [installmentExpense, setInstallmentExpense] = useState<Expense | null>(null)
   const queryClient = useQueryClient()
 
   const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.is_projected
@@ -248,6 +250,12 @@ export function ExpenseTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        {expense.installment_group_id && (
+                          <DropdownMenuItem onClick={() => setInstallmentExpense(expense)}>
+                            <CalendarClock className="mr-2 h-4 w-4" />
+                            Ver parcelas
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() => {
                             if (expense.is_projected) {
@@ -401,6 +409,13 @@ export function ExpenseTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <InstallmentGroupModal
+        open={installmentExpense !== null}
+        onOpenChange={(open) => !open && setInstallmentExpense(null)}
+        expense={installmentExpense}
+        selectedMonth={selectedMonth}
+      />
     </>
   )
 }
