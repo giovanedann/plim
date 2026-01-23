@@ -3,6 +3,7 @@ import { ExpenseFilters } from './components/expense-filters'
 import { ExpenseTable } from './components/expense-table'
 import { MonthSelector } from './components/month-selector'
 import { SalaryDisplay } from './components/salary-display'
+import { SpendingLimitCard } from './components/spending-limit-card'
 import { useExpensesPage } from './use-expenses.page'
 
 export function ExpensesPage() {
@@ -14,6 +15,7 @@ export function ExpensesPage() {
     expenses,
     categories,
     salary,
+    spendingLimit,
     isLoading,
     totalExpenses,
     balance,
@@ -39,6 +41,15 @@ export function ExpensesPage() {
       </div>
 
       <div className="px-4 lg:px-6">
+        <SpendingLimitCard
+          spendingLimit={spendingLimit}
+          totalExpenses={totalExpenses}
+          selectedMonth={selectedMonth}
+          isLoading={isLoading}
+        />
+      </div>
+
+      <div className="px-4 lg:px-6">
         <ExpenseChart expenses={expenses} selectedMonth={selectedMonth} isLoading={isLoading} />
       </div>
 
@@ -48,6 +59,8 @@ export function ExpensesPage() {
           onFiltersChange={setFilters}
           categories={categories}
           selectedMonth={selectedMonth}
+          spendingLimit={spendingLimit}
+          totalExpenses={totalExpenses}
         />
       </div>
 
@@ -57,6 +70,8 @@ export function ExpensesPage() {
           categories={categories}
           isLoading={isLoading}
           selectedMonth={selectedMonth}
+          spendingLimit={spendingLimit}
+          totalExpenses={totalExpenses}
         />
       </div>
     </div>

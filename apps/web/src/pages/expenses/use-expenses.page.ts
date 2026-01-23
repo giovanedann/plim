@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { salaryService } from '@/services'
+import { salaryService, spendingLimitService } from '@/services'
 import { categoryService } from '@/services/category.service'
 import { expenseService } from '@/services/expense.service'
 import type { ExpenseFilters } from '@plim/shared'
@@ -83,12 +83,18 @@ export function useExpensesPage() {
     queryFn: () => salaryService.getSalary(selectedMonth),
   })
 
+  const { data: spendingLimitResponse, isLoading: isLoadingSpendingLimit } = useQuery({
+    queryKey: ['spending-limit', selectedMonth],
+    queryFn: () => spendingLimitService.getSpendingLimit(selectedMonth),
+  })
+
   const expenses = expensesResponse?.data ?? []
   const allExpenses = allExpensesResponse?.data ?? []
   const previousExpenses = previousExpensesResponse?.data ?? []
   const categories = categoriesResponse?.data ?? []
   const salary = salaryResponse?.data ?? null
   const previousSalary = previousSalaryResponse?.data ?? null
+  const spendingLimit = spendingLimitResponse?.data ?? null
 
   // Calculate totals from ALL expenses (not filtered)
   const totalExpenses = useMemo(
@@ -128,7 +134,11 @@ export function useExpensesPage() {
   }, [previousExpenses.length, previousSalary, previousTotalExpenses, previousBalance])
 
   const isLoading =
-    isLoadingExpenses || isLoadingAllExpenses || isLoadingCategories || isLoadingSalary
+    isLoadingExpenses ||
+    isLoadingAllExpenses ||
+    isLoadingCategories ||
+    isLoadingSalary ||
+    isLoadingSpendingLimit
 
   return {
     selectedMonth,
@@ -138,6 +148,7 @@ export function useExpensesPage() {
     expenses,
     categories,
     salary,
+    spendingLimit,
     isLoading,
     totalExpenses,
     balance,
