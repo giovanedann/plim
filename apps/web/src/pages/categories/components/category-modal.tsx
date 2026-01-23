@@ -94,7 +94,7 @@ export function CategoryModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
             <Label htmlFor="category-name">Nome</Label>
             <Input

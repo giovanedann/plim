@@ -330,7 +330,7 @@ export function ExpenseModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
           {!isEditing && (
             <div className="space-y-2">
               <Label>Tipo de Despesa</Label>
@@ -372,7 +372,7 @@ export function ExpenseModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Valor (R$)</Label>
               <Input id="amount" placeholder="0,00" {...register('amount')} />
@@ -438,7 +438,7 @@ export function ExpenseModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label>Forma de Pagamento</Label>
               <Controller
@@ -481,9 +481,9 @@ export function ExpenseModal({
           </div>
 
           {expenseType === 'recurrent' && !isEditing && (
-            <div className="space-y-4 rounded-lg border p-4">
+            <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Recorrência</h4>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="recurrence_day">Dia do mês</Label>
                   <Input
@@ -528,7 +528,7 @@ export function ExpenseModal({
           )}
 
           {expenseType === 'installment' && !isEditing && (
-            <div className="space-y-4 rounded-lg border p-4">
+            <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Parcelas</h4>
               <div className="space-y-2">
                 <Label htmlFor="installment_total">Número de parcelas</Label>
