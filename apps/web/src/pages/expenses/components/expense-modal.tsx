@@ -66,6 +66,7 @@ const formSchema = z.object({
   recurrence_start: z.string().optional(),
   recurrence_end: z.string().optional(),
   installment_total: z.string().optional(),
+  installment_input_mode: z.enum(['total', 'per_installment']).optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -118,33 +119,51 @@ export function ExpenseModal({
       recurrence_start: '',
       recurrence_end: '',
       installment_total: '',
+      installment_input_mode: 'total',
     },
   })
 
   const expenseType = watch('type')
   const watchedAmount = watch('amount')
   const watchedInstallmentTotal = watch('installment_total')
+  const watchedInstallmentInputMode = watch('installment_input_mode')
 
-  const installmentPreview = useMemo(() => {
+  const installmentCalculation = useMemo(() => {
     if (expenseType !== 'installment' || !watchedAmount || !watchedInstallmentTotal) {
       return null
     }
 
-    const totalCents = decimalToCents(
+    const amountCents = decimalToCents(
       Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
     )
     const installments = Number.parseInt(watchedInstallmentTotal, 10)
 
-    if (Number.isNaN(totalCents) || Number.isNaN(installments) || installments < 2) {
+    if (Number.isNaN(amountCents) || Number.isNaN(installments) || installments < 2) {
       return null
     }
 
-    const perInstallment = Math.ceil(totalCents / installments)
-    return {
-      perInstallment,
-      formatted: formatBRL(perInstallment),
+    const isPerInstallmentMode = watchedInstallmentInputMode === 'per_installment'
+
+    if (isPerInstallmentMode) {
+      const totalCents = amountCents * installments
+      return {
+        totalCents,
+        perInstallmentCents: amountCents,
+        formattedTotal: formatBRL(totalCents),
+        formattedPerInstallment: formatBRL(amountCents),
+        mode: 'per_installment' as const,
+      }
     }
-  }, [expenseType, watchedAmount, watchedInstallmentTotal])
+
+    const perInstallmentCents = Math.ceil(amountCents / installments)
+    return {
+      totalCents: amountCents,
+      perInstallmentCents,
+      formattedTotal: formatBRL(amountCents),
+      formattedPerInstallment: formatBRL(perInstallmentCents),
+      mode: 'total' as const,
+    }
+  }, [expenseType, watchedAmount, watchedInstallmentTotal, watchedInstallmentInputMode])
 
   const spendingLimitWarning = useMemo(() => {
     if (!spendingLimit || !watchedAmount) return null
@@ -204,6 +223,7 @@ export function ExpenseModal({
           recurrence_start: expense.recurrence_start ?? '',
           recurrence_end: expense.recurrence_end ?? '',
           installment_total: expense.installment_total?.toString() ?? '',
+          installment_input_mode: 'total',
         })
       } else {
         const defaultDate = getDefaultDate(selectedMonth)
@@ -219,6 +239,7 @@ export function ExpenseModal({
           recurrence_start: monthStart,
           recurrence_end: '',
           installment_total: '',
+          installment_input_mode: 'total',
         })
       }
     }
@@ -298,14 +319,18 @@ export function ExpenseModal({
         recurrence_end: data.recurrence_end || undefined,
       }
     } else {
+      const installments = Number.parseInt(data.installment_total || '2', 10)
+      const isPerInstallmentMode = data.installment_input_mode === 'per_installment'
+      const totalAmountCents = isPerInstallmentMode ? amountCents * installments : amountCents
+
       createData = {
         type: 'installment',
         description: data.description,
-        amount_cents: amountCents,
+        amount_cents: totalAmountCents,
         category_id: data.category_id,
         payment_method: data.payment_method,
         date: data.date,
-        installment_total: Number.parseInt(data.installment_total || '2', 10),
+        installment_total: installments,
       }
     }
 
@@ -374,7 +399,11 @@ export function ExpenseModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Valor (R$)</Label>
+              <Label htmlFor="amount">
+                {expenseType === 'installment' && watchedInstallmentInputMode === 'per_installment'
+                  ? 'Valor da parcela (R$)'
+                  : 'Valor (R$)'}
+              </Label>
               <Input id="amount" placeholder="0,00" {...register('amount')} />
               {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
             </div>
@@ -530,23 +559,65 @@ export function ExpenseModal({
           {expenseType === 'installment' && !isEditing && (
             <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Parcelas</h4>
-              <div className="space-y-2">
-                <Label htmlFor="installment_total">Número de parcelas</Label>
-                <Input
-                  id="installment_total"
-                  type="number"
-                  min={2}
-                  max={48}
-                  placeholder="2-48"
-                  {...register('installment_total')}
-                />
-                <p className="text-xs text-muted-foreground">
-                  O valor informado acima é o valor total da compra.
-                </p>
-                {installmentPreview && (
-                  <p className="text-sm font-medium text-primary">
-                    Cada parcela: {installmentPreview.formatted}
-                  </p>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>O valor informado é:</Label>
+                  <Controller
+                    name="installment_input_mode"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={field.value === 'total' ? 'default' : 'outline'}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => field.onChange('total')}
+                        >
+                          Valor total
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={field.value === 'per_installment' ? 'default' : 'outline'}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => field.onChange('per_installment')}
+                        >
+                          Valor da parcela
+                        </Button>
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="installment_total">Número de parcelas</Label>
+                  <Input
+                    id="installment_total"
+                    type="number"
+                    min={2}
+                    max={48}
+                    placeholder="2-48"
+                    {...register('installment_total')}
+                  />
+                </div>
+                {installmentCalculation && (
+                  <div className="rounded-md bg-muted/50 p-3 space-y-1">
+                    {installmentCalculation.mode === 'total' ? (
+                      <>
+                        <p className="text-xs text-muted-foreground">Valor de cada parcela:</p>
+                        <p className="text-lg font-semibold text-primary">
+                          {installmentCalculation.formattedPerInstallment}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-muted-foreground">Valor total da compra:</p>
+                        <p className="text-lg font-semibold text-primary">
+                          {installmentCalculation.formattedTotal}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
