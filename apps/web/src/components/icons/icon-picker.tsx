@@ -55,7 +55,7 @@ export function IconPicker({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80 max-w-80 p-0" align="start">
         <div className="p-3 border-b">
           <Input
             placeholder="Buscar ícone..."
@@ -65,8 +65,9 @@ export function IconPicker({
           />
         </div>
         <div
-          className="h-64 overflow-y-auto overscroll-contain"
+          className="h-64 overflow-y-auto overscroll-contain touch-auto"
           onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <div className="p-3 space-y-4">
             {Object.entries(filteredGroups).map(([groupName, icons]) => (
