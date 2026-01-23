@@ -174,9 +174,15 @@ export function ExpenseModal({
 
     if (Number.isNaN(amountCents) || amountCents <= 0) return null
 
+    // For installments, use the total value (not per-installment)
+    const effectiveAmount =
+      expenseType === 'installment' && installmentCalculation
+        ? installmentCalculation.totalCents
+        : amountCents
+
     // For editing, subtract current expense amount to get accurate projection
     const currentExpenseAmount = expense?.amount_cents ?? 0
-    const projectedTotal = totalExpenses - currentExpenseAmount + amountCents
+    const projectedTotal = totalExpenses - currentExpenseAmount + effectiveAmount
     const percentage = Math.round((projectedTotal / spendingLimit.amount_cents) * 100)
 
     if (percentage < 75) return null
@@ -203,7 +209,7 @@ export function ExpenseModal({
       message: `Atenção: Com esta despesa você atingirá ${percentage}% do limite`,
       percentage,
     }
-  }, [watchedAmount, spendingLimit, totalExpenses, expense])
+  }, [watchedAmount, spendingLimit, totalExpenses, expense, expenseType, installmentCalculation])
 
   useEffect(() => {
     if (open) {
