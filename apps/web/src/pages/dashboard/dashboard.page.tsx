@@ -32,7 +32,7 @@ export function DashboardPage() {
     isInstallmentForecastLoading,
   } = useDashboard()
 
-  const hasSalary = summary?.total_income && summary.total_income > 0
+  const hasSalary = (summary?.total_income ?? 0) > 0
 
   return (
     <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
