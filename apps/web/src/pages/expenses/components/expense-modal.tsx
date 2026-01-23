@@ -29,9 +29,16 @@ import {
   formatBRL,
   updateExpenseSchema,
 } from '@plim/shared'
-import type { Category, CreateExpense, Expense, ExpenseType, UpdateExpense } from '@plim/shared'
+import type {
+  Category,
+  CreateExpense,
+  EffectiveSpendingLimit,
+  Expense,
+  ExpenseType,
+  UpdateExpense,
+} from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { AlertTriangle, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -44,6 +51,8 @@ interface ExpenseModalProps {
   categories: Category[]
   selectedMonth: string
   expense?: Expense
+  spendingLimit?: EffectiveSpendingLimit | null
+  totalExpenses?: number
 }
 
 const formSchema = z.object({
@@ -81,6 +90,8 @@ export function ExpenseModal({
   categories,
   selectedMonth,
   expense,
+  spendingLimit,
+  totalExpenses = 0,
 }: ExpenseModalProps) {
   const isEditing = !!expense
   const queryClient = useQueryClient()
@@ -134,6 +145,46 @@ export function ExpenseModal({
       formatted: formatBRL(perInstallment),
     }
   }, [expenseType, watchedAmount, watchedInstallmentTotal])
+
+  const spendingLimitWarning = useMemo(() => {
+    if (!spendingLimit || !watchedAmount) return null
+
+    const amountCents = decimalToCents(
+      Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
+    )
+
+    if (Number.isNaN(amountCents) || amountCents <= 0) return null
+
+    // For editing, subtract current expense amount to get accurate projection
+    const currentExpenseAmount = expense?.amount_cents ?? 0
+    const projectedTotal = totalExpenses - currentExpenseAmount + amountCents
+    const percentage = Math.round((projectedTotal / spendingLimit.amount_cents) * 100)
+
+    if (percentage < 75) return null
+
+    if (percentage >= 100) {
+      const exceededBy = projectedTotal - spendingLimit.amount_cents
+      return {
+        severity: 'exceeded' as const,
+        message: `Esta despesa excederá seu limite em ${formatBRL(exceededBy)}`,
+        percentage,
+      }
+    }
+
+    if (percentage >= 90) {
+      return {
+        severity: 'high' as const,
+        message: `Alerta: Com esta despesa você atingirá ${percentage}% do limite`,
+        percentage,
+      }
+    }
+
+    return {
+      severity: 'medium' as const,
+      message: `Atenção: Com esta despesa você atingirá ${percentage}% do limite`,
+      percentage,
+    }
+  }, [watchedAmount, spendingLimit, totalExpenses, expense])
 
   useEffect(() => {
     if (open) {
@@ -371,6 +422,21 @@ export function ExpenseModal({
               )}
             </div>
           </div>
+
+          {spendingLimitWarning && (
+            <div
+              className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
+                spendingLimitWarning.severity === 'exceeded'
+                  ? 'border-red-500/50 bg-red-500/10 text-red-500'
+                  : spendingLimitWarning.severity === 'high'
+                    ? 'border-orange-500/50 bg-orange-500/10 text-orange-500'
+                    : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500'
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>{spendingLimitWarning.message}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

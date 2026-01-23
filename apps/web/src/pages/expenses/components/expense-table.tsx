@@ -28,7 +28,7 @@ import {
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
 import { formatBRL } from '@plim/shared'
-import type { Category, Expense } from '@plim/shared'
+import type { Category, EffectiveSpendingLimit, Expense } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -40,6 +40,8 @@ interface ExpenseTableProps {
   categories: Category[]
   isLoading: boolean
   selectedMonth: string
+  spendingLimit?: EffectiveSpendingLimit | null
+  totalExpenses?: number
 }
 
 const PAYMENT_METHOD_CONFIG: Record<string, { label: string; className: string }> = {
@@ -65,6 +67,8 @@ export function ExpenseTable({
   categories,
   isLoading,
   selectedMonth,
+  spendingLimit,
+  totalExpenses,
 }: ExpenseTableProps) {
   const hideValues = useUIStore((state) => state.hideValues)
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
@@ -279,6 +283,8 @@ export function ExpenseTable({
         categories={categories}
         selectedMonth={selectedMonth}
         expense={expenseToEdit ?? undefined}
+        spendingLimit={spendingLimit}
+        totalExpenses={totalExpenses}
       />
 
       <AlertDialog

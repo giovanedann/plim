@@ -10,7 +10,11 @@ import {
 } from '@/components/ui/select'
 import { useUIStore } from '@/stores'
 import { EXPENSE_TYPES, PAYMENT_METHODS } from '@plim/shared'
-import type { Category, ExpenseFilters as ExpenseFiltersType } from '@plim/shared'
+import type {
+  Category,
+  EffectiveSpendingLimit,
+  ExpenseFilters as ExpenseFiltersType,
+} from '@plim/shared'
 import { Eye, EyeOff, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { ExpenseModal } from './expense-modal'
@@ -20,6 +24,8 @@ interface ExpenseFiltersProps {
   onFiltersChange: (filters: Omit<ExpenseFiltersType, 'start_date' | 'end_date'>) => void
   categories: Category[]
   selectedMonth: string
+  spendingLimit?: EffectiveSpendingLimit | null
+  totalExpenses?: number
 }
 
 export function ExpenseFilters({
@@ -27,6 +33,8 @@ export function ExpenseFilters({
   onFiltersChange,
   categories,
   selectedMonth,
+  spendingLimit,
+  totalExpenses,
 }: ExpenseFiltersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { hideValues, toggleHideValues } = useUIStore()
@@ -148,6 +156,8 @@ export function ExpenseFilters({
         onOpenChange={setIsModalOpen}
         categories={categories}
         selectedMonth={selectedMonth}
+        spendingLimit={spendingLimit}
+        totalExpenses={totalExpenses}
       />
     </Card>
   )
