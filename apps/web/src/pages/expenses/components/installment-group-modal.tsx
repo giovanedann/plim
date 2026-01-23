@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -77,6 +76,8 @@ export function InstallmentGroupModal({
   const paidCount =
     installments?.filter((i) => isPastOrCurrentMonth(i.date, selectedMonth)).length ?? 0
   const totalCount = installments?.length ?? 0
+  const futureInstallments =
+    installments?.filter((i) => !isPastOrCurrentMonth(i.date, selectedMonth)) ?? []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,9 +87,7 @@ export function InstallmentGroupModal({
             <CalendarClock className="h-5 w-5 text-purple-400" />
             {expense?.description}
           </DialogTitle>
-          <DialogDescription>
-            Gerencie as parcelas desta despesa. Você pode antecipar pagamentos.
-          </DialogDescription>
+          <DialogDescription>Antecipe parcelas futuras para pagá-las neste mês.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -98,81 +97,50 @@ export function InstallmentGroupModal({
                 <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
+          ) : futureInstallments.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-6 text-center">
+              <Check className="mx-auto h-8 w-8 text-emerald-400 mb-2" />
+              <p className="text-muted-foreground">
+                Todas as parcelas já foram pagas ou estão no mês atual.
+              </p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {installments?.map((installment) => {
-                const isPaidOrCurrent = isPastOrCurrentMonth(installment.date, selectedMonth)
-                const isFuture = !isPaidOrCurrent
-
-                return (
-                  <div
-                    key={installment.id}
-                    className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
-                      isPaidOrCurrent
-                        ? 'bg-muted/30 border-muted'
-                        : 'bg-background border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                          isPaidOrCurrent
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {isPaidOrCurrent ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <span className="text-sm font-medium">
-                            {installment.installment_current}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            Parcela {installment.installment_current}/
-                            {installment.installment_total}
-                          </span>
-                          {isPaidOrCurrent && (
-                            <Badge
-                              variant="outline"
-                              className="border-emerald-500/50 text-emerald-400 text-xs"
-                            >
-                              {installment.date <= (new Date().toISOString().split('T')[0] ?? '')
-                                ? 'Pago'
-                                : 'Este mês'}
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(installment.date)}
-                        </span>
-                      </div>
+              {futureInstallments.map((installment) => (
+                <div
+                  key={installment.id}
+                  className="flex items-center justify-between rounded-lg border bg-background border-border hover:border-primary/50 p-3 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <span className="text-sm font-medium">{installment.installment_current}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`font-medium ${isPaidOrCurrent ? 'text-muted-foreground' : ''}`}
-                      >
-                        {hideValues ? '••••••' : formatBRL(installment.amount_cents)}
+                    <div>
+                      <span className="font-medium">
+                        Parcela {installment.installment_current}/{installment.installment_total}
                       </span>
-                      {isFuture && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => anticipateMutation.mutate(installment.id)}
-                          disabled={anticipateMutation.isPending}
-                          className="gap-1.5"
-                        >
-                          <FastForward className="h-3.5 w-3.5" />
-                          Antecipar
-                        </Button>
-                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(installment.date)}
+                      </p>
                     </div>
                   </div>
-                )
-              })}
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium">
+                      {hideValues ? '••••••' : formatBRL(installment.amount_cents)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => anticipateMutation.mutate(installment.id)}
+                      disabled={anticipateMutation.isPending}
+                      className="gap-1.5"
+                    >
+                      <FastForward className="h-3.5 w-3.5" />
+                      Antecipar
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
