@@ -15,7 +15,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Check, CheckCircle, Eye, EyeOff, KeyRound, Mail, X } from 'lucide-react'
 import { useState } from 'react'
 
-type Step = 'email' | 'reset' | 'success'
+type Step = 'email' | 'otp' | 'password' | 'success'
 
 function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
   return (
@@ -32,8 +32,15 @@ function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate()
-  const { resetPassword, verifyRecoveryOtp, updatePassword, isLoading, error, clearError } =
-    useAuthStore()
+  const {
+    resetPassword,
+    verifyRecoveryOtp,
+    updatePassword,
+    clearRecoveryMode,
+    isLoading,
+    error,
+    clearError,
+  } = useAuthStore()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
@@ -61,13 +68,13 @@ export function ForgotPasswordPage() {
 
     try {
       await resetPassword(email)
-      setStep('reset')
+      setStep('otp')
     } catch {
       // Error handled by store
     }
   }
 
-  const handleResetSubmit = async (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     clearError()
     setValidationError(null)
@@ -76,6 +83,19 @@ export function ForgotPasswordPage() {
       setValidationError('Digite o código de 8 dígitos')
       return
     }
+
+    try {
+      await verifyRecoveryOtp(email, otpCode)
+      setStep('password')
+    } catch {
+      // Error handled by store
+    }
+  }
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    clearError()
+    setValidationError(null)
 
     if (!allRequirementsMet) {
       setValidationError('A senha não atende todos os requisitos')
@@ -88,9 +108,6 @@ export function ForgotPasswordPage() {
     }
 
     try {
-      // Verify OTP and update password in one go
-      // This prevents the auth redirect from happening before password is updated
-      await verifyRecoveryOtp(email, otpCode)
       await updatePassword(password)
       setStep('success')
     } catch {
@@ -105,6 +122,20 @@ export function ForgotPasswordPage() {
     } catch {
       // Error handled by store
     }
+  }
+
+  const handleBackToEmail = () => {
+    setStep('email')
+    setOtpCode('')
+    setPassword('')
+    setConfirmPassword('')
+    clearError()
+    clearRecoveryMode()
+  }
+
+  const handleGoToLogin = () => {
+    clearRecoveryMode()
+    navigate({ to: '/sign-in' })
   }
 
   if (step === 'success') {
@@ -130,7 +161,7 @@ export function ForgotPasswordPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={() => navigate({ to: '/sign-in' })}>
+            <Button className="w-full" onClick={handleGoToLogin}>
               Ir para o login
             </Button>
           </CardFooter>
@@ -139,46 +170,21 @@ export function ForgotPasswordPage() {
     )
   }
 
-  if (step === 'reset') {
+  if (step === 'password') {
     return (
       <>
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Redefinir senha</h1>
-          <p className="text-muted-foreground">Digite o código enviado para {email}</p>
+          <h1 className="text-3xl font-bold">Nova senha</h1>
+          <p className="text-muted-foreground">Escolha sua nova senha</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Nova senha</CardTitle>
-            <CardDescription>
-              Digite o código de 8 dígitos do email e escolha sua nova senha
-            </CardDescription>
+            <CardTitle>Criar nova senha</CardTitle>
+            <CardDescription>Sua senha deve atender aos requisitos abaixo</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleResetSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label>Código de verificação</Label>
-                <div className="flex justify-center">
-                  <InputOTP
-                    maxLength={8}
-                    value={otpCode}
-                    onChange={setOtpCode}
-                    disabled={isLoading}
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                      <InputOTPSlot index={6} />
-                      <InputOTPSlot index={7} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-              </div>
-
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Nova senha</Label>
                 <div className="relative">
@@ -191,6 +197,7 @@ export function ForgotPasswordPage() {
                     required
                     disabled={isLoading}
                     className="pr-10"
+                    autoFocus
                   />
                   <button
                     type="button"
@@ -264,9 +271,7 @@ export function ForgotPasswordPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={
-                  isLoading || otpCode.length !== 8 || !allRequirementsMet || !passwordsMatch
-                }
+                disabled={isLoading || !allRequirementsMet || !passwordsMatch}
               >
                 {isLoading ? (
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -274,6 +279,64 @@ export function ForgotPasswordPage() {
                   <KeyRound className="mr-2 h-4 w-4" />
                 )}
                 Atualizar senha
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </>
+    )
+  }
+
+  if (step === 'otp') {
+    return (
+      <>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Verificar código</h1>
+          <p className="text-muted-foreground">Digite o código enviado para {email}</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Código de verificação</CardTitle>
+            <CardDescription>Digite o código de 8 dígitos do email</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleOtpSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label>Código</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={8}
+                    value={otpCode}
+                    onChange={setOtpCode}
+                    disabled={isLoading}
+                    autoFocus
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                      <InputOTPSlot index={6} />
+                      <InputOTPSlot index={7} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
+
+              {(error || validationError) && (
+                <p className="text-sm text-destructive">{validationError || error}</p>
+              )}
+
+              <Button type="submit" className="w-full" disabled={isLoading || otpCode.length !== 8}>
+                {isLoading ? (
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
+                Verificar código
               </Button>
             </form>
           </CardContent>
@@ -289,13 +352,7 @@ export function ForgotPasswordPage() {
             </Button>
             <button
               type="button"
-              onClick={() => {
-                setStep('email')
-                setOtpCode('')
-                setPassword('')
-                setConfirmPassword('')
-                clearError()
-              }}
+              onClick={handleBackToEmail}
               className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
             >
               <ArrowLeft className="h-3 w-3" />

@@ -7,6 +7,7 @@ export interface RouterContext {
   auth: {
     user: User | null
     isInitialized: boolean
+    isInRecoveryMode: boolean
   }
 }
 

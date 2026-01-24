@@ -23,6 +23,7 @@ export function App() {
   const initialize = useAuthStore((state) => state.initialize)
   const user = useAuthStore((state) => state.user)
   const isInitialized = useAuthStore((state) => state.isInitialized)
+  const isInRecoveryMode = useAuthStore((state) => state.isInRecoveryMode)
 
   useEffect(() => {
     initialize()
@@ -31,7 +32,10 @@ export function App() {
   return (
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} context={{ auth: { user, isInitialized } }} />
+        <RouterProvider
+          router={router}
+          context={{ auth: { user, isInitialized, isInRecoveryMode } }}
+        />
       </QueryClientProvider>
     </ThemeProvider>
   )

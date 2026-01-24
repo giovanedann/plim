@@ -7,6 +7,7 @@ interface AuthState {
   session: Session | null
   isLoading: boolean
   isInitialized: boolean
+  isInRecoveryMode: boolean
   error: string | null
   setSession: (session: Session | null) => void
   signInWithGoogle: () => Promise<void>
@@ -18,6 +19,7 @@ interface AuthState {
   signOut: () => Promise<void>
   initialize: () => Promise<void>
   clearError: () => void
+  clearRecoveryMode: () => void
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -25,6 +27,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   isLoading: false,
   isInitialized: false,
+  isInRecoveryMode: false,
   error: null,
 
   setSession: (session) => {
@@ -35,6 +38,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  clearRecoveryMode: () => set({ isInRecoveryMode: false }),
 
   signInWithGoogle: async () => {
     set({ isLoading: true, error: null })
@@ -111,6 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         type: 'recovery',
       })
       if (error) throw error
+      set({ isInRecoveryMode: true })
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Código inválido ou expirado' })
       throw err
@@ -124,6 +130,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
       if (error) throw error
+      set({ isInRecoveryMode: false })
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Erro ao atualizar senha' })
       throw err
