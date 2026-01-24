@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { CategoryBreakdownResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts'
 
 interface TopCategoriesChartProps {
   data: CategoryBreakdownResponse | undefined
-  isLoading: boolean
 }
 
 const FALLBACK_COLORS = [
@@ -24,7 +22,7 @@ const FALLBACK_COLORS = [
   'hsl(var(--chart-5))',
 ]
 
-export function TopCategoriesChart({ data, isLoading }: TopCategoriesChartProps) {
+export function TopCategoriesChart({ data }: TopCategoriesChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.slice(0, 5).map((item, index) => ({
@@ -46,20 +44,6 @@ export function TopCategoriesChart({ data, isLoading }: TopCategoriesChartProps)
     })
     return config
   }, [chartData])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[200px] w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   if (!chartData.length) {
     return (

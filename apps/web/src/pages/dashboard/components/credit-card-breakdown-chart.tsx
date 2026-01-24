@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { CardBank, CardColor, CardFlag, CreditCardBreakdownResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { Cell, Pie, PieChart } from 'recharts'
 
 interface CreditCardBreakdownChartProps {
   data: CreditCardBreakdownResponse | undefined
-  isLoading: boolean
 }
 
 const COLOR_HEX: Record<CardColor | 'default', string> = {
@@ -69,7 +67,7 @@ function getCardLabel(name: string, bank: string, flag: string): string {
   return name
 }
 
-export function CreditCardBreakdownChart({ data, isLoading }: CreditCardBreakdownChartProps) {
+export function CreditCardBreakdownChart({ data }: CreditCardBreakdownChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.slice(0, 5).map((item) => ({
@@ -91,20 +89,6 @@ export function CreditCardBreakdownChart({ data, isLoading }: CreditCardBreakdow
     }
     return config
   }, [chartData])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="mx-auto h-[200px] w-[200px] rounded-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   if (!chartData.length) {
     return (

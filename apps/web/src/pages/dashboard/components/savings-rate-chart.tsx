@@ -5,14 +5,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { SavingsRateResponse } from '@plim/shared'
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 
 interface SavingsRateChartProps {
   data: SavingsRateResponse | undefined
-  isLoading: boolean
 }
 
 const chartConfig = {
@@ -41,7 +39,7 @@ function formatMonth(month: string): string {
   return `${monthNames[Number(m) - 1]} ${year?.slice(2)}`
 }
 
-export function SavingsRateChart({ data, isLoading }: SavingsRateChartProps) {
+export function SavingsRateChart({ data }: SavingsRateChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.map((item) => ({
@@ -49,20 +47,6 @@ export function SavingsRateChart({ data, isLoading }: SavingsRateChartProps) {
       rate: Math.round(item.rate * 10) / 10,
     }))
   }, [data])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[250px] w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Card>

@@ -75,15 +75,6 @@ export function useDashboard() {
     salaryTimeline: dashboardQuery.data?.salaryTimeline,
     installmentForecast: dashboardQuery.data?.installmentForecast,
     isLoading: dashboardQuery.isLoading,
-    isSummaryLoading: dashboardQuery.isLoading,
-    isExpensesTimelineLoading: dashboardQuery.isLoading,
-    isIncomeVsExpensesLoading: dashboardQuery.isLoading,
-    isCategoryBreakdownLoading: dashboardQuery.isLoading,
-    isPaymentBreakdownLoading: dashboardQuery.isLoading,
-    isCreditCardBreakdownLoading: dashboardQuery.isLoading,
-    isSavingsRateLoading: dashboardQuery.isLoading,
-    isSalaryTimelineLoading: dashboardQuery.isLoading,
-    isInstallmentForecastLoading: dashboardQuery.isLoading,
   }
 }
 

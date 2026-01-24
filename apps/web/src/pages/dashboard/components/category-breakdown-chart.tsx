@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { CategoryBreakdownResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { Cell, Pie, PieChart } from 'recharts'
 
 interface CategoryBreakdownChartProps {
   data: CategoryBreakdownResponse | undefined
-  isLoading: boolean
 }
 
 const FALLBACK_COLORS = [
@@ -24,7 +22,7 @@ const FALLBACK_COLORS = [
   'hsl(var(--chart-5))',
 ]
 
-export function CategoryBreakdownChart({ data, isLoading }: CategoryBreakdownChartProps) {
+export function CategoryBreakdownChart({ data }: CategoryBreakdownChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.slice(0, 5).map((item, index) => ({
@@ -46,20 +44,6 @@ export function CategoryBreakdownChart({ data, isLoading }: CategoryBreakdownCha
     }
     return config
   }, [chartData])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="mx-auto h-[200px] w-[200px] rounded-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   if (!chartData.length) {
     return (

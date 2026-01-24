@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import { PAYMENT_METHODS, type PaymentBreakdownResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { Cell, Pie, PieChart } from 'recharts'
 
 interface PaymentBreakdownChartProps {
   data: PaymentBreakdownResponse | undefined
-  isLoading: boolean
 }
 
 const PAYMENT_COLORS: Record<string, string> = {
@@ -28,7 +26,7 @@ function getPaymentLabel(method: string): string {
   return found?.label ?? method
 }
 
-export function PaymentBreakdownChart({ data, isLoading }: PaymentBreakdownChartProps) {
+export function PaymentBreakdownChart({ data }: PaymentBreakdownChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.map((item) => ({
@@ -49,20 +47,6 @@ export function PaymentBreakdownChart({ data, isLoading }: PaymentBreakdownChart
     }
     return config
   }, [chartData])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="mx-auto h-[200px] w-[200px] rounded-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   if (!chartData.length) {
     return (

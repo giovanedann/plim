@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { DashboardSummary } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
@@ -15,7 +14,6 @@ import {
 
 interface SummaryCardsProps {
   summary: DashboardSummary | undefined
-  isLoading: boolean
 }
 
 function formatPercentChange(value: number): string {
@@ -44,32 +42,8 @@ function ChangeIndicator({ value }: { value: number }) {
   )
 }
 
-function SummaryCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-4" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="mb-1 h-7 w-28" />
-        <Skeleton className="h-3 w-16" />
-      </CardContent>
-    </Card>
-  )
-}
-
-export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
-  if (isLoading || !summary) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCardSkeleton />
-        <SummaryCardSkeleton />
-        <SummaryCardSkeleton />
-        <SummaryCardSkeleton />
-      </div>
-    )
-  }
+export function SummaryCards({ summary }: SummaryCardsProps) {
+  if (!summary) return null
 
   const hasSalary = summary.total_income > 0
 

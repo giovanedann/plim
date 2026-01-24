@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { InstallmentForecastResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 interface InstallmentForecastProps {
   data: InstallmentForecastResponse | undefined
-  isLoading: boolean
 }
 
 const chartConfig = {
@@ -42,7 +40,7 @@ function formatMonth(month: string): string {
   return `${monthNames[Number(m) - 1]} ${year?.slice(2)}`
 }
 
-export function InstallmentForecast({ data, isLoading }: InstallmentForecastProps) {
+export function InstallmentForecast({ data }: InstallmentForecastProps) {
   const chartData = useMemo(() => {
     if (!data?.data || data.data.length === 0) return []
 
@@ -51,20 +49,6 @@ export function InstallmentForecast({ data, isLoading }: InstallmentForecastProp
       total: month.total / 100,
     }))
   }, [data])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-4 w-56" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[250px] w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   if (!chartData.length) {
     return (

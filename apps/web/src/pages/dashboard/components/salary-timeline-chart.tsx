@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { SalaryTimelineResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 
 interface SalaryTimelineChartProps {
   data: SalaryTimelineResponse | undefined
-  isLoading: boolean
 }
 
 const chartConfig = {
@@ -42,7 +40,7 @@ function formatDate(date: string): string {
   return `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(2)}`
 }
 
-export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProps) {
+export function SalaryTimelineChart({ data }: SalaryTimelineChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data || data.data.length === 0) return []
     return data.data.map((item) => ({
@@ -51,20 +49,6 @@ export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProp
       rawAmount: item.amount,
     }))
   }, [data])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[200px] w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   if (!chartData.length) {
     return (

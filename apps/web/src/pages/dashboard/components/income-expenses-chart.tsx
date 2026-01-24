@@ -7,7 +7,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { IncomeVsExpensesResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -15,7 +14,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 interface IncomeExpensesChartProps {
   data: IncomeVsExpensesResponse | undefined
-  isLoading: boolean
 }
 
 const chartConfig = {
@@ -48,7 +46,7 @@ function formatMonth(month: string): string {
   return `${monthNames[Number(m) - 1]} ${year?.slice(2)}`
 }
 
-export function IncomeExpensesChart({ data, isLoading }: IncomeExpensesChartProps) {
+export function IncomeExpensesChart({ data }: IncomeExpensesChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.map((item) => ({
@@ -57,20 +55,6 @@ export function IncomeExpensesChart({ data, isLoading }: IncomeExpensesChartProp
       expenses: item.expenses / 100,
     }))
   }, [data])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Card>

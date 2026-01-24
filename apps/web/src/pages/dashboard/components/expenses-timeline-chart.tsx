@@ -5,7 +5,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { ExpensesTimelineResponse } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useMemo } from 'react'
@@ -13,7 +12,6 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 interface ExpensesTimelineChartProps {
   data: ExpensesTimelineResponse | undefined
-  isLoading: boolean
 }
 
 const chartConfig = {
@@ -49,7 +47,7 @@ function formatDate(date: string, groupBy: string): string {
   return date.slice(8)
 }
 
-export function ExpensesTimelineChart({ data, isLoading }: ExpensesTimelineChartProps) {
+export function ExpensesTimelineChart({ data }: ExpensesTimelineChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
     return data.data.map((item) => ({
@@ -57,20 +55,6 @@ export function ExpensesTimelineChart({ data, isLoading }: ExpensesTimelineChart
       amount: item.amount / 100,
     }))
   }, [data])
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[250px] w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Card>
