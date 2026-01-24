@@ -201,29 +201,29 @@
 ### Phase 17: Deployment
 
 #### 17.1 API Deployment
-- [ ] Set Cloudflare Workers secrets (`wrangler secret put SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`)
-- [ ] Deploy API to Cloudflare Workers (`pnpm --filter @plim/api deploy`)
-- [ ] Configure custom domain for API (`api.your-domain.com`)
+- [x] Set Cloudflare Workers secrets (`wrangler secret put SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`)
+- [x] Deploy API to Cloudflare Workers (`pnpm --filter @plim/api deploy`)
+- [x] Configure custom domain for API (`api.your-domain.com`)
 
 #### 17.2 Frontend Deployment
-- [ ] Create Cloudflare Pages project connected to GitHub
-- [ ] Configure build settings (root: `/`, build: `pnpm install && pnpm build`, output: `apps/web/dist`)
-- [ ] Set environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_API_URL`)
-- [ ] Configure custom domain for frontend (`your-domain.com`, `www.your-domain.com`)
+- [x] Create Cloudflare Pages project connected to GitHub
+- [x] Configure build settings (root: `/`, build: `pnpm install && pnpm build`, output: `apps/web/dist`)
+- [x] Set environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_API_URL`)
+- [x] Configure custom domain for frontend (`your-domain.com`, `www.your-domain.com`)
 
 #### 17.3 Domain Configuration
-- [ ] Buy/configure domain in Cloudflare
-- [ ] Add frontend custom domains in Cloudflare Pages
-- [ ] Add API custom domain in Cloudflare Workers
+- [x] Buy/configure domain in Cloudflare
+- [x] Add frontend custom domains in Cloudflare Pages
+- [x] Add API custom domain in Cloudflare Workers
 
 #### 17.4 Auth Configuration
-- [ ] Update Supabase Site URL to production domain
-- [ ] Add production redirect URLs to Supabase (`https://your-domain.com/auth/callback`)
-- [ ] (Optional) Configure Supabase custom auth domain to hide Supabase URL
-- [ ] Update Google OAuth authorized domains
-- [ ] Update Google OAuth redirect URIs
-- [ ] Update Google OAuth authorized JavaScript origins
-- [ ] Test full OAuth flow with custom domain
+- [x] Update Supabase Site URL to production domain
+- [x] Add production redirect URLs to Supabase (`https://your-domain.com/auth/callback`)
+- [x] (Optional) Configure Supabase custom auth domain to hide Supabase URL
+- [x] Update Google OAuth authorized domains
+- [x] Update Google OAuth redirect URIs
+- [x] Update Google OAuth authorized JavaScript origins
+- [x] Test full OAuth flow with custom domain
 
 ### Phase 18: Production Hardening (Post-Beta)
 
