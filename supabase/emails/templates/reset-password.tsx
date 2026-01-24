@@ -1,29 +1,23 @@
-import { Link, Section, Text } from '@react-email/components'
+import { Section, Text } from '@react-email/components'
 import { BaseLayout } from '../components/base-layout'
-import { Button } from '../components/button'
 
 export default function ResetPasswordEmail() {
   return (
-    <BaseLayout preview="Redefinir sua senha do Plim">
+    <BaseLayout preview="Seu código de recuperação do Plim">
       <Section>
         <Text style={headingStyle}>Redefinir senha</Text>
         <Text style={paragraphStyle}>
-          Recebemos uma solicitação para redefinir a senha da sua conta no Plim. Clique no botão
-          abaixo para criar uma nova senha:
+          Recebemos uma solicitação para redefinir a senha da sua conta no Plim. Use o código abaixo
+          para criar uma nova senha:
         </Text>
-        <Section style={buttonContainerStyle}>
-          <Button href="{{.ConfirmationURL}}">Redefinir senha</Button>
+        <Section style={codeContainerStyle}>
+          <Text style={codeStyle}>{'{{ .Token }}'}</Text>
         </Section>
         <Text style={paragraphStyle}>
-          Se você não conseguir clicar no botão, copie e cole o link abaixo no seu navegador:
-        </Text>
-        <Text style={linkStyle}>
-          <Link href="{{.ConfirmationURL}}" style={linkTextStyle}>
-            {'{{.ConfirmationURL}}'}
-          </Link>
+          Digite este código de 6 dígitos na página de recuperação de senha.
         </Text>
         <Text style={noteStyle}>
-          Este link expira em 1 hora. Se você não solicitou a redefinição de senha, ignore este
+          Este código expira em 1 hora. Se você não solicitou a redefinição de senha, ignore este
           email — sua senha atual permanecerá inalterada.
         </Text>
       </Section>
@@ -46,19 +40,21 @@ const paragraphStyle = {
   margin: '0 0 16px 0',
 }
 
-const buttonContainerStyle = {
+const codeContainerStyle = {
   textAlign: 'center' as const,
   margin: '32px 0',
+  backgroundColor: '#f8fafc',
+  borderRadius: '8px',
+  padding: '24px',
 }
 
-const linkStyle = {
-  wordBreak: 'break-all' as const,
-  margin: '0 0 16px 0',
-}
-
-const linkTextStyle = {
+const codeStyle = {
   color: '#f59e0b',
-  fontSize: '14px',
+  fontSize: '32px',
+  fontWeight: 700,
+  letterSpacing: '8px',
+  fontFamily: 'monospace',
+  margin: 0,
 }
 
 const noteStyle = {
