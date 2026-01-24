@@ -25,6 +25,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  type ExpenseChange,
+  applyOptimisticDashboardUpdate,
+  applyOptimisticExpenseGroupRemove,
+  applyOptimisticExpenseRemove,
+  rollbackDashboardUpdate,
+  rollbackExpensesUpdate,
+} from '@/lib/optimistic-updates'
 import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
@@ -88,15 +96,52 @@ export function ExpenseTable({
   const isInstallmentExpense =
     expenseToDelete?.installment_total && expenseToDelete.installment_total > 1
 
+  const getExpenseChange = (exp: Expense): ExpenseChange => {
+    const category = categories.find((c) => c.id === exp.category_id)
+    const creditCard = creditCards.find((c) => c.id === exp.credit_card_id)
+    return {
+      amount_cents: exp.amount_cents,
+      category_id: exp.category_id,
+      category_name: category?.name,
+      category_color: category?.color,
+      category_icon: category?.icon,
+      payment_method: exp.payment_method,
+      credit_card_id: exp.credit_card_id,
+      credit_card_name: creditCard?.name,
+      credit_card_color: creditCard?.color,
+      credit_card_bank: creditCard?.bank,
+      credit_card_flag: creditCard?.flag,
+      date: exp.date,
+      installment_total: exp.installment_total ?? undefined,
+      operation: 'remove',
+    }
+  }
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => expenseService.deleteExpense(id),
+    onMutate: async (id) => {
+      if (!expenseToDelete) return {}
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.cancelQueries({ queryKey: queryKeys.expenses() })
+
+      const change = getExpenseChange(expenseToDelete)
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, change)
+      const previousExpenses = applyOptimisticExpenseRemove(queryClient, id)
+
+      return { previousDashboards, previousExpenses }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Despesa excluída com sucesso!')
       setExpenseToDelete(null)
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
+      if (context?.previousExpenses) {
+        rollbackExpensesUpdate(queryClient, context.previousExpenses)
+      }
       toast.error(error.message || 'Erro ao excluir despesa')
     },
   })
@@ -104,27 +149,64 @@ export function ExpenseTable({
   const cancelRecurrenceMutation = useMutation({
     mutationFn: ({ id, endDate }: { id: string; endDate: string }) =>
       expenseService.cancelRecurrence(id, endDate),
+    onMutate: async ({ id }) => {
+      if (!expenseToDelete) return {}
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.cancelQueries({ queryKey: queryKeys.expenses() })
+
+      const change = getExpenseChange(expenseToDelete)
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, change)
+      const previousExpenses = applyOptimisticExpenseRemove(queryClient, id)
+
+      return { previousDashboards, previousExpenses }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Recorrência cancelada com sucesso!')
       setExpenseToDelete(null)
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
+      if (context?.previousExpenses) {
+        rollbackExpensesUpdate(queryClient, context.previousExpenses)
+      }
       toast.error(error.message || 'Erro ao cancelar recorrência')
     },
   })
 
   const deleteInstallmentGroupMutation = useMutation({
     mutationFn: (groupId: string) => expenseService.deleteInstallmentGroup(groupId),
+    onMutate: async (groupId) => {
+      if (!expenseToDelete) return {}
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.cancelQueries({ queryKey: queryKeys.expenses() })
+
+      const totalAmount = expenseToDelete.amount_cents * (expenseToDelete.installment_total ?? 1)
+      const change: ExpenseChange = {
+        ...getExpenseChange(expenseToDelete),
+        amount_cents: totalAmount,
+        installment_total: expenseToDelete.installment_total ?? undefined,
+      }
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, change)
+      const previousExpenses = applyOptimisticExpenseGroupRemove(queryClient, groupId)
+
+      return { previousDashboards, previousExpenses }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       queryClient.invalidateQueries({ queryKey: ['installment-group'] })
       toast.success('Todas as parcelas foram excluídas!')
       setExpenseToDelete(null)
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
+      if (context?.previousExpenses) {
+        rollbackExpensesUpdate(queryClient, context.previousExpenses)
+      }
       toast.error(error.message || 'Erro ao excluir parcelas')
     },
   })

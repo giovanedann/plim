@@ -7,6 +7,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  type ExpenseChange,
+  applyOptimisticDashboardUpdate,
+  applyOptimisticExpenseUpdate,
+  rollbackDashboardUpdate,
+  rollbackExpensesUpdate,
+} from '@/lib/optimistic-updates'
 import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
@@ -55,13 +62,57 @@ export function InstallmentGroupModal({ open, onOpenChange, expense }: Installme
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
       return expenseService.updateExpense(installmentId, { date: today })
     },
+    onMutate: async (installmentId) => {
+      const installment = installments?.find((i) => i.id === installmentId)
+      if (!installment) return {}
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.cancelQueries({ queryKey: queryKeys.expenses() })
+
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+      const removeChange: ExpenseChange = {
+        amount_cents: installment.amount_cents,
+        category_id: installment.category_id,
+        payment_method: installment.payment_method,
+        credit_card_id: installment.credit_card_id,
+        date: installment.date,
+        operation: 'remove',
+      }
+
+      const addChange: ExpenseChange = {
+        amount_cents: installment.amount_cents,
+        category_id: installment.category_id,
+        payment_method: installment.payment_method,
+        credit_card_id: installment.credit_card_id,
+        date: today,
+        operation: 'add',
+      }
+
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, removeChange)
+      applyOptimisticDashboardUpdate(queryClient, addChange)
+
+      const updatedInstallment = { ...installment, date: today }
+      const previousExpenses = applyOptimisticExpenseUpdate(
+        queryClient,
+        installmentId,
+        updatedInstallment
+      )
+
+      return { previousDashboards, previousExpenses }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['installment-group'] })
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Parcela antecipada com sucesso!')
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
+      if (context?.previousExpenses) {
+        rollbackExpensesUpdate(queryClient, context.previousExpenses)
+      }
       toast.error(error.message || 'Erro ao antecipar parcela')
     },
   })

@@ -18,6 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  type ExpenseChange,
+  addExpensesToCache,
+  applyOptimisticDashboardUpdate,
+  applyOptimisticExpenseUpdate,
+  rollbackDashboardUpdate,
+  rollbackExpensesUpdate,
+} from '@/lib/optimistic-updates'
 import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -266,13 +274,44 @@ export function ExpenseModal({
 
   const createMutation = useMutation({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+    onMutate: async (newExpense) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+
+      const category = categories.find((c) => c.id === newExpense.category_id)
+      const creditCard = creditCards.find((c) => c.id === newExpense.credit_card_id)
+
+      const change: ExpenseChange = {
+        amount_cents: newExpense.amount_cents,
+        category_id: newExpense.category_id,
+        category_name: category?.name,
+        category_color: category?.color,
+        category_icon: category?.icon,
+        payment_method: newExpense.payment_method,
+        credit_card_id: newExpense.credit_card_id,
+        credit_card_name: creditCard?.name,
+        credit_card_color: creditCard?.color,
+        credit_card_bank: creditCard?.bank,
+        credit_card_flag: creditCard?.flag,
+        date: newExpense.type === 'recurrent' ? newExpense.recurrence_start : newExpense.date,
+        installment_total:
+          newExpense.type === 'installment' ? newExpense.installment_total : undefined,
+        operation: 'add',
+      }
+
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, change)
+      return { previousDashboards }
+    },
+    onSuccess: (response) => {
+      if (response.data) {
+        addExpensesToCache(queryClient, response.data)
+      }
       toast.success('Despesa criada com sucesso!')
       onOpenChange(false)
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
       toast.error(error.message || 'Erro ao criar despesa')
     },
   })
@@ -280,13 +319,79 @@ export function ExpenseModal({
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateExpense }) =>
       expenseService.updateExpense(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+    onMutate: async ({ id, data: updateData }) => {
+      if (!expense) return {}
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.cancelQueries({ queryKey: queryKeys.expenses() })
+
+      const oldCategory = categories.find((c) => c.id === expense.category_id)
+      const newCategory = categories.find((c) => c.id === updateData.category_id)
+      const oldCreditCard = creditCards.find((c) => c.id === expense.credit_card_id)
+      const newCreditCard = creditCards.find((c) => c.id === updateData.credit_card_id)
+
+      const removeChange: ExpenseChange = {
+        amount_cents: expense.amount_cents,
+        category_id: expense.category_id,
+        category_name: oldCategory?.name,
+        category_color: oldCategory?.color,
+        category_icon: oldCategory?.icon,
+        payment_method: expense.payment_method,
+        credit_card_id: expense.credit_card_id,
+        credit_card_name: oldCreditCard?.name,
+        credit_card_color: oldCreditCard?.color,
+        credit_card_bank: oldCreditCard?.bank,
+        credit_card_flag: oldCreditCard?.flag,
+        date: expense.date,
+        operation: 'remove',
+      }
+
+      const addChange: ExpenseChange = {
+        amount_cents: updateData.amount_cents ?? expense.amount_cents,
+        category_id: updateData.category_id ?? expense.category_id,
+        category_name: newCategory?.name ?? oldCategory?.name,
+        category_color: newCategory?.color ?? oldCategory?.color,
+        category_icon: newCategory?.icon ?? oldCategory?.icon,
+        payment_method: updateData.payment_method ?? expense.payment_method,
+        credit_card_id: updateData.credit_card_id ?? expense.credit_card_id ?? undefined,
+        credit_card_name: newCreditCard?.name ?? oldCreditCard?.name,
+        credit_card_color: newCreditCard?.color ?? oldCreditCard?.color,
+        credit_card_bank: newCreditCard?.bank ?? oldCreditCard?.bank,
+        credit_card_flag: newCreditCard?.flag ?? oldCreditCard?.flag,
+        date: updateData.date ?? expense.date,
+        operation: 'add',
+      }
+
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, removeChange)
+      applyOptimisticDashboardUpdate(queryClient, addChange)
+
+      const updatedExpense: Expense = {
+        ...expense,
+        amount_cents: updateData.amount_cents ?? expense.amount_cents,
+        category_id: updateData.category_id ?? expense.category_id,
+        payment_method: updateData.payment_method ?? expense.payment_method,
+        credit_card_id: updateData.credit_card_id ?? expense.credit_card_id,
+        date: updateData.date ?? expense.date,
+        description: updateData.description ?? expense.description,
+      }
+      const previousExpenses = applyOptimisticExpenseUpdate(queryClient, id, updatedExpense)
+
+      return { previousDashboards, previousExpenses }
+    },
+    onSuccess: (response, { id }) => {
+      if (response.data) {
+        applyOptimisticExpenseUpdate(queryClient, id, response.data)
+      }
       toast.success('Despesa atualizada com sucesso!')
       onOpenChange(false)
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
+      if (context?.previousExpenses) {
+        rollbackExpensesUpdate(queryClient, context.previousExpenses)
+      }
       toast.error(error.message || 'Erro ao atualizar despesa')
     },
   })

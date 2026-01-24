@@ -189,7 +189,7 @@ export class ExpensesRepository {
   async delete(id: string, userId: string): Promise<boolean> {
     const { error, count } = await this.supabase
       .from('expense')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('id', id)
       .eq('user_id', userId)
 
@@ -199,7 +199,7 @@ export class ExpensesRepository {
   async deleteByGroupId(groupId: string, userId: string): Promise<boolean> {
     const { error, count } = await this.supabase
       .from('expense')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('installment_group_id', groupId)
       .eq('user_id', userId)
 
