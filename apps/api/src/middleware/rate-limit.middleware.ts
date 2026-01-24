@@ -20,7 +20,6 @@ export const rateLimitMiddleware: MiddlewareHandler<{
   const ratelimit = new Ratelimit({
     redis,
     limiter: Ratelimit.tokenBucket(RATE_LIMIT, `${WINDOW_SECONDS} s`, RATE_LIMIT),
-    analytics: true,
   })
 
   const { success } = await ratelimit.limit(clientIP)
