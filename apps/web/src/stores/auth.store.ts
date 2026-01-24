@@ -13,6 +13,7 @@ interface AuthState {
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>
   resetPassword: (email: string) => Promise<void>
+  verifyRecoveryOtp: (email: string, token: string) => Promise<void>
   updatePassword: (newPassword: string) => Promise<void>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
@@ -91,12 +92,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   resetPassword: async (email: string) => {
     set({ isLoading: true, error: null })
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
       if (error) throw error
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Erro ao enviar email de recuperação' })
+      throw err
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  verifyRecoveryOtp: async (email: string, token: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'recovery',
+      })
+      if (error) throw error
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Código inválido ou expirado' })
       throw err
     } finally {
       set({ isLoading: false })
