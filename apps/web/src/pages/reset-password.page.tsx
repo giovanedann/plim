@@ -1,3 +1,4 @@
+import { AuthLayout } from '@/components/layouts/auth'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -9,14 +10,53 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CheckCircle, Eye, EyeOff, KeyRound } from 'lucide-react'
-import { useState } from 'react'
+import { CheckCircle, Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 export function ResetPasswordPage() {
+  return (
+    <AuthLayout>
+      <ResetPasswordContent />
+    </AuthLayout>
+  )
+}
+
+function ResetPasswordContent() {
   const navigate = useNavigate()
   const { updatePassword, isLoading, error, clearError, user } = useAuthStore()
+  const [isExchangingCode, setIsExchangingCode] = useState(true)
+  const [exchangeError, setExchangeError] = useState<string | null>(null)
+  const hasExchangedCode = useRef(false)
+
+  useEffect(() => {
+    const handleCodeExchange = async () => {
+      if (hasExchangedCode.current) return
+      hasExchangedCode.current = true
+
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const errorParam = hashParams.get('error')
+      const errorDescription = hashParams.get('error_description')
+
+      if (errorParam) {
+        setExchangeError(errorDescription || 'Link inválido ou expirado')
+        setIsExchangingCode(false)
+        return
+      }
+
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+
+      if (error) {
+        setExchangeError(error.message)
+      }
+
+      setIsExchangingCode(false)
+    }
+
+    handleCodeExchange()
+  }, [])
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -45,6 +85,17 @@ export function ResetPasswordPage() {
     } catch {
       // Error is handled by the store
     }
+  }
+
+  if (isExchangingCode) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-muted-foreground">Validando link...</p>
+        </div>
+      </div>
+    )
   }
 
   if (success) {
@@ -79,7 +130,7 @@ export function ResetPasswordPage() {
     )
   }
 
-  if (!user) {
+  if (exchangeError || !user) {
     return (
       <>
         <div className="text-center">
@@ -95,7 +146,8 @@ export function ResetPasswordPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Solicite um novo link de recuperação para redefinir sua senha.
+                  {exchangeError ||
+                    'Solicite um novo link de recuperação para redefinir sua senha.'}
                 </p>
               </div>
             </div>
