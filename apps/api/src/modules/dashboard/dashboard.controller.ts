@@ -1,11 +1,17 @@
 import { sValidator } from '@hono/standard-validator'
-import { HTTP_STATUS, dashboardQuerySchema, expensesTimelineQuerySchema } from '@plim/shared'
+import {
+  HTTP_STATUS,
+  dashboardQuerySchema,
+  expensesTimelineQuerySchema,
+  timelineGroupBySchema,
+} from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { DashboardRepository } from './dashboard.repository'
 import { GetCategoryBreakdownUseCase } from './get-category-breakdown.usecase'
 import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.usecase'
+import { GetDashboardUseCase } from './get-dashboard.usecase'
 import { GetExpensesTimelineUseCase } from './get-expenses-timeline.usecase'
 import { GetIncomeVsExpensesUseCase } from './get-income-vs-expenses.usecase'
 import { GetInstallmentForecastUseCase } from './get-installment-forecast.usecase'
@@ -20,6 +26,24 @@ type DashboardEnv = {
 }
 
 const dashboardController = new Hono<DashboardEnv>()
+
+const getDashboardQuerySchema = dashboardQuerySchema.extend({
+  group_by: timelineGroupBySchema.optional(),
+})
+
+dashboardController.get('/', sValidator('query', getDashboardQuerySchema), async (c) => {
+  const userId = c.get('userId')
+  const accessToken = c.get('accessToken')
+  const query = c.req.valid('query')
+
+  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+  const repository = new DashboardRepository(supabase)
+  const useCase = new GetDashboardUseCase(repository)
+
+  const data = await useCase.execute(userId, query)
+
+  return c.json({ data }, HTTP_STATUS.OK)
+})
 
 dashboardController.get('/summary', sValidator('query', dashboardQuerySchema), async (c) => {
   const userId = c.get('userId')

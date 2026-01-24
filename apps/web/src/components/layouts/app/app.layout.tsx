@@ -1,10 +1,10 @@
 import { OnboardingOverlay } from '@/components/onboarding'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { useProfile } from '@/hooks/use-profile'
 import { profileService, salaryService } from '@/services'
-import { useAuthStore } from '@/stores/auth.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useLocation } from '@tanstack/react-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { AppSidebar } from './app-sidebar'
 import { SiteHeader } from './site-header'
 
@@ -18,30 +18,19 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user } = useAuthStore()
   const { open } = useOnboardingStore()
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const { profile, isLoading: isLoadingProfile } = useProfile()
   const location = useLocation()
 
   const pageTitle = PAGE_TITLES[location.pathname]
 
   useEffect(() => {
-    async function fetchProfile() {
-      if (!user) return
+    if (isLoadingProfile) return
 
-      const { data, error } = await profileService.getProfile()
-
-      if (error || !data) {
-        open(false)
-      } else if (!data.is_onboarded) {
-        open(false)
-      }
-
-      setIsLoadingProfile(false)
+    if (!profile || !profile.is_onboarded) {
+      open(false)
     }
-
-    fetchProfile()
-  }, [user, open])
+  }, [profile, isLoadingProfile, open])
 
   const handleSaveSalary = useCallback(async (salaryInCents: number) => {
     await salaryService.createCurrentMonthSalary(salaryInCents)
