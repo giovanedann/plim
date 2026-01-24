@@ -123,9 +123,13 @@ export function CreditCard3D({
           hover:shadow-2xl
         `}
       >
-        {/* Chip */}
+        {/* Chip - use silver for yellow/gold cards to avoid color conflict */}
         <div
-          className="absolute left-4 top-6 h-8 w-10 rounded bg-gradient-to-br from-yellow-300 to-yellow-500 opacity-80"
+          className={`absolute left-4 top-6 h-8 w-10 rounded opacity-80 ${
+            color === 'yellow' || color === 'gold'
+              ? 'bg-gradient-to-br from-zinc-300 to-zinc-500'
+              : 'bg-gradient-to-br from-yellow-300 to-yellow-500'
+          }`}
           style={{ transform: 'translateZ(2px)' }}
         />
 
