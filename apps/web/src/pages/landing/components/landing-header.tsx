@@ -2,11 +2,14 @@ import { PlimIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth.store'
 import { Link } from '@tanstack/react-router'
+import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function LandingHeader() {
   const [isVisible, setIsVisible] = useState(false)
+  const user = useAuthStore((state) => state.user)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,11 +38,29 @@ export function LandingHeader() {
         </Link>
 
         {/* Right side */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <ThemeToggle />
-          <Button asChild size="sm" className="bg-amber-500 text-slate-950 hover:bg-amber-400">
-            <Link to="/sign-up">Começar agora</Link>
-          </Button>
+          {user ? (
+            <Button
+              asChild
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Link to="/dashboard" className="flex items-center gap-2">
+                Ir para Dashboard
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+                <Link to="/sign-in">Entrar</Link>
+              </Button>
+              <Button asChild size="sm" className="bg-amber-500 text-slate-950 hover:bg-amber-400">
+                <Link to="/sign-up">Começar agora</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

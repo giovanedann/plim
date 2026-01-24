@@ -1,8 +1,10 @@
 import { PlimIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth.store'
 import { Link } from '@tanstack/react-router'
 import {
+  ArrowRight,
   BadgeDollarSign,
   Banknote,
   Coins,
@@ -58,6 +60,8 @@ function FloatingIcon({
 }
 
 export function HeroSection() {
+  const user = useAuthStore((state) => state.user)
+
   return (
     <section className="landing-section relative min-h-screen w-full overflow-hidden bg-slate-950">
       {/* Gradient overlay */}
@@ -239,19 +243,34 @@ export function HeroSection() {
 
         {/* CTAs */}
         <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <Button
-            asChild
-            size="lg"
-            className="bg-amber-500 text-slate-950 hover:bg-amber-400 text-base md:text-lg px-8"
-          >
-            <Link to="/sign-up">Começar agora — é grátis</Link>
-          </Button>
-          <Link
-            to="/sign-in"
-            className="text-slate-400 hover:text-white transition-colors text-base md:text-lg"
-          >
-            Já tem conta? Entrar
-          </Link>
+          {user ? (
+            <Button
+              asChild
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 text-base md:text-lg px-8"
+            >
+              <Link to="/dashboard" className="flex items-center gap-2">
+                Ir para Dashboard
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button
+                asChild
+                size="lg"
+                className="bg-amber-500 text-slate-950 hover:bg-amber-400 text-base md:text-lg px-8"
+              >
+                <Link to="/sign-up">Começar agora — é grátis</Link>
+              </Button>
+              <Link
+                to="/sign-in"
+                className="text-slate-400 hover:text-white transition-colors text-base md:text-lg"
+              >
+                Já tem conta? Entrar
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
