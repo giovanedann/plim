@@ -1,7 +1,7 @@
 import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, createCreditCardSchema, updateCreditCardSchema } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
+import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CreateCreditCardUseCase } from './create-credit-card.usecase'
 import { CreditCardsRepository } from './credit-cards.repository'

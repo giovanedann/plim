@@ -6,7 +6,7 @@ import {
   updateExpenseSchema,
 } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
+import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CreateExpenseUseCase } from './create-expense.usecase'
 import { DeleteExpenseUseCase } from './delete-expense.usecase'

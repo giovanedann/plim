@@ -1,7 +1,7 @@
 import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, createSalarySchema, salaryQuerySchema } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
+import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CreateSalaryUseCase } from './create-salary.usecase'
 import { GetSalaryUseCase } from './get-salary.usecase'

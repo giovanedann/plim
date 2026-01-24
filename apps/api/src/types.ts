@@ -1,4 +1,4 @@
-import type { Bindings } from './lib/supabase'
+import type { Bindings } from './lib/env'
 import type { AuthVariables } from './middleware/auth.middleware'
 
 export type Env = {

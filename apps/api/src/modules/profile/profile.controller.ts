@@ -1,7 +1,7 @@
 import { sValidator } from '@hono/standard-validator'
 import { ERROR_CODES, HTTP_STATUS, updateProfileSchema } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
+import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { AppError } from '../../middleware/error-handler.middleware'
 import { DeleteAvatarUseCase } from './delete-avatar.usecase'
