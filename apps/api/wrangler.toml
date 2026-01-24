@@ -11,4 +11,5 @@ binding = "AVATARS_BUCKET"
 bucket_name = "plim-avatars"
 
 [vars]
-R2_PUBLIC_URL = "https://pub-c949aa032b0444a2b23f93bd59ad1e4e.r2.dev"  # Set to your R2 public URL (e.g., https://pub-xxx.r2.dev or custom domain)
+R2_PUBLIC_URL = "https://pub-c949aa032b0444a2b23f93bd59ad1e4e.r2.dev"
+ENVIRONMENT = "production"

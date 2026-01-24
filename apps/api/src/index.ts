@@ -13,7 +13,23 @@ import type { Env } from './types'
 
 const app = new Hono<Env>()
 
-app.use('*', cors())
+app.use(
+  '*',
+  cors({
+    origin: (origin, c) => {
+      const allowedOrigins = ['https://plim.app.br', 'https://www.plim.app.br']
+
+      if (c.env.ENVIRONMENT === 'development') {
+        allowedOrigins.push('http://localhost:5173')
+      }
+
+      return allowedOrigins.includes(origin) ? origin : null
+    },
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+)
 app.onError(errorHandler)
 
 app.get('/', (c) => {

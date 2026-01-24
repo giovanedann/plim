@@ -5,6 +5,7 @@ export type Bindings = {
   SUPABASE_PUBLISHABLE_KEY: string
   AVATARS_BUCKET: R2Bucket
   R2_PUBLIC_URL: string
+  ENVIRONMENT: 'development' | 'production'
 }
 
 /**
