@@ -251,28 +251,49 @@ export class DashboardRepository {
     userId: string,
     query: DashboardQuery
   ): Promise<ExpenseWithCreditCardRow[]> {
-    const { data, error } = await this.supabase
+    // Query expenses - only credit/debit card payments
+    const { data: expenses, error: expensesError } = await this.supabase
       .from('expense')
-      .select(`
-        date,
-        amount_cents,
-        credit_card_id,
-        credit_card:credit_card_id (name, color, bank, flag)
-      `)
+      .select('date, amount_cents, credit_card_id')
       .eq('user_id', userId)
+      .in('payment_method', ['credit_card', 'debit_card'])
       .gte('date', query.start_date)
       .lte('date', query.end_date)
       .order('date', { ascending: true })
 
-    if (error || !data) return []
+    if (expensesError || !expenses) return []
 
-    return data.map((row) => {
-      const creditCard = row.credit_card as unknown as {
-        name: string
-        color: string
-        bank: string
-        flag: string
-      } | null
+    // Get unique credit card IDs
+    const creditCardIds = [
+      ...new Set(expenses.map((e) => e.credit_card_id).filter((id): id is string => id !== null)),
+    ]
+
+    // Query credit cards separately
+    const creditCardsMap = new Map<
+      string,
+      { name: string; color: string; bank: string; flag: string }
+    >()
+
+    if (creditCardIds.length > 0) {
+      const { data: creditCards } = await this.supabase
+        .from('credit_card')
+        .select('id, name, color, bank, flag')
+        .in('id', creditCardIds)
+
+      if (creditCards) {
+        for (const card of creditCards) {
+          creditCardsMap.set(card.id, {
+            name: card.name,
+            color: card.color,
+            bank: card.bank,
+            flag: card.flag,
+          })
+        }
+      }
+    }
+
+    return expenses.map((row) => {
+      const creditCard = row.credit_card_id ? creditCardsMap.get(row.credit_card_id) : null
       return {
         date: row.date,
         amount_cents: row.amount_cents,
