@@ -68,7 +68,7 @@ export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProp
 
   if (!chartData.length) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Histórico de Salário</CardTitle>
           <CardDescription>Evolução da receita mensal</CardDescription>
@@ -83,7 +83,7 @@ export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProp
   if (chartData.length === 1) {
     const currentSalary = chartData[0]!
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Salário Atual</CardTitle>
           <CardDescription>Desde {currentSalary.date}</CardDescription>
@@ -101,7 +101,7 @@ export function SalaryTimelineChart({ data, isLoading }: SalaryTimelineChartProp
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Histórico de Salário</CardTitle>
         <CardDescription>Evolução da receita mensal</CardDescription>

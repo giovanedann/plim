@@ -60,7 +60,6 @@ const BANKS: { value: CardBank; label: string }[] = [
   { value: 'next', label: 'Next' },
   { value: 'picpay', label: 'PicPay' },
   { value: 'mercado_pago', label: 'Mercado Pago' },
-  { value: 'will_bank', label: 'Will Bank' },
   { value: 'other', label: 'Outro' },
 ]
 

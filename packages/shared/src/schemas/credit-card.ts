@@ -24,7 +24,6 @@ export const cardBankSchema = z.enum([
   'next',
   'picpay',
   'mercado_pago',
-  'will_bank',
   'other',
 ])
 

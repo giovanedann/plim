@@ -76,7 +76,7 @@ export function TopCategoriesChart({ data, isLoading }: TopCategoriesChartProps)
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Top Categorias</CardTitle>
         <CardDescription>Maiores gastos do período</CardDescription>

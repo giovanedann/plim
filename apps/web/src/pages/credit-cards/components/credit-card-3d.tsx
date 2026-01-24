@@ -41,7 +41,6 @@ const BANK_DISPLAY: Record<CardBank, string> = {
   next: 'Next',
   picpay: 'PicPay',
   mercado_pago: 'Mercado Pago',
-  will_bank: 'Will Bank',
   other: '',
 }
 
@@ -146,20 +145,18 @@ export function CreditCard3D({
           •••• •••• •••• {last4Digits || '••••'}
         </div>
 
-        {/* Card name */}
+        {/* Card name and Flag - bottom row */}
         <div
-          className="absolute bottom-8 left-4 text-xs font-medium uppercase tracking-wider opacity-80"
+          className="absolute bottom-4 left-4 right-4 flex items-center justify-between"
           style={{ transform: 'translateZ(2px)' }}
         >
-          {name || 'SEU NOME'}
-        </div>
-
-        {/* Flag */}
-        <div
-          className="absolute bottom-4 right-4 text-sm font-bold opacity-90"
-          style={{ transform: 'translateZ(4px)' }}
-        >
-          {FLAG_DISPLAY[flag]}
+          <span
+            className="max-w-[60%] truncate text-xs font-medium uppercase tracking-wider opacity-80"
+            title={name}
+          >
+            {name || 'SEU NOME'}
+          </span>
+          <span className="text-sm font-bold opacity-90">{FLAG_DISPLAY[flag]}</span>
         </div>
 
         {/* Shine effect */}

@@ -56,7 +56,6 @@ const BANK_DISPLAY: Record<CardBank, string> = {
   next: 'Next',
   picpay: 'PicPay',
   mercado_pago: 'Mercado Pago',
-  will_bank: 'Will Bank',
   other: '',
 }
 

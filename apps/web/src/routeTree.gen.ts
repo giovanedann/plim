@@ -19,8 +19,8 @@ import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
 import { Route as AppCreditCardsRouteImport } from './routes/_app/credit-cards'
+import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -70,14 +70,14 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCategoriesRoute = AppCategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppCreditCardsRoute = AppCreditCardsRouteImport.update({
   id: '/credit-cards',
   path: '/credit-cards',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCategoriesRoute = AppCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -241,18 +241,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/categories': {
-      id: '/_app/categories'
-      path: '/categories'
-      fullPath: '/categories'
-      preLoaderRoute: typeof AppCategoriesRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/credit-cards': {
       id: '/_app/credit-cards'
       path: '/credit-cards'
       fullPath: '/credit-cards'
       preLoaderRoute: typeof AppCreditCardsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/categories': {
+      id: '/_app/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof AppCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
   }

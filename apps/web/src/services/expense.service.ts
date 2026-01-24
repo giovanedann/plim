@@ -9,6 +9,8 @@ function buildQueryString(filters?: ExpenseFilters): string {
   if (filters.end_date) params.set('end_date', filters.end_date)
   if (filters.category_id) params.set('category_id', filters.category_id)
   if (filters.payment_method) params.set('payment_method', filters.payment_method)
+  if (filters.expense_type) params.set('expense_type', filters.expense_type)
+  if (filters.credit_card_id) params.set('credit_card_id', filters.credit_card_id)
 
   const queryString = params.toString()
   return queryString ? `?${queryString}` : ''
