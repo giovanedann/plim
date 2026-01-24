@@ -143,21 +143,98 @@ export function ForgotPasswordPage() {
     return (
       <>
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Redefinir senha</h1>
-          <p className="text-muted-foreground">Digite o código enviado para {email}</p>
+          <h1 className="text-3xl font-bold">Criar nova senha</h1>
+          <p className="text-muted-foreground">
+            Escolha sua nova senha e confirme com o código enviado para {email}
+          </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>{otpComplete ? 'Criar nova senha' : 'Código de verificação'}</CardTitle>
-            <CardDescription>
-              {otpComplete
-                ? 'Escolha uma senha segura para sua conta'
-                : 'Digite o código de 8 dígitos enviado por email'}
-            </CardDescription>
+            <CardTitle>Nova senha</CardTitle>
+            <CardDescription>Escolha uma senha segura para sua conta</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleResetSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="password">Nova senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="pr-10"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {password.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <PasswordRequirement
+                      met={passwordRequirements.minLength}
+                      label="Mínimo 8 caracteres"
+                    />
+                    <PasswordRequirement
+                      met={passwordRequirements.hasUppercase}
+                      label="Uma letra maiúscula"
+                    />
+                    <PasswordRequirement
+                      met={passwordRequirements.hasLowercase}
+                      label="Uma letra minúscula"
+                    />
+                    <PasswordRequirement met={passwordRequirements.hasNumber} label="Um número" />
+                    <PasswordRequirement
+                      met={passwordRequirements.hasSymbol}
+                      label="Um caractere especial"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && (
+                  <div className="mt-1">
+                    <PasswordRequirement met={passwordsMatch} label="Senhas coincidem" />
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label>Código de verificação</Label>
                 <div className="flex justify-center">
@@ -179,103 +256,10 @@ export function ForgotPasswordPage() {
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                {otpComplete && (
-                  <p className="text-center text-xs text-emerald-500 flex items-center justify-center gap-1">
-                    <Check className="h-3 w-3" />
-                    Código completo
-                  </p>
-                )}
+                <p className="text-center text-xs text-muted-foreground">
+                  Digite o código de 8 dígitos enviado por email
+                </p>
               </div>
-
-              {otpComplete && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Nova senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="pr-10"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                    {password.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        <PasswordRequirement
-                          met={passwordRequirements.minLength}
-                          label="Mínimo 8 caracteres"
-                        />
-                        <PasswordRequirement
-                          met={passwordRequirements.hasUppercase}
-                          label="Uma letra maiúscula"
-                        />
-                        <PasswordRequirement
-                          met={passwordRequirements.hasLowercase}
-                          label="Uma letra minúscula"
-                        />
-                        <PasswordRequirement
-                          met={passwordRequirements.hasNumber}
-                          label="Um número"
-                        />
-                        <PasswordRequirement
-                          met={passwordRequirements.hasSymbol}
-                          label="Um caractere especial"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmar senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        tabIndex={-1}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                    {confirmPassword.length > 0 && (
-                      <div className="mt-1">
-                        <PasswordRequirement met={passwordsMatch} label="Senhas coincidem" />
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
 
               {(error || validationError) && (
                 <p className="text-sm text-destructive">{validationError || error}</p>
