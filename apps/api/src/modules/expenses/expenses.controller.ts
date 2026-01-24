@@ -6,16 +6,9 @@ import {
   updateExpenseSchema,
 } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import type { Bindings } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
-import { CreateExpenseUseCase } from './create-expense.usecase'
-import { DeleteExpenseUseCase } from './delete-expense.usecase'
-import { DeleteInstallmentGroupUseCase } from './delete-installment-group.usecase'
-import { ExpensesRepository } from './expenses.repository'
-import { GetExpenseUseCase } from './get-expense.usecase'
-import { GetInstallmentGroupUseCase } from './get-installment-group.usecase'
-import { ListExpensesUseCase } from './list-expenses.usecase'
-import { UpdateExpenseUseCase } from './update-expense.usecase'
+import { createExpensesDependencies } from './expenses.factory'
 
 type ExpensesEnv = {
   Bindings: Bindings
@@ -26,99 +19,99 @@ const expensesController = new Hono<ExpensesEnv>()
 
 expensesController.get('/', sValidator('query', expenseFiltersSchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const filters = c.req.valid('query')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new ListExpensesUseCase(repository)
+  const { listExpenses } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const expenses = await useCase.execute(userId, filters)
+  const expenses = await listExpenses.execute(userId, filters)
 
   return c.json({ data: expenses }, HTTP_STATUS.OK)
 })
 
 expensesController.get('/installments/:groupId', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const groupId = c.req.param('groupId')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new GetInstallmentGroupUseCase(repository)
+  const { getInstallmentGroup } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const installments = await useCase.execute(userId, groupId)
+  const installments = await getInstallmentGroup.execute(userId, groupId)
 
   return c.json({ data: installments }, HTTP_STATUS.OK)
 })
 
 expensesController.get('/:id', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const expenseId = c.req.param('id')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new GetExpenseUseCase(repository)
+  const { getExpense } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const expense = await useCase.execute(userId, expenseId)
+  const expense = await getExpense.execute(userId, expenseId)
 
   return c.json({ data: expense }, HTTP_STATUS.OK)
 })
 
 expensesController.post('/', sValidator('json', createExpenseSchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const input = c.req.valid('json')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new CreateExpenseUseCase(repository)
+  const { createExpense } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const expense = await useCase.execute(userId, input)
+  const expense = await createExpense.execute(userId, input)
 
   return c.json({ data: expense }, HTTP_STATUS.CREATED)
 })
 
 expensesController.patch('/:id', sValidator('json', updateExpenseSchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const expenseId = c.req.param('id')
   const input = c.req.valid('json')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new UpdateExpenseUseCase(repository)
+  const { updateExpense } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const expense = await useCase.execute(userId, expenseId, input)
+  const expense = await updateExpense.execute(userId, expenseId, input)
 
   return c.json({ data: expense }, HTTP_STATUS.OK)
 })
 
 expensesController.delete('/installments/:groupId', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const groupId = c.req.param('groupId')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new DeleteInstallmentGroupUseCase(repository)
+  const { deleteInstallmentGroup } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  await useCase.execute(userId, groupId)
+  await deleteInstallmentGroup.execute(userId, groupId)
 
   return c.body(null, HTTP_STATUS.NO_CONTENT)
 })
 
 expensesController.delete('/:id', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const expenseId = c.req.param('id')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new ExpensesRepository(supabase)
-  const useCase = new DeleteExpenseUseCase(repository)
+  const { deleteExpense } = createExpensesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  await useCase.execute(userId, expenseId)
+  await deleteExpense.execute(userId, expenseId)
 
   return c.body(null, HTTP_STATUS.NO_CONTENT)
 })
