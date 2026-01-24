@@ -15,7 +15,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Check, CheckCircle, Eye, EyeOff, KeyRound, Mail, X } from 'lucide-react'
 import { useState } from 'react'
 
-type Step = 'email' | 'otp' | 'password' | 'success'
+type Step = 'email' | 'reset' | 'success'
 
 function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
   return (
@@ -32,15 +32,8 @@ function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate()
-  const {
-    resetPassword,
-    verifyRecoveryOtp,
-    updatePassword,
-    clearRecoveryMode,
-    isLoading,
-    error,
-    clearError,
-  } = useAuthStore()
+  const { resetPassword, verifyRecoveryOtp, updatePassword, isLoading, error, clearError } =
+    useAuthStore()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
@@ -49,6 +42,8 @@ export function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
+
+  const otpComplete = otpCode.length === 8
 
   const passwordRequirements = {
     minLength: password.length >= 8,
@@ -68,34 +63,21 @@ export function ForgotPasswordPage() {
 
     try {
       await resetPassword(email)
-      setStep('otp')
+      setStep('reset')
     } catch {
       // Error handled by store
     }
   }
 
-  const handleOtpSubmit = async (e: React.FormEvent) => {
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     clearError()
     setValidationError(null)
 
-    if (otpCode.length !== 8) {
+    if (!otpComplete) {
       setValidationError('Digite o código de 8 dígitos')
       return
     }
-
-    try {
-      await verifyRecoveryOtp(email, otpCode)
-      setStep('password')
-    } catch {
-      // Error handled by store
-    }
-  }
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    clearError()
-    setValidationError(null)
 
     if (!allRequirementsMet) {
       setValidationError('A senha não atende todos os requisitos')
@@ -108,6 +90,7 @@ export function ForgotPasswordPage() {
     }
 
     try {
+      await verifyRecoveryOtp(email, otpCode)
       await updatePassword(password)
       setStep('success')
     } catch {
@@ -122,20 +105,6 @@ export function ForgotPasswordPage() {
     } catch {
       // Error handled by store
     }
-  }
-
-  const handleBackToEmail = () => {
-    setStep('email')
-    setOtpCode('')
-    setPassword('')
-    setConfirmPassword('')
-    clearError()
-    clearRecoveryMode()
-  }
-
-  const handleGoToLogin = () => {
-    clearRecoveryMode()
-    navigate({ to: '/sign-in' })
   }
 
   if (step === 'success') {
@@ -161,7 +130,7 @@ export function ForgotPasswordPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={handleGoToLogin}>
+            <Button className="w-full" onClick={() => navigate({ to: '/sign-in' })}>
               Ir para o login
             </Button>
           </CardFooter>
@@ -170,147 +139,33 @@ export function ForgotPasswordPage() {
     )
   }
 
-  if (step === 'password') {
+  if (step === 'reset') {
     return (
       <>
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Nova senha</h1>
-          <p className="text-muted-foreground">Escolha sua nova senha</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Criar nova senha</CardTitle>
-            <CardDescription>Sua senha deve atender aos requisitos abaixo</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Nova senha</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="pr-10"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {password.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <PasswordRequirement
-                      met={passwordRequirements.minLength}
-                      label="Mínimo 8 caracteres"
-                    />
-                    <PasswordRequirement
-                      met={passwordRequirements.hasUppercase}
-                      label="Uma letra maiúscula"
-                    />
-                    <PasswordRequirement
-                      met={passwordRequirements.hasLowercase}
-                      label="Uma letra minúscula"
-                    />
-                    <PasswordRequirement met={passwordRequirements.hasNumber} label="Um número" />
-                    <PasswordRequirement
-                      met={passwordRequirements.hasSymbol}
-                      label="Um caractere especial"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar senha</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    tabIndex={-1}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {confirmPassword.length > 0 && (
-                  <div className="mt-1">
-                    <PasswordRequirement met={passwordsMatch} label="Senhas coincidem" />
-                  </div>
-                )}
-              </div>
-
-              {(error || validationError) && (
-                <p className="text-sm text-destructive">{validationError || error}</p>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading || !allRequirementsMet || !passwordsMatch}
-              >
-                {isLoading ? (
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : (
-                  <KeyRound className="mr-2 h-4 w-4" />
-                )}
-                Atualizar senha
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </>
-    )
-  }
-
-  if (step === 'otp') {
-    return (
-      <>
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Verificar código</h1>
+          <h1 className="text-3xl font-bold">Redefinir senha</h1>
           <p className="text-muted-foreground">Digite o código enviado para {email}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Código de verificação</CardTitle>
-            <CardDescription>Digite o código de 8 dígitos do email</CardDescription>
+            <CardTitle>{otpComplete ? 'Criar nova senha' : 'Código de verificação'}</CardTitle>
+            <CardDescription>
+              {otpComplete
+                ? 'Escolha uma senha segura para sua conta'
+                : 'Digite o código de 8 dígitos enviado por email'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleOtpSubmit} className="space-y-6">
+            <form onSubmit={handleResetSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label>Código</Label>
+                <Label>Código de verificação</Label>
                 <div className="flex justify-center">
                   <InputOTP
                     maxLength={8}
                     value={otpCode}
                     onChange={setOtpCode}
                     disabled={isLoading}
-                    autoFocus
                   >
                     <InputOTPGroup>
                       <InputOTPSlot index={0} />
@@ -324,19 +179,119 @@ export function ForgotPasswordPage() {
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
+                {otpComplete && (
+                  <p className="text-center text-xs text-emerald-500 flex items-center justify-center gap-1">
+                    <Check className="h-3 w-3" />
+                    Código completo
+                  </p>
+                )}
               </div>
+
+              {otpComplete && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Nova senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="pr-10"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {password.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <PasswordRequirement
+                          met={passwordRequirements.minLength}
+                          label="Mínimo 8 caracteres"
+                        />
+                        <PasswordRequirement
+                          met={passwordRequirements.hasUppercase}
+                          label="Uma letra maiúscula"
+                        />
+                        <PasswordRequirement
+                          met={passwordRequirements.hasLowercase}
+                          label="Uma letra minúscula"
+                        />
+                        <PasswordRequirement
+                          met={passwordRequirements.hasNumber}
+                          label="Um número"
+                        />
+                        <PasswordRequirement
+                          met={passwordRequirements.hasSymbol}
+                          label="Um caractere especial"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {confirmPassword.length > 0 && (
+                      <div className="mt-1">
+                        <PasswordRequirement met={passwordsMatch} label="Senhas coincidem" />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               {(error || validationError) && (
                 <p className="text-sm text-destructive">{validationError || error}</p>
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading || otpCode.length !== 8}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || !otpComplete || !allRequirementsMet || !passwordsMatch}
+              >
                 {isLoading ? (
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 ) : (
-                  <Check className="mr-2 h-4 w-4" />
+                  <KeyRound className="mr-2 h-4 w-4" />
                 )}
-                Verificar código
+                Atualizar senha
               </Button>
             </form>
           </CardContent>
@@ -352,7 +307,13 @@ export function ForgotPasswordPage() {
             </Button>
             <button
               type="button"
-              onClick={handleBackToEmail}
+              onClick={() => {
+                setStep('email')
+                setOtpCode('')
+                setPassword('')
+                setConfirmPassword('')
+                clearError()
+              }}
               className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
             >
               <ArrowLeft className="h-3 w-3" />
