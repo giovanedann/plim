@@ -14,7 +14,7 @@ export default function ResetPasswordEmail() {
           <Text style={codeStyle}>{'{{ .Token }}'}</Text>
         </Section>
         <Text style={paragraphStyle}>
-          Digite este código de 6 dígitos na página de recuperação de senha.
+          Digite este código de 8 dígitos na página de recuperação de senha.
         </Text>
         <Text style={noteStyle}>
           Este código expira em 1 hora. Se você não solicitou a redefinição de senha, ignore este
