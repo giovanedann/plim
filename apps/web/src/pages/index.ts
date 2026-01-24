@@ -1,5 +1,7 @@
 export { SignInPage } from './sign-in.page'
 export { SignUpPage } from './sign-up.page'
+export { ForgotPasswordPage } from './forgot-password.page'
+export { ResetPasswordPage } from './reset-password.page'
 export { AuthCallbackPage } from './auth-callback.page'
 export { DashboardPage } from './dashboard/dashboard.page'
 export { ExpensesPage } from './expenses'

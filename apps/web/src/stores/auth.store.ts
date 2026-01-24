@@ -12,6 +12,8 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>
+  resetPassword: (email: string) => Promise<void>
+  updatePassword: (newPassword: string) => Promise<void>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
   clearError: () => void
@@ -80,6 +82,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Erro ao criar conta' })
+      throw err
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  resetPassword: async (email: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) throw error
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Erro ao enviar email de recuperação' })
+      throw err
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  updatePassword: async (newPassword: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Erro ao atualizar senha' })
       throw err
     } finally {
       set({ isLoading: false })
