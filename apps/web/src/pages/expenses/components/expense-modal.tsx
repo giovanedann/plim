@@ -32,6 +32,7 @@ import {
 import type {
   Category,
   CreateExpense,
+  CreditCard,
   EffectiveSpendingLimit,
   Expense,
   ExpenseType,
@@ -49,6 +50,7 @@ interface ExpenseModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   categories: Category[]
+  creditCards: CreditCard[]
   selectedMonth: string
   expense?: Expense
   spendingLimit?: EffectiveSpendingLimit | null
@@ -61,6 +63,7 @@ const formSchema = z.object({
   amount: z.string().min(1, 'Valor é obrigatório'),
   category_id: z.string().uuid('Selecione uma categoria'),
   payment_method: z.enum(['credit_card', 'debit_card', 'pix', 'cash']),
+  credit_card_id: z.string().uuid().optional().or(z.literal('')),
   date: z.string().min(1, 'Data é obrigatória'),
   recurrence_day: z.string().optional(),
   recurrence_start: z.string().optional(),
@@ -77,18 +80,23 @@ function getDefaultDate(selectedMonth: string): string {
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month
 
   if (isCurrentMonth) {
-    return today.toISOString().split('T')[0] as string
+    const y = today.getFullYear()
+    const m = String(today.getMonth() + 1).padStart(2, '0')
+    const d = String(today.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
   }
 
   return `${selectedMonth}-01`
 }
 
 const CREATE_NEW_CATEGORY_VALUE = '__create_new__'
+const NO_CREDIT_CARD_VALUE = '__none__'
 
 export function ExpenseModal({
   open,
   onOpenChange,
   categories,
+  creditCards,
   selectedMonth,
   expense,
   spendingLimit,
@@ -114,6 +122,7 @@ export function ExpenseModal({
       amount: '',
       category_id: '',
       payment_method: 'credit_card',
+      credit_card_id: '',
       date: getDefaultDate(selectedMonth),
       recurrence_day: '',
       recurrence_start: '',
@@ -125,6 +134,7 @@ export function ExpenseModal({
 
   const expenseType = watch('type')
   const watchedAmount = watch('amount')
+  const watchedPaymentMethod = watch('payment_method')
   const watchedInstallmentTotal = watch('installment_total')
   const watchedInstallmentInputMode = watch('installment_input_mode')
 
@@ -224,6 +234,7 @@ export function ExpenseModal({
           amount: centsToDecimal(expense.amount_cents).toFixed(2).replace('.', ','),
           category_id: expense.category_id,
           payment_method: expense.payment_method,
+          credit_card_id: expense.credit_card_id ?? '',
           date: expense.date,
           recurrence_day: expense.recurrence_day?.toString() ?? '',
           recurrence_start: expense.recurrence_start ?? '',
@@ -240,8 +251,9 @@ export function ExpenseModal({
           amount: '',
           category_id: '',
           payment_method: 'credit_card',
+          credit_card_id: '',
           date: defaultDate,
-          recurrence_day: new Date(defaultDate).getDate().toString(),
+          recurrence_day: defaultDate.split('-')[2] ?? '1',
           recurrence_start: monthStart,
           recurrence_end: '',
           installment_total: '',
@@ -289,6 +301,7 @@ export function ExpenseModal({
         amount_cents: amountCents,
         category_id: data.category_id,
         payment_method: data.payment_method,
+        credit_card_id: data.credit_card_id || null,
         date: data.date,
       }
 
@@ -304,6 +317,8 @@ export function ExpenseModal({
 
     let createData: CreateExpense
 
+    const creditCardId = data.credit_card_id || undefined
+
     if (data.type === 'one_time') {
       createData = {
         type: 'one_time',
@@ -312,6 +327,7 @@ export function ExpenseModal({
         category_id: data.category_id,
         payment_method: data.payment_method,
         date: data.date,
+        credit_card_id: creditCardId,
       }
     } else if (data.type === 'recurrent') {
       createData = {
@@ -323,6 +339,7 @@ export function ExpenseModal({
         recurrence_day: Number.parseInt(data.recurrence_day || '1', 10),
         recurrence_start: data.recurrence_start || data.date,
         recurrence_end: data.recurrence_end || undefined,
+        credit_card_id: creditCardId,
       }
     } else {
       const installments = Number.parseInt(data.installment_total || '2', 10)
@@ -337,6 +354,7 @@ export function ExpenseModal({
         payment_method: data.payment_method,
         date: data.date,
         installment_total: installments,
+        credit_card_id: creditCardId,
       }
     }
 
@@ -496,6 +514,37 @@ export function ExpenseModal({
               />
             </div>
 
+            {(watchedPaymentMethod === 'credit_card' || watchedPaymentMethod === 'debit_card') &&
+              creditCards.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Cartão</Label>
+                  <Controller
+                    name="credit_card_id"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value || NO_CREDIT_CARD_VALUE}
+                        onValueChange={(value) =>
+                          field.onChange(value === NO_CREDIT_CARD_VALUE ? '' : value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione (opcional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_CREDIT_CARD_VALUE}>Nenhum</SelectItem>
+                          {creditCards.map((card) => (
+                            <SelectItem key={card.id} value={card.id}>
+                              {card.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              )}
+
             {expenseType !== 'recurrent' && (
               <div className="space-y-2">
                 <Label>Data</Label>
@@ -518,7 +567,7 @@ export function ExpenseModal({
           {expenseType === 'recurrent' && !isEditing && (
             <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Recorrência</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="recurrence_day">Dia do mês</Label>
                   <Input

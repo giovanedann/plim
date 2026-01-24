@@ -159,6 +159,7 @@ export function ExpenseFilters({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="none">Sem cartão</SelectItem>
                     {creditCards.map((card) => (
                       <SelectItem key={card.id} value={card.id}>
                         {card.name}
@@ -188,6 +189,7 @@ export function ExpenseFilters({
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         categories={categories}
+        creditCards={creditCards}
         selectedMonth={selectedMonth}
         spendingLimit={spendingLimit}
         totalExpenses={totalExpenses}
