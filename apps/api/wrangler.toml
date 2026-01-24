@@ -8,6 +8,10 @@ compatibility_date = "2025-01-13"
 # UPSTASH_REDIS_REST_URL = ""
 # UPSTASH_REDIS_REST_TOKEN = ""
 
+routes = [
+  { pattern = "api.plim.app.br", zone_name = "plim.app.br", custom_domain = true }
+]
+
 [[r2_buckets]]
 binding = "AVATARS_BUCKET"
 bucket_name = "plim-avatars"

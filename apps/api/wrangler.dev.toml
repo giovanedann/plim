@@ -12,3 +12,7 @@ remote = true
 
 [vars]
 R2_PUBLIC_URL = "https://pub-c949aa032b0444a2b23f93bd59ad1e4e.r2.dev"
+
+routes = [
+    { pattern = "api.plim.app.br", zone_name = "plim.app.br", custom_domain = true }
+  ]
