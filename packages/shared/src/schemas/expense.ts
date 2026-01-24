@@ -80,7 +80,7 @@ export const expenseFiltersSchema = z.object({
   category_id: z.uuid().optional(),
   payment_method: paymentMethodSchema.optional(),
   expense_type: expenseTypeSchema.optional(),
-  credit_card_id: z.uuid().optional(),
+  credit_card_id: z.union([z.uuid(), z.literal('none')]).optional(),
 })
 
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
