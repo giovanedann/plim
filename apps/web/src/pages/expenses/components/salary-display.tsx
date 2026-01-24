@@ -98,7 +98,7 @@ export function SalaryDisplay({
       const parts = selectedMonth.split('-').map(Number)
       const year = parts[0] ?? 0
       const month = parts[1] ?? 1
-      const effectiveFrom = new Date(year, month - 1, 1).toISOString().split('T')[0] as string
+      const effectiveFrom = `${year}-${String(month).padStart(2, '0')}-01`
 
       const response = await salaryService.createSalary({
         amount_cents: amountCents,

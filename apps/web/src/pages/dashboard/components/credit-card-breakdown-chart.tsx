@@ -72,7 +72,7 @@ function getCardLabel(name: string, bank: string, flag: string): string {
 export function CreditCardBreakdownChart({ data, isLoading }: CreditCardBreakdownChartProps) {
   const chartData = useMemo(() => {
     if (!data?.data) return []
-    return data.data.map((item) => ({
+    return data.data.slice(0, 5).map((item) => ({
       name: item.credit_card_id ? getCardLabel(item.name, item.bank, item.flag) : item.name,
       shortName: item.name,
       value: item.amount / 100,
@@ -124,7 +124,7 @@ export function CreditCardBreakdownChart({ data, isLoading }: CreditCardBreakdow
     <Card className="h-full">
       <CardHeader>
         <CardTitle>Cartões de Crédito</CardTitle>
-        <CardDescription>Gastos por cartão</CardDescription>
+        <CardDescription>Top 5 cartões do período</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer

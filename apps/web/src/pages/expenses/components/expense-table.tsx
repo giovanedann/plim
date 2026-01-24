@@ -28,7 +28,7 @@ import {
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
 import { formatBRL } from '@plim/shared'
-import type { Category, EffectiveSpendingLimit, Expense } from '@plim/shared'
+import type { Category, CreditCard, EffectiveSpendingLimit, Expense } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -39,6 +39,7 @@ import { InstallmentGroupModal } from './installment-group-modal'
 interface ExpenseTableProps {
   expenses: Expense[]
   categories: Category[]
+  creditCards: CreditCard[]
   isLoading: boolean
   selectedMonth: string
   spendingLimit?: EffectiveSpendingLimit | null
@@ -60,12 +61,16 @@ function formatDate(dateString: string) {
 function getPreviousMonthEnd(currentDate: string): string {
   const date = new Date(`${currentDate}T00:00:00`)
   date.setDate(0)
-  return date.toISOString().split('T')[0] as string
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 export function ExpenseTable({
   expenses,
   categories,
+  creditCards,
   isLoading,
   selectedMonth,
   spendingLimit,
@@ -311,6 +316,7 @@ export function ExpenseTable({
         open={expenseToEdit !== null}
         onOpenChange={(open) => !open && setExpenseToEdit(null)}
         categories={categories}
+        creditCards={creditCards}
         selectedMonth={selectedMonth}
         expense={expenseToEdit ?? undefined}
         spendingLimit={spendingLimit}

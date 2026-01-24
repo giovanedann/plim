@@ -12,14 +12,21 @@ function parseMonth(month: string): [number, number] {
   return [parts[0] ?? 0, parts[1] ?? 1]
 }
 
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 function getMonthBounds(month: string) {
   const [year, monthNum] = parseMonth(month)
   const startDate = new Date(year, monthNum - 1, 1)
   const endDate = new Date(year, monthNum, 0)
 
   return {
-    start_date: startDate.toISOString().split('T')[0],
-    end_date: endDate.toISOString().split('T')[0],
+    start_date: formatLocalDate(startDate),
+    end_date: formatLocalDate(endDate),
   }
 }
 
@@ -157,6 +164,7 @@ export function useExpensesPage() {
     filters,
     setFilters,
     expenses,
+    allExpenses,
     categories,
     creditCards,
     salary,

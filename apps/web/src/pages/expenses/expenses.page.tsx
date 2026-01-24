@@ -13,6 +13,7 @@ export function ExpensesPage() {
     filters,
     setFilters,
     expenses,
+    allExpenses,
     categories,
     creditCards,
     salary,
@@ -51,7 +52,7 @@ export function ExpensesPage() {
       </div>
 
       <div className="px-4 lg:px-6">
-        <ExpenseChart expenses={expenses} selectedMonth={selectedMonth} isLoading={isLoading} />
+        <ExpenseChart expenses={allExpenses} selectedMonth={selectedMonth} isLoading={isLoading} />
       </div>
 
       <div className="px-4 lg:px-6">
@@ -70,6 +71,7 @@ export function ExpensesPage() {
         <ExpenseTable
           expenses={expenses}
           categories={categories}
+          creditCards={creditCards}
           isLoading={isLoading}
           selectedMonth={selectedMonth}
           spendingLimit={spendingLimit}

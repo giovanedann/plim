@@ -16,7 +16,7 @@ export const salaryService = {
 
   async createCurrentMonthSalary(amountInCents: number) {
     const now = new Date()
-    const effectiveFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const effectiveFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 
     return api.post<SalaryHistory>('/salary', {
       amount_cents: amountInCents,
