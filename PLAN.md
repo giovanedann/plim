@@ -198,6 +198,22 @@
 - [x] Call-to-action buttons to return to dashboard or go back
 - [x] Catch-all route in router.tsx
 
+### Phase 16b: Credit Card Registration ✅
+
+**Status:** ✅ Complete (2026-01-23)
+
+- [x] Create credit card database schema with encrypted last 4 digits
+- [x] Create `private.credit_card_data` table with RLS policies
+- [x] Create `public.spending_limit` table for credit card limits
+- [x] Implement credit cards CRUD API endpoints
+- [x] Create shared Zod schemas for credit cards
+- [x] Create `/credit-cards` page with list view
+- [x] Add 3D card animations with Framer Motion (spin, drag, rotate)
+- [x] Add credit card properties: name, color, flag (Visa, Mastercard), bank (Nubank, Inter, etc.)
+- [x] Add expenses by credit card chart to dashboard
+- [x] Add credit card filter to `/expenses` page
+- [x] Link expenses to credit cards (optional `credit_card_id` field)
+
 ### Phase 17: Deployment
 
 #### 17.1 API Deployment
@@ -256,9 +272,9 @@ Track these items while collecting beta feedback. Implement before public launch
 - [ ] Add loading skeletons for better perceived performance
 
 #### 18.5 Security Hardening
-- [ ] Add rate limiting to API endpoints (Cloudflare rate limiting)
-- [ ] Add CORS configuration for production domain only
-- [ ] Audit RLS policies with Supabase security advisor
+- [x] Add rate limiting to API endpoints (Upstash Redis - 50 req/60s per IP)
+- [x] Add CORS configuration for production domain only
+- [x] Audit RLS policies with Supabase security advisor (8 auth_rls_initplan warnings fixed)
 - [ ] Review and document authentication token handling
 
 #### 18.6 Data & Backup
@@ -330,6 +346,7 @@ Track these items while collecting beta feedback. Implement before public launch
 | `installment_current`  | integer     | Nullable                                   |
 | `installment_total`    | integer     | Nullable                                   |
 | `installment_group_id` | uuid        | Nullable                                   |
+| `credit_card_id`       | uuid        | Nullable, FK to credit_card.id             |
 | `created_at`           | timestamptz |                                            |
 | `updated_at`           | timestamptz |                                            |
 
@@ -342,6 +359,39 @@ Track these items while collecting beta feedback. Implement before public launch
 | `amount_cents`   | integer     | BRL in centavos          |
 | `effective_from` | date        | When this salary started |
 | `created_at`     | timestamptz |                          |
+
+### credit_card
+
+| Column       | Type        | Notes                                    |
+| ------------ | ----------- | ---------------------------------------- |
+| `id`         | uuid        | PK                                       |
+| `user_id`    | uuid        | FK to auth.users                         |
+| `name`       | text        | e.g., 'Nubank', 'Inter Black'            |
+| `color`      | text        | Hex color for card display               |
+| `flag`       | text        | 'visa', 'mastercard', 'elo', etc.        |
+| `bank`       | text        | 'Nubank', 'Inter', 'Santander', etc.     |
+| `created_at` | timestamptz |                                          |
+| `updated_at` | timestamptz |                                          |
+
+### private.credit_card_data
+
+| Column           | Type        | Notes                                |
+| ---------------- | ----------- | ------------------------------------ |
+| `credit_card_id` | uuid        | PK, FK to credit_card.id             |
+| `last_four`      | text        | Encrypted last 4 digits (optional)   |
+| `created_at`     | timestamptz |                                      |
+| `updated_at`     | timestamptz |                                      |
+
+### spending_limit
+
+| Column           | Type        | Notes                        |
+| ---------------- | ----------- | ---------------------------- |
+| `id`             | uuid        | PK                           |
+| `user_id`        | uuid        | FK to auth.users             |
+| `credit_card_id` | uuid        | FK to credit_card.id         |
+| `limit_cents`    | integer     | Credit limit in centavos     |
+| `created_at`     | timestamptz |                              |
+| `updated_at`     | timestamptz |                              |
 
 ---
 
@@ -356,6 +406,7 @@ Track these items while collecting beta feedback. Implement before public launch
 7. **Controller → UseCase → Repository** — Backend architecture
 8. **Dark/Light mode** — shadcn theme provider, system preference default
 9. **Onboarding flow** — Guided setup after sign-up (salary, categories, first expense)
+10. **Credit cards** — Optional expense linking, encrypted sensitive data (last 4 digits), 3D card animations
 
 ---
 
@@ -412,5 +463,7 @@ Based on expected query patterns:
 
 - `expense(user_id, date)` — Fetching user's expenses by month
 - `expense(installment_group_id)` — Grouping installments
+- `expense(credit_card_id)` — Filtering expenses by credit card
 - `salary_history(user_id, effective_from)` — Finding active salary for a date
 - `category(user_id)` — Fetching user's categories
+- `credit_card(user_id)` — Fetching user's credit cards
