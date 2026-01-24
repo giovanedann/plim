@@ -5,6 +5,8 @@ compatibility_date = "2025-01-13"
 # Environment variables (set via wrangler secret or dashboard)
 # SUPABASE_URL = ""
 # SUPABASE_PUBLISHABLE_KEY = ""
+# UPSTASH_REDIS_REST_URL = ""
+# UPSTASH_REDIS_REST_TOKEN = ""
 
 [[r2_buckets]]
 binding = "AVATARS_BUCKET"

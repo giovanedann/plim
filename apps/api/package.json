@@ -16,6 +16,8 @@
     "@hono/standard-validator": "^0.2.2",
     "@plim/shared": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.1",
     "hono": "^4.7.4",
     "zod": "^4.3.5"
   },

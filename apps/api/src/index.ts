@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.middleware'
 import { errorHandler } from './middleware/error-handler.middleware'
+import { rateLimitMiddleware } from './middleware/rate-limit.middleware'
 import { categoriesController } from './modules/categories/categories.controller'
 import { creditCardsController } from './modules/credit-cards/credit-cards.controller'
 import { dashboardController } from './modules/dashboard/dashboard.controller'
@@ -41,6 +42,7 @@ app.get('/health', (c) => {
 })
 
 const api = new Hono<Env>()
+api.use('*', rateLimitMiddleware)
 api.use('*', authMiddleware)
 api.route('/profile', profileController)
 api.route('/categories', categoriesController)
