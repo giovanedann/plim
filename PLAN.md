@@ -265,11 +265,11 @@ Track these items while collecting beta feedback. Implement before public launch
 - [ ] Add branch protection rules
 
 #### 18.4 Performance & Optimization
-- [ ] Add React Query cache configuration for dashboard data
+- [x] Add React Query cache configuration for dashboard data
 - [ ] Implement pagination for expenses list (currently loads all)
 - [ ] Add image optimization for avatar uploads (resize/compress)
 - [ ] Analyze and optimize bundle size (code splitting)
-- [ ] Add loading skeletons for better perceived performance
+- [x] Add loading skeletons for better perceived performance
 
 #### 18.5 Security Hardening
 - [x] Add rate limiting to API endpoints (Upstash Redis - 50 req/60s per IP)
@@ -290,7 +290,7 @@ Track these items while collecting beta feedback. Implement before public launch
 
 #### 18.8 User Experience Polish
 - [ ] Add loading states to all async operations
-- [ ] Add toast notifications for success/error feedback
+- [x] Add toast notifications for success/error feedback
 - [ ] Improve form validation error messages
 - [ ] Add keyboard shortcuts documentation
 - [ ] Test and fix mobile responsiveness issues
