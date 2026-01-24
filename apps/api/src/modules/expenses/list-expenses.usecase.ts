@@ -60,6 +60,17 @@ export class ListExpensesUseCase {
       if (filters?.payment_method && expense.payment_method !== filters.payment_method) {
         continue
       }
+      if (filters?.credit_card_id) {
+        if (filters.credit_card_id === 'none' && expense.credit_card_id !== null) {
+          continue
+        }
+        if (
+          filters.credit_card_id !== 'none' &&
+          expense.credit_card_id !== filters.credit_card_id
+        ) {
+          continue
+        }
+      }
 
       const recurrenceStart = expense.recurrence_start ? new Date(expense.recurrence_start) : null
       const recurrenceEnd = expense.recurrence_end ? new Date(expense.recurrence_end) : null

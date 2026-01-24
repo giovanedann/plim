@@ -74,7 +74,11 @@ export class ExpensesRepository {
     }
 
     if (filters?.credit_card_id) {
-      query = query.eq('credit_card_id', filters.credit_card_id)
+      if (filters.credit_card_id === 'none') {
+        query = query.is('credit_card_id', null)
+      } else {
+        query = query.eq('credit_card_id', filters.credit_card_id)
+      }
     }
 
     const { data, error } = await query.order('date', { ascending: false })
