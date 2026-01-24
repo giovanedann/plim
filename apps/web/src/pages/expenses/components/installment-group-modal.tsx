@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
 import { formatBRL } from '@plim/shared'
@@ -56,8 +57,8 @@ export function InstallmentGroupModal({ open, onOpenChange, expense }: Installme
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['installment-group'] })
-      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Parcela antecipada com sucesso!')
     },
     onError: (error) => {

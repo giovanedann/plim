@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -266,8 +267,8 @@ export function ExpenseModal({
   const createMutation = useMutation({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Despesa criada com sucesso!')
       onOpenChange(false)
     },
@@ -280,8 +281,8 @@ export function ExpenseModal({
     mutationFn: ({ id, data }: { id: string; data: UpdateExpense }) =>
       expenseService.updateExpense(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Despesa atualizada com sucesso!')
       onOpenChange(false)
     },

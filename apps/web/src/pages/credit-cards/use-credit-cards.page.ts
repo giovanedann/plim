@@ -1,3 +1,4 @@
+import { queryConfig, queryKeys } from '@/lib/query-config'
 import { creditCardService } from '@/services/credit-card.service'
 import type { CreateCreditCard, CreditCard, UpdateCreditCard } from '@plim/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -11,17 +12,18 @@ export function useCreditCardsPage() {
   const [cardToDelete, setCardToDelete] = useState<CreditCard | null>(null)
 
   const creditCardsQuery = useQuery({
-    queryKey: ['credit-cards'],
+    queryKey: queryKeys.creditCards,
     queryFn: async () => {
       const response = await creditCardService.listCreditCards()
       return response.data || []
     },
+    staleTime: queryConfig.staleTime.creditCards,
   })
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCreditCard) => creditCardService.createCreditCard(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['credit-cards'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
       toast.success('Cartão criado com sucesso!')
       setIsModalOpen(false)
     },
@@ -34,7 +36,7 @@ export function useCreditCardsPage() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCreditCard }) =>
       creditCardService.updateCreditCard(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['credit-cards'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
       toast.success('Cartão atualizado com sucesso!')
       setIsModalOpen(false)
       setSelectedCard(null)
@@ -47,7 +49,7 @@ export function useCreditCardsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => creditCardService.deleteCreditCard(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['credit-cards'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
       toast.success('Cartão excluído com sucesso!')
       setCardToDelete(null)
     },

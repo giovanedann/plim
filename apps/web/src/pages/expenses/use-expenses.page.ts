@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
+import { queryConfig, queryKeys } from '@/lib/query-config'
 import { salaryService, spendingLimitService } from '@/services'
 import { categoryService } from '@/services/category.service'
 import { creditCardService } from '@/services/credit-card.service'
@@ -57,51 +58,55 @@ export function useExpensesPage() {
     [monthBounds, filters]
   )
 
-  // Filtered expenses for table display
   const { data: expensesResponse, isLoading: isLoadingExpenses } = useQuery({
-    queryKey: ['expenses', expenseFilters],
+    queryKey: queryKeys.expenses(expenseFilters),
     queryFn: () => expenseService.listExpenses(expenseFilters),
+    staleTime: queryConfig.staleTime.expenses,
   })
 
-  // All expenses for the month (unfiltered) for totals calculation
   const { data: allExpensesResponse, isLoading: isLoadingAllExpenses } = useQuery({
-    queryKey: ['expenses', monthBounds],
+    queryKey: queryKeys.expenses(monthBounds),
     queryFn: () => expenseService.listExpenses(monthBounds),
+    staleTime: queryConfig.staleTime.expenses,
   })
 
-  // Previous month expenses for comparison
   const { data: previousExpensesResponse } = useQuery({
-    queryKey: ['expenses', previousMonthBounds],
+    queryKey: queryKeys.expenses(previousMonthBounds),
     queryFn: () => expenseService.listExpenses(previousMonthBounds),
+    staleTime: queryConfig.staleTime.expenses,
   })
 
-  // Previous month salary for comparison
   const { data: previousSalaryResponse } = useQuery({
-    queryKey: ['salary', previousMonth],
+    queryKey: queryKeys.salary(previousMonth),
     queryFn: () => salaryService.getSalary(previousMonth),
+    staleTime: queryConfig.staleTime.salary,
   })
 
   const { data: categoriesResponse, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: queryKeys.categories,
     queryFn: () => categoryService.listCategories(),
+    staleTime: queryConfig.staleTime.categories,
   })
 
   const { data: creditCardsResponse, isLoading: isLoadingCreditCards } = useQuery({
-    queryKey: ['credit-cards'],
+    queryKey: queryKeys.creditCards,
     queryFn: async () => {
       const response = await creditCardService.listCreditCards()
       return response.data || []
     },
+    staleTime: queryConfig.staleTime.creditCards,
   })
 
   const { data: salaryResponse, isLoading: isLoadingSalary } = useQuery({
-    queryKey: ['salary', selectedMonth],
+    queryKey: queryKeys.salary(selectedMonth),
     queryFn: () => salaryService.getSalary(selectedMonth),
+    staleTime: queryConfig.staleTime.salary,
   })
 
   const { data: spendingLimitResponse, isLoading: isLoadingSpendingLimit } = useQuery({
-    queryKey: ['spending-limit', selectedMonth],
+    queryKey: queryKeys.spendingLimit(selectedMonth),
     queryFn: () => spendingLimitService.getSpendingLimit(selectedMonth),
+    staleTime: queryConfig.staleTime.spendingLimit,
   })
 
   const expenses = expensesResponse?.data ?? []
@@ -113,7 +118,6 @@ export function useExpensesPage() {
   const previousSalary = previousSalaryResponse?.data ?? null
   const spendingLimit = spendingLimitResponse?.data ?? null
 
-  // Calculate totals from ALL expenses (not filtered)
   const totalExpenses = useMemo(
     () => allExpenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
     [allExpenses]
@@ -124,7 +128,6 @@ export function useExpensesPage() {
     [salary, totalExpenses]
   )
 
-  // Calculate previous month totals for comparison
   const previousTotalExpenses = useMemo(
     () => previousExpenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
     [previousExpenses]
@@ -135,7 +138,6 @@ export function useExpensesPage() {
     [previousSalary, previousTotalExpenses]
   )
 
-  // Comparison data - null if no previous expenses exist
   const comparison = useMemo(() => {
     const hasPreviousData = previousExpenses.length > 0 || previousSalary !== null
     if (!hasPreviousData) {

@@ -1,3 +1,4 @@
+import { queryConfig, queryKeys } from '@/lib/query-config'
 import { categoryService } from '@/services/category.service'
 import type { CreateCategory, UpdateCategory } from '@plim/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -7,8 +8,9 @@ export function useCategoriesPage() {
   const queryClient = useQueryClient()
 
   const categoriesQuery = useQuery({
-    queryKey: ['categories'],
+    queryKey: queryKeys.categories,
     queryFn: () => categoryService.listCategories(),
+    staleTime: queryConfig.staleTime.categories,
   })
 
   const categories = categoriesQuery.data?.data ?? []
@@ -20,7 +22,7 @@ export function useCategoriesPage() {
   const createMutation = useMutation({
     mutationFn: (data: CreateCategory) => categoryService.createCategory(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
       toast.success('Categoria criada com sucesso!')
     },
     onError: (error) => {
@@ -32,7 +34,7 @@ export function useCategoriesPage() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCategory }) =>
       categoryService.updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
       toast.success('Categoria atualizada com sucesso!')
     },
     onError: (error) => {
@@ -43,7 +45,7 @@ export function useCategoriesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => categoryService.deleteCategory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
       toast.success('Categoria excluída com sucesso!')
     },
     onError: (error) => {

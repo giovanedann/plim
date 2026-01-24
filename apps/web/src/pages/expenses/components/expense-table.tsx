@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
 import { formatBRL } from '@plim/shared'
@@ -90,8 +91,8 @@ export function ExpenseTable({
   const deleteMutation = useMutation({
     mutationFn: (id: string) => expenseService.deleteExpense(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Despesa excluída com sucesso!')
       setExpenseToDelete(null)
     },
@@ -104,8 +105,8 @@ export function ExpenseTable({
     mutationFn: ({ id, endDate }: { id: string; endDate: string }) =>
       expenseService.cancelRecurrence(id, endDate),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       toast.success('Recorrência cancelada com sucesso!')
       setExpenseToDelete(null)
     },
@@ -117,8 +118,8 @@ export function ExpenseTable({
   const deleteInstallmentGroupMutation = useMutation({
     mutationFn: (groupId: string) => expenseService.deleteInstallmentGroup(groupId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       queryClient.invalidateQueries({ queryKey: ['installment-group'] })
       toast.success('Todas as parcelas foram excluídas!')
       setExpenseToDelete(null)

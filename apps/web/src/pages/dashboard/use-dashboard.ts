@@ -1,3 +1,4 @@
+import { queryConfig, queryKeys } from '@/lib/query-config'
 import { dashboardService } from '@/services/dashboard.service'
 import type { DashboardQuery, ExpensesTimelineQuery, TimelineGroupBy } from '@plim/shared'
 import { useQuery } from '@tanstack/react-query'
@@ -46,12 +47,13 @@ export function useDashboard() {
   const defaultGroupBy = useMemo(() => getDefaultGroupBy(timeRange), [timeRange])
 
   const summaryQuery = useQuery({
-    queryKey: ['dashboard', 'summary', dateRange],
+    queryKey: queryKeys.dashboard.summary(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getSummary(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const timelineQuery: ExpensesTimelineQuery = useMemo(
@@ -60,75 +62,83 @@ export function useDashboard() {
   )
 
   const expensesTimelineQuery = useQuery({
-    queryKey: ['dashboard', 'expenses-timeline', timelineQuery],
+    queryKey: queryKeys.dashboard.expensesTimeline(timelineQuery),
     queryFn: async () => {
       const result = await dashboardService.getExpensesTimeline(timelineQuery)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const incomeVsExpensesQuery = useQuery({
-    queryKey: ['dashboard', 'income-vs-expenses', dateRange],
+    queryKey: queryKeys.dashboard.incomeVsExpenses(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getIncomeVsExpenses(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const categoryBreakdownQuery = useQuery({
-    queryKey: ['dashboard', 'category-breakdown', dateRange],
+    queryKey: queryKeys.dashboard.categoryBreakdown(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getCategoryBreakdown(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const paymentBreakdownQuery = useQuery({
-    queryKey: ['dashboard', 'payment-breakdown', dateRange],
+    queryKey: queryKeys.dashboard.paymentBreakdown(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getPaymentBreakdown(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const creditCardBreakdownQuery = useQuery({
-    queryKey: ['dashboard', 'credit-card-breakdown', dateRange],
+    queryKey: queryKeys.dashboard.creditCardBreakdown(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getCreditCardBreakdown(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const savingsRateQuery = useQuery({
-    queryKey: ['dashboard', 'savings-rate', dateRange],
+    queryKey: queryKeys.dashboard.savingsRate(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getSavingsRate(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const salaryTimelineQuery = useQuery({
-    queryKey: ['dashboard', 'salary-timeline', dateRange],
+    queryKey: queryKeys.dashboard.salaryTimeline(dateRange),
     queryFn: async () => {
       const result = await dashboardService.getSalaryTimeline(dateRange)
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const installmentForecastQuery = useQuery({
-    queryKey: ['dashboard', 'installment-forecast'],
+    queryKey: queryKeys.dashboard.installmentForecast,
     queryFn: async () => {
       const result = await dashboardService.getInstallmentForecast()
       if (result.error) throw new Error(result.error.message)
       return result.data
     },
+    staleTime: queryConfig.staleTime.dashboard,
   })
 
   const isLoading =

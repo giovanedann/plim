@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { queryConfig, queryKeys } from '@/lib/query-config'
 import { profileService } from '@/services/profile.service'
 import type { Profile } from '@plim/shared'
 
@@ -10,15 +11,16 @@ export function useProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
 
   const { data: profileResponse, isLoading } = useQuery({
-    queryKey: ['profile'],
+    queryKey: queryKeys.profile,
     queryFn: () => profileService.getProfile(),
+    staleTime: queryConfig.staleTime.profile,
   })
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<Pick<Profile, 'name' | 'currency' | 'locale'>>) =>
       profileService.updateProfile(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
       toast.success('Perfil atualizado')
       setIsEditing(false)
     },
@@ -34,7 +36,7 @@ export function useProfilePage() {
         toast.error(response.error.message)
         return
       }
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
       toast.success('Foto atualizada')
     },
     onError: () => {
@@ -45,7 +47,7 @@ export function useProfilePage() {
   const deleteAvatarMutation = useMutation({
     mutationFn: () => profileService.deleteAvatar(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
       toast.success('Foto removida')
     },
     onError: () => {
