@@ -34,6 +34,7 @@ export class CreateExpenseUseCase {
       payment_method: input.payment_method,
       date: input.date,
       is_recurrent: false,
+      credit_card_id: input.credit_card_id ?? null,
     }
 
     const expense = await this.expensesRepository.create(userId, data)
@@ -63,6 +64,7 @@ export class CreateExpenseUseCase {
       recurrence_day: input.recurrence_day,
       recurrence_start: input.recurrence_start,
       recurrence_end: input.recurrence_end ?? null,
+      credit_card_id: input.credit_card_id ?? null,
     }
 
     const expense = await this.expensesRepository.create(userId, data)
@@ -102,6 +104,7 @@ export class CreateExpenseUseCase {
         installment_current: i + 1,
         installment_total: input.installment_total,
         installment_group_id: groupId,
+        credit_card_id: input.credit_card_id ?? null,
       })
     }
 

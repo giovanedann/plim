@@ -14,6 +14,7 @@ export function ExpensesPage() {
     setFilters,
     expenses,
     categories,
+    creditCards,
     salary,
     spendingLimit,
     isLoading,
@@ -58,6 +59,7 @@ export function ExpensesPage() {
           filters={filters}
           onFiltersChange={setFilters}
           categories={categories}
+          creditCards={creditCards}
           selectedMonth={selectedMonth}
           spendingLimit={spendingLimit}
           totalExpenses={totalExpenses}

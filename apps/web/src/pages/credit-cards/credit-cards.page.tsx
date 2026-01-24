@@ -1,0 +1,95 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Plus } from 'lucide-react'
+import { CreditCardList } from './components/credit-card-list'
+import { CreditCardModal } from './components/credit-card-modal'
+import { useCreditCardsPage } from './use-credit-cards.page'
+
+export function CreditCardsPage() {
+  const {
+    creditCards,
+    isLoading,
+    isModalOpen,
+    setIsModalOpen,
+    selectedCard,
+    cardToDelete,
+    setCardToDelete,
+    openCreateModal,
+    openEditModal,
+    handleSubmit,
+    confirmDelete,
+    isPending,
+    isDeleting,
+  } = useCreditCardsPage()
+
+  return (
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Cartões de Crédito</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie seus cartões para organizar suas despesas.
+          </p>
+        </div>
+        <Button onClick={openCreateModal}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Cartão
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-44 w-72 rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <CreditCardList
+          creditCards={creditCards}
+          onEdit={openEditModal}
+          onDelete={setCardToDelete}
+        />
+      )}
+
+      <CreditCardModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        creditCard={selectedCard}
+        onSubmit={handleSubmit}
+        isPending={isPending}
+      />
+
+      <AlertDialog open={!!cardToDelete} onOpenChange={() => setCardToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cartão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cartão "{cardToDelete?.name}"? Esta ação não pode ser
+              desfeita. As despesas vinculadas a este cartão não serão excluídas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}

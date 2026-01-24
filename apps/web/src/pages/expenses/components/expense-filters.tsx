@@ -12,6 +12,7 @@ import { useUIStore } from '@/stores'
 import { EXPENSE_TYPES, PAYMENT_METHODS } from '@plim/shared'
 import type {
   Category,
+  CreditCard,
   EffectiveSpendingLimit,
   ExpenseFilters as ExpenseFiltersType,
 } from '@plim/shared'
@@ -23,6 +24,7 @@ interface ExpenseFiltersProps {
   filters: Omit<ExpenseFiltersType, 'start_date' | 'end_date'>
   onFiltersChange: (filters: Omit<ExpenseFiltersType, 'start_date' | 'end_date'>) => void
   categories: Category[]
+  creditCards: CreditCard[]
   selectedMonth: string
   spendingLimit?: EffectiveSpendingLimit | null
   totalExpenses?: number
@@ -32,6 +34,7 @@ export function ExpenseFilters({
   filters,
   onFiltersChange,
   categories,
+  creditCards,
   selectedMonth,
   spendingLimit,
   totalExpenses,
@@ -60,11 +63,19 @@ export function ExpenseFilters({
     })
   }
 
+  const handleCreditCardChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      credit_card_id: value === 'all' ? undefined : value,
+    })
+  }
+
   const clearFilters = () => {
     onFiltersChange({})
   }
 
-  const hasActiveFilters = filters.category_id || filters.payment_method || filters.expense_type
+  const hasActiveFilters =
+    filters.category_id || filters.payment_method || filters.expense_type || filters.credit_card_id
 
   return (
     <Card>
@@ -135,6 +146,28 @@ export function ExpenseFilters({
                 </SelectContent>
               </Select>
             </div>
+
+            {creditCards.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Cartão</Label>
+                <Select
+                  value={filters.credit_card_id ?? 'all'}
+                  onValueChange={handleCreditCardChange}
+                >
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {creditCards.map((card) => (
+                      <SelectItem key={card.id} value={card.id}>
+                        {card.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">

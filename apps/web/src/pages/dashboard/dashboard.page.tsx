@@ -1,4 +1,5 @@
 import { CategoryBreakdownChart } from './components/category-breakdown-chart'
+import { CreditCardBreakdownChart } from './components/credit-card-breakdown-chart'
 import { ExpensesTimelineChart } from './components/expenses-timeline-chart'
 import { IncomeExpensesChart } from './components/income-expenses-chart'
 import { InstallmentForecast } from './components/installment-forecast'
@@ -19,6 +20,7 @@ export function DashboardPage() {
     incomeVsExpenses,
     categoryBreakdown,
     paymentBreakdown,
+    creditCardBreakdown,
     savingsRate,
     salaryTimeline,
     installmentForecast,
@@ -27,6 +29,7 @@ export function DashboardPage() {
     isIncomeVsExpensesLoading,
     isCategoryBreakdownLoading,
     isPaymentBreakdownLoading,
+    isCreditCardBreakdownLoading,
     isSavingsRateLoading,
     isSalaryTimelineLoading,
     isInstallmentForecastLoading,
@@ -62,12 +65,18 @@ export function DashboardPage() {
         )}
       </div>
 
-      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 lg:px-6">
         <div className="min-w-0">
           <CategoryBreakdownChart data={categoryBreakdown} isLoading={isCategoryBreakdownLoading} />
         </div>
         <div className="min-w-0">
           <PaymentBreakdownChart data={paymentBreakdown} isLoading={isPaymentBreakdownLoading} />
+        </div>
+        <div className="min-w-0 md:col-span-2 lg:col-span-1">
+          <CreditCardBreakdownChart
+            data={creditCardBreakdown}
+            isLoading={isCreditCardBreakdownLoading}
+          />
         </div>
       </div>
 

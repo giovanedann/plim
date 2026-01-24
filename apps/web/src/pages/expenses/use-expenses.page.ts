@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import { salaryService, spendingLimitService } from '@/services'
 import { categoryService } from '@/services/category.service'
+import { creditCardService } from '@/services/credit-card.service'
 import { expenseService } from '@/services/expense.service'
 import type { ExpenseFilters } from '@plim/shared'
 
@@ -78,6 +79,14 @@ export function useExpensesPage() {
     queryFn: () => categoryService.listCategories(),
   })
 
+  const { data: creditCardsResponse, isLoading: isLoadingCreditCards } = useQuery({
+    queryKey: ['credit-cards'],
+    queryFn: async () => {
+      const response = await creditCardService.listCreditCards()
+      return response.data || []
+    },
+  })
+
   const { data: salaryResponse, isLoading: isLoadingSalary } = useQuery({
     queryKey: ['salary', selectedMonth],
     queryFn: () => salaryService.getSalary(selectedMonth),
@@ -92,6 +101,7 @@ export function useExpensesPage() {
   const allExpenses = allExpensesResponse?.data ?? []
   const previousExpenses = previousExpensesResponse?.data ?? []
   const categories = categoriesResponse?.data ?? []
+  const creditCards = creditCardsResponse ?? []
   const salary = salaryResponse?.data ?? null
   const previousSalary = previousSalaryResponse?.data ?? null
   const spendingLimit = spendingLimitResponse?.data ?? null
@@ -137,6 +147,7 @@ export function useExpensesPage() {
     isLoadingExpenses ||
     isLoadingAllExpenses ||
     isLoadingCategories ||
+    isLoadingCreditCards ||
     isLoadingSalary ||
     isLoadingSpendingLimit
 
@@ -147,6 +158,7 @@ export function useExpensesPage() {
     setFilters,
     expenses,
     categories,
+    creditCards,
     salary,
     spendingLimit,
     isLoading,

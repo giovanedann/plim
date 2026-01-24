@@ -16,6 +16,7 @@ const EXPENSE_COLUMNS = `
   installment_current,
   installment_total,
   installment_group_id,
+  credit_card_id,
   created_at,
   updated_at
 `
@@ -33,6 +34,7 @@ export interface CreateExpenseData {
   installment_current?: number | null
   installment_total?: number | null
   installment_group_id?: string | null
+  credit_card_id?: string | null
 }
 
 export class ExpensesRepository {
@@ -69,6 +71,10 @@ export class ExpensesRepository {
           query = query.not('installment_total', 'is', null)
           break
       }
+    }
+
+    if (filters?.credit_card_id) {
+      query = query.eq('credit_card_id', filters.credit_card_id)
     }
 
     const { data, error } = await query.order('date', { ascending: false })
@@ -121,6 +127,7 @@ export class ExpensesRepository {
         installment_current: input.installment_current ?? null,
         installment_total: input.installment_total ?? null,
         installment_group_id: input.installment_group_id ?? null,
+        credit_card_id: input.credit_card_id ?? null,
       })
       .select(EXPENSE_COLUMNS)
       .single()
@@ -145,6 +152,7 @@ export class ExpensesRepository {
       installment_current: input.installment_current ?? null,
       installment_total: input.installment_total ?? null,
       installment_group_id: input.installment_group_id ?? null,
+      credit_card_id: input.credit_card_id ?? null,
     }))
 
     const { data, error } = await this.supabase

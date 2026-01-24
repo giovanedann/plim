@@ -97,6 +97,21 @@ export const installmentForecastResponseSchema = z.object({
   data: z.array(installmentForecastMonthSchema),
 })
 
+export const creditCardBreakdownItemSchema = z.object({
+  credit_card_id: z.uuid().nullable(),
+  name: z.string(),
+  color: z.string(),
+  bank: z.string(),
+  flag: z.string(),
+  amount: z.number().int().nonnegative(),
+  percentage: z.number(),
+})
+
+export const creditCardBreakdownResponseSchema = z.object({
+  data: z.array(creditCardBreakdownItemSchema),
+  total: z.number().int().nonnegative(),
+})
+
 export type DashboardQuery = z.infer<typeof dashboardQuerySchema>
 export type TimelineGroupBy = z.infer<typeof timelineGroupBySchema>
 export type ExpensesTimelineQuery = z.infer<typeof expensesTimelineQuerySchema>
@@ -116,3 +131,5 @@ export type SalaryTimelineDataPoint = z.infer<typeof salaryTimelineDataPointSche
 export type SalaryTimelineResponse = z.infer<typeof salaryTimelineResponseSchema>
 export type InstallmentForecastMonth = z.infer<typeof installmentForecastMonthSchema>
 export type InstallmentForecastResponse = z.infer<typeof installmentForecastResponseSchema>
+export type CreditCardBreakdownItem = z.infer<typeof creditCardBreakdownItemSchema>
+export type CreditCardBreakdownResponse = z.infer<typeof creditCardBreakdownResponseSchema>

@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.middleware'
 import { errorHandler } from './middleware/error-handler.middleware'
 import { categoriesController } from './modules/categories/categories.controller'
+import { creditCardsController } from './modules/credit-cards/credit-cards.controller'
 import { dashboardController } from './modules/dashboard/dashboard.controller'
 import { expensesController } from './modules/expenses/expenses.controller'
 import { profileController } from './modules/profile/profile.controller'
@@ -31,6 +32,7 @@ api.route('/expenses', expensesController)
 api.route('/salary', salaryController)
 api.route('/spending-limits', spendingLimitsController)
 api.route('/dashboard', dashboardController)
+api.route('/credit-cards', creditCardsController)
 
 app.route('/api/v1', api)
 

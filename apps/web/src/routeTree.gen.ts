@@ -20,6 +20,7 @@ import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
+import { Route as AppCreditCardsRouteImport } from './routes/_app/credit-cards'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -74,11 +75,17 @@ const AppCategoriesRoute = AppCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCreditCardsRoute = AppCreditCardsRouteImport.update({
+  id: '/credit-cards',
+  path: '/credit-cards',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/categories': typeof AppCategoriesRoute
+  '/credit-cards': typeof AppCreditCardsRoute
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
   '/profile': typeof AppProfileRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/categories': typeof AppCategoriesRoute
+  '/credit-cards': typeof AppCreditCardsRoute
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
   '/profile': typeof AppProfileRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
   '/_app/categories': typeof AppCategoriesRoute
+  '/_app/credit-cards': typeof AppCreditCardsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/expenses': typeof AppExpensesRoute
   '/_app/profile': typeof AppProfileRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/categories'
+    | '/credit-cards'
     | '/dashboard'
     | '/expenses'
     | '/profile'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/categories'
+    | '/credit-cards'
     | '/dashboard'
     | '/expenses'
     | '/profile'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_auth'
     | '/_app/categories'
+    | '/_app/credit-cards'
     | '/_app/dashboard'
     | '/_app/expenses'
     | '/_app/profile'
@@ -236,11 +248,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/credit-cards': {
+      id: '/_app/credit-cards'
+      path: '/credit-cards'
+      fullPath: '/credit-cards'
+      preLoaderRoute: typeof AppCreditCardsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppCategoriesRoute: typeof AppCategoriesRoute
+  AppCreditCardsRoute: typeof AppCreditCardsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppExpensesRoute: typeof AppExpensesRoute
   AppProfileRoute: typeof AppProfileRoute
@@ -248,6 +268,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriesRoute: AppCategoriesRoute,
+  AppCreditCardsRoute: AppCreditCardsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppExpensesRoute: AppExpensesRoute,
   AppProfileRoute: AppProfileRoute,

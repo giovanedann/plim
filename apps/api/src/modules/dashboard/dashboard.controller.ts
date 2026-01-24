@@ -5,6 +5,7 @@ import { type Bindings, createSupabaseClientWithAuth } from '../../lib/supabase'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { DashboardRepository } from './dashboard.repository'
 import { GetCategoryBreakdownUseCase } from './get-category-breakdown.usecase'
+import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.usecase'
 import { GetExpensesTimelineUseCase } from './get-expenses-timeline.usecase'
 import { GetIncomeVsExpensesUseCase } from './get-income-vs-expenses.usecase'
 import { GetInstallmentForecastUseCase } from './get-installment-forecast.usecase'
@@ -99,6 +100,24 @@ dashboardController.get(
     const supabase = createSupabaseClientWithAuth(c.env, accessToken)
     const repository = new DashboardRepository(supabase)
     const useCase = new GetPaymentBreakdownUseCase(repository)
+
+    const data = await useCase.execute(userId, query)
+
+    return c.json({ data }, HTTP_STATUS.OK)
+  }
+)
+
+dashboardController.get(
+  '/credit-card-breakdown',
+  sValidator('query', dashboardQuerySchema),
+  async (c) => {
+    const userId = c.get('userId')
+    const accessToken = c.get('accessToken')
+    const query = c.req.valid('query')
+
+    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
+    const repository = new DashboardRepository(supabase)
+    const useCase = new GetCreditCardBreakdownUseCase(repository)
 
     const data = await useCase.execute(userId, query)
 

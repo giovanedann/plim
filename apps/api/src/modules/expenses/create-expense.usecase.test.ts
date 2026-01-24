@@ -20,6 +20,7 @@ const baseExpense: Expense = {
   installment_current: null,
   installment_total: null,
   installment_group_id: null,
+  credit_card_id: null,
   created_at: '2024-01-15T00:00:00Z',
   updated_at: '2024-01-15T00:00:00Z',
 }
@@ -61,6 +62,7 @@ describe('CreateExpenseUseCase', () => {
         payment_method: 'credit_card',
         date: '2024-01-15',
         is_recurrent: false,
+        credit_card_id: null,
       })
     })
 
@@ -116,6 +118,7 @@ describe('CreateExpenseUseCase', () => {
         recurrence_day: 15,
         recurrence_start: '2024-01-15',
         recurrence_end: null,
+        credit_card_id: null,
       })
     })
 

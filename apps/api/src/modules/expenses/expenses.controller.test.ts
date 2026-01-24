@@ -38,6 +38,7 @@ const baseExpense: Expense = {
   installment_current: null,
   installment_total: null,
   installment_group_id: null,
+  credit_card_id: null,
   created_at: '2024-01-15T00:00:00Z',
   updated_at: '2024-01-15T00:00:00Z',
 }

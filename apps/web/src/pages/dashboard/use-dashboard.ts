@@ -95,6 +95,15 @@ export function useDashboard() {
     },
   })
 
+  const creditCardBreakdownQuery = useQuery({
+    queryKey: ['dashboard', 'credit-card-breakdown', dateRange],
+    queryFn: async () => {
+      const result = await dashboardService.getCreditCardBreakdown(dateRange)
+      if (result.error) throw new Error(result.error.message)
+      return result.data
+    },
+  })
+
   const savingsRateQuery = useQuery({
     queryKey: ['dashboard', 'savings-rate', dateRange],
     queryFn: async () => {
@@ -137,6 +146,7 @@ export function useDashboard() {
     incomeVsExpenses: incomeVsExpensesQuery.data,
     categoryBreakdown: categoryBreakdownQuery.data,
     paymentBreakdown: paymentBreakdownQuery.data,
+    creditCardBreakdown: creditCardBreakdownQuery.data,
     savingsRate: savingsRateQuery.data,
     salaryTimeline: salaryTimelineQuery.data,
     installmentForecast: installmentForecastQuery.data,
@@ -146,6 +156,7 @@ export function useDashboard() {
     isIncomeVsExpensesLoading: incomeVsExpensesQuery.isLoading,
     isCategoryBreakdownLoading: categoryBreakdownQuery.isLoading,
     isPaymentBreakdownLoading: paymentBreakdownQuery.isLoading,
+    isCreditCardBreakdownLoading: creditCardBreakdownQuery.isLoading,
     isSavingsRateLoading: savingsRateQuery.isLoading,
     isSalaryTimelineLoading: salaryTimelineQuery.isLoading,
     isInstallmentForecastLoading: installmentForecastQuery.isLoading,

@@ -1,5 +1,6 @@
 import type {
   CategoryBreakdownItem,
+  CreditCardBreakdownItem,
   DashboardQuery,
   IncomeExpensesDataPoint,
   InstallmentForecastMonth,
@@ -23,6 +24,16 @@ interface ExpenseRow {
   installment_total: number | null
   installment_current: number | null
   description: string
+}
+
+interface ExpenseWithCreditCardRow {
+  date: string
+  amount_cents: number
+  credit_card_id: string | null
+  credit_card_name: string | null
+  credit_card_color: string | null
+  credit_card_bank: string | null
+  credit_card_flag: string | null
 }
 
 interface SalaryRow {
@@ -232,6 +243,82 @@ export class DashboardRepository {
         method,
         amount,
         percentage: total > 0 ? (amount / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount)
+  }
+
+  async getExpensesWithCreditCards(
+    userId: string,
+    query: DashboardQuery
+  ): Promise<ExpenseWithCreditCardRow[]> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .select(`
+        date,
+        amount_cents,
+        credit_card_id,
+        credit_card:credit_card_id (name, color, bank, flag)
+      `)
+      .eq('user_id', userId)
+      .gte('date', query.start_date)
+      .lte('date', query.end_date)
+      .order('date', { ascending: true })
+
+    if (error || !data) return []
+
+    return data.map((row) => {
+      const creditCard = row.credit_card as unknown as {
+        name: string
+        color: string
+        bank: string
+        flag: string
+      } | null
+      return {
+        date: row.date,
+        amount_cents: row.amount_cents,
+        credit_card_id: row.credit_card_id,
+        credit_card_name: creditCard?.name ?? null,
+        credit_card_color: creditCard?.color ?? null,
+        credit_card_bank: creditCard?.bank ?? null,
+        credit_card_flag: creditCard?.flag ?? null,
+      }
+    })
+  }
+
+  aggregateByCreditCard(
+    expenses: ExpenseWithCreditCardRow[],
+    total: number
+  ): CreditCardBreakdownItem[] {
+    const grouped = new Map<
+      string,
+      { name: string; color: string; bank: string; flag: string; amount: number }
+    >()
+
+    for (const expense of expenses) {
+      const key = expense.credit_card_id ?? 'no_card'
+      const current = grouped.get(key)
+      if (current) {
+        current.amount += expense.amount_cents
+      } else {
+        grouped.set(key, {
+          name: expense.credit_card_name ?? 'Sem cartão',
+          color: expense.credit_card_color ?? '#94a3b8',
+          bank: expense.credit_card_bank ?? '',
+          flag: expense.credit_card_flag ?? '',
+          amount: expense.amount_cents,
+        })
+      }
+    }
+
+    return Array.from(grouped.entries())
+      .map(([credit_card_id, data]) => ({
+        credit_card_id: credit_card_id === 'no_card' ? null : credit_card_id,
+        name: data.name,
+        color: data.color,
+        bank: data.bank,
+        flag: data.flag,
+        amount: data.amount,
+        percentage: total > 0 ? (data.amount / total) * 100 : 0,
       }))
       .sort((a, b) => b.amount - a.amount)
   }

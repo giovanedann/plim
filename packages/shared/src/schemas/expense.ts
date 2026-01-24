@@ -17,6 +17,7 @@ export const expenseSchema = z.object({
   installment_current: z.number().int().min(1).nullable(),
   installment_total: z.number().int().min(1).nullable(),
   installment_group_id: z.uuid().nullable(),
+  credit_card_id: z.uuid().nullable(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
   is_projected: z.boolean().optional(),
@@ -32,6 +33,7 @@ export const createExpenseSchema = z.discriminatedUnion('type', [
     amount_cents: z.number().int().positive(),
     payment_method: paymentMethodSchema,
     date: z.iso.date(),
+    credit_card_id: z.uuid().optional(),
   }),
   // Recurrent expense
   z.object({
@@ -43,6 +45,7 @@ export const createExpenseSchema = z.discriminatedUnion('type', [
     recurrence_day: z.number().int().min(1).max(31),
     recurrence_start: z.iso.date(),
     recurrence_end: z.iso.date().optional(),
+    credit_card_id: z.uuid().optional(),
   }),
   // Installment expense
   z.object({
@@ -53,6 +56,7 @@ export const createExpenseSchema = z.discriminatedUnion('type', [
     payment_method: paymentMethodSchema,
     date: z.iso.date(),
     installment_total: z.number().int().min(2).max(48),
+    credit_card_id: z.uuid().optional(),
   }),
 ])
 
@@ -64,6 +68,7 @@ export const updateExpenseSchema = expenseSchema
     payment_method: true,
     date: true,
     recurrence_end: true,
+    credit_card_id: true,
   })
   .partial()
 
@@ -75,6 +80,7 @@ export const expenseFiltersSchema = z.object({
   category_id: z.uuid().optional(),
   payment_method: paymentMethodSchema.optional(),
   expense_type: expenseTypeSchema.optional(),
+  credit_card_id: z.uuid().optional(),
 })
 
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>

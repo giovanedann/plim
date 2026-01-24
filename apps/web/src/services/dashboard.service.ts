@@ -1,6 +1,7 @@
 import { api } from '@/lib/api-client'
 import type {
   CategoryBreakdownResponse,
+  CreditCardBreakdownResponse,
   DashboardQuery,
   DashboardSummary,
   ExpensesTimelineQuery,
@@ -48,6 +49,12 @@ export const dashboardService = {
   async getPaymentBreakdown(query: DashboardQuery) {
     return api.get<PaymentBreakdownResponse>(
       `/dashboard/payment-breakdown${buildQueryString(query)}`
+    )
+  },
+
+  async getCreditCardBreakdown(query: DashboardQuery) {
+    return api.get<CreditCardBreakdownResponse>(
+      `/dashboard/credit-card-breakdown${buildQueryString(query)}`
     )
   },
 

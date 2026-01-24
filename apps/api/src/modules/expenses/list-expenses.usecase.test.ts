@@ -18,6 +18,7 @@ const oneTimeExpense: Expense = {
   installment_current: null,
   installment_total: null,
   installment_group_id: null,
+  credit_card_id: null,
   created_at: '2024-01-15T00:00:00Z',
   updated_at: '2024-01-15T00:00:00Z',
 }
@@ -37,6 +38,7 @@ const recurrentExpense: Expense = {
   installment_current: null,
   installment_total: null,
   installment_group_id: null,
+  credit_card_id: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 }
@@ -56,6 +58,7 @@ const installmentExpense: Expense = {
   installment_current: 1,
   installment_total: 3,
   installment_group_id: 'group-1',
+  credit_card_id: null,
   created_at: '2024-01-20T00:00:00Z',
   updated_at: '2024-01-20T00:00:00Z',
 }

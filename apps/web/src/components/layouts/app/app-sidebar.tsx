@@ -25,7 +25,15 @@ import {
 import { profileService } from '@/services/profile.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link, useLocation } from '@tanstack/react-router'
-import { ChevronsUpDown, LayoutDashboard, LogOut, Receipt, Tags, User } from 'lucide-react'
+import {
+  ChevronsUpDown,
+  CreditCard,
+  LayoutDashboard,
+  LogOut,
+  Receipt,
+  Tags,
+  User,
+} from 'lucide-react'
 
 const navigation = [
   {
@@ -42,6 +50,11 @@ const navigation = [
     title: 'Categorias',
     url: '/categories',
     icon: Tags,
+  },
+  {
+    title: 'Cartões',
+    url: '/credit-cards',
+    icon: CreditCard,
   },
 ]
 
