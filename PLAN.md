@@ -245,24 +245,16 @@
 
 Track these items while collecting beta feedback. Implement before public launch.
 
+> **Note:** Some items from this phase have been moved to [BACKLOG.md](./BACKLOG.md) to prioritize AI features.
+
 #### 18.1 Legal & Compliance
 - [ ] Create `/privacy` page (Privacy Policy)
 - [ ] Create `/terms` page (Terms of Service)
 - [ ] Add footer links to legal pages
 - [ ] Document data handling practices (LGPD compliance for Brazil)
 
-#### 18.2 Error Monitoring & Logging
-- [ ] Set up Sentry for frontend error tracking
-- [ ] Set up Sentry for API error tracking (Cloudflare Workers)
-- [ ] Add structured logging to API endpoints
+#### 18.2 Error Handling
 - [ ] Create error boundary components for graceful failures
-
-#### 18.3 CI/CD Pipeline
-- [ ] Create GitHub Actions workflow for linting/typecheck on PR
-- [ ] Create GitHub Actions workflow for running tests on PR
-- [ ] Create GitHub Actions workflow for API deployment on merge to main
-- [ ] Create GitHub Actions workflow for frontend deployment on merge to main
-- [ ] Add branch protection rules
 
 #### 18.4 Performance & Optimization
 - [x] Add React Query cache configuration for dashboard data
@@ -277,16 +269,9 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Audit RLS policies with Supabase security advisor (8 auth_rls_initplan warnings fixed)
 - [ ] Review and document authentication token handling
 
-#### 18.6 Data & Backup
-- [ ] Set up Supabase automated backups (check plan)
+#### 18.6 Data & User Rights (LGPD)
 - [ ] Create data export feature (user can download their data)
 - [ ] Document data deletion procedure (account deletion)
-- [ ] Test backup restore procedure
-
-#### 18.7 Analytics & Monitoring
-- [ ] Add Plausible or similar privacy-friendly analytics
-- [ ] Set up uptime monitoring (e.g., Checkly, Better Uptime)
-- [ ] Create dashboard for key metrics (signups, active users)
 
 #### 18.8 User Experience Polish
 - [ ] Add loading states to all async operations
@@ -294,6 +279,65 @@ Track these items while collecting beta feedback. Implement before public launch
 - [ ] Improve form validation error messages
 - [ ] Add keyboard shortcuts documentation
 - [ ] Test and fix mobile responsiveness issues
+
+---
+
+### Phase 19: AI-Powered Agentic Platform
+
+**Sprint:** [SPRINT-06](.claude/sprints/SPRINT-06.md)
+
+> AI assistant for expense management via text, voice, and image input with natural language queries.
+
+#### 19.1 Foundation
+- [ ] Create AI usage tracking database tables
+- [ ] Create subscription table for billing
+- [ ] Implement usage limits and tracking
+
+#### 19.2 AI Integration
+- [ ] Integrate Gemini 2.0 Flash API
+- [ ] Implement function calling for expense creation
+- [ ] Implement natural language queries
+
+#### 19.3 Multimodal Input
+- [ ] Text-to-expense (parse natural language)
+- [ ] Voice-to-expense (audio input)
+- [ ] Image-to-expense (receipt OCR)
+
+#### 19.4 Frontend UI
+- [ ] Floating AI chat button
+- [ ] Chat drawer interface
+- [ ] Voice recorder component
+- [ ] Image uploader component
+
+#### 19.5 Monetization
+- [ ] Usage tracking per user
+- [ ] Freemium tiers (30 free / 300 Pro / Unlimited)
+- [ ] Stripe integration (future sprint)
+
+---
+
+### Phase 20: Guided Tutorials (Agentic Help)
+
+**Sprint:** SPRINT-07 (to be created after Sprint 06 completion)
+
+> Interactive UI tutorials where users ask "how do I X" and the AI highlights UI elements step-by-step.
+
+#### 20.1 Infrastructure
+- [ ] Create highlight/spotlight system for UI elements
+- [ ] Add data-tutorial-id attributes to key UI components
+- [ ] Create step-by-step instruction renderer
+
+#### 20.2 AI Integration
+- [ ] Add `show_tutorial` function to Gemini tools
+- [ ] Map user intents to tutorial sequences
+- [ ] Parse "Como faço para..." queries
+
+#### 20.3 Tutorial Content
+- [ ] Define tutorial sequences for common tasks
+- [ ] Create tutorial for adding expenses
+- [ ] Create tutorial for managing categories
+- [ ] Create tutorial for credit card setup
+- [ ] Create tutorial for viewing reports/dashboard
 
 ---
 
