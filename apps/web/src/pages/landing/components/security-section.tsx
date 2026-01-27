@@ -19,7 +19,7 @@ const securityFeatures: SecurityFeature[] = [
     icon: <KeyRound className="h-6 w-6" />,
     title: 'Chaves Seguras',
     description:
-      'As chaves de criptografia ficam em um cofre digital separado, inacessível até para nós.',
+      'As chaves de criptografia ficam em um cofre digital separado. Mesmo em caso de vazamento, seus dados financeiros permanecem protegidos.',
   },
   {
     icon: <ShieldCheck className="h-6 w-6" />,
