@@ -59,7 +59,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const json = await response.json()
-  // API returns { data: T }, so we extract it
+  // For paginated responses, return the full object { data: T[], meta: PaginationMeta }
+  // For regular responses, extract data from { data: T }
+  if (json.meta !== undefined) {
+    return { data: json }
+  }
   return { data: json.data }
 }
 
