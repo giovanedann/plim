@@ -3,6 +3,9 @@ import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
+// Client wrapper for API responses - provides consistent interface for frontend
+// Backend returns: { data: T } or { data: T[], meta: ... } or { error: {...} }
+// We wrap this to provide optional error handling
 export interface ApiResponse<T> {
   data?: T
   error?: {
@@ -59,11 +62,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const json = await response.json()
-  // For paginated responses, return the full object { data: T[], meta: PaginationMeta }
-  // For regular responses, extract data from { data: T }
+
+  // Backend returns: { data: T } for success, { data: T[], meta: PaginationMeta } for paginated
+  // We wrap success responses to maintain consistent API, but preserve paginated structure
   if (json.meta !== undefined) {
+    // Paginated response: wrap the entire structure
     return { data: json }
   }
+
+  // Regular success response: data is already at top level
   return { data: json.data }
 }
 
