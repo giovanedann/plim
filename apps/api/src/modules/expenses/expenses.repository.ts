@@ -88,6 +88,66 @@ export class ExpensesRepository {
     return data as Expense[]
   }
 
+  async findByUserIdPaginated(
+    userId: string,
+    filters?: ExpenseFilters,
+    page = 1,
+    limit = 20
+  ): Promise<{ data: Expense[]; total: number }> {
+    const offset = (page - 1) * limit
+
+    let query = this.supabase
+      .from('expense')
+      .select(EXPENSE_COLUMNS, { count: 'exact' })
+      .eq('user_id', userId)
+
+    if (filters?.start_date) {
+      query = query.gte('date', filters.start_date)
+    }
+
+    if (filters?.end_date) {
+      query = query.lte('date', filters.end_date)
+    }
+
+    if (filters?.category_id) {
+      query = query.eq('category_id', filters.category_id)
+    }
+
+    if (filters?.payment_method) {
+      query = query.eq('payment_method', filters.payment_method)
+    }
+
+    if (filters?.expense_type) {
+      switch (filters.expense_type) {
+        case 'one_time':
+          query = query.eq('is_recurrent', false).is('installment_total', null)
+          break
+        case 'recurrent':
+          query = query.eq('is_recurrent', true)
+          break
+        case 'installment':
+          query = query.not('installment_total', 'is', null)
+          break
+      }
+    }
+
+    if (filters?.credit_card_id) {
+      if (filters.credit_card_id === 'none') {
+        query = query.is('credit_card_id', null)
+      } else {
+        query = query.eq('credit_card_id', filters.credit_card_id)
+      }
+    }
+
+    const { data, error, count } = await query
+      .order('date', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) return { data: [], total: 0 }
+
+    return { data: data as Expense[], total: count ?? 0 }
+  }
+
   async findRecurrentByUserId(userId: string): Promise<Expense[]> {
     const { data, error } = await this.supabase
       .from('expense')

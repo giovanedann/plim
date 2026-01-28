@@ -2,6 +2,7 @@ import { Camera, Check, Loader2, Trash2, User, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { optimizeImage } from '@/lib/image-utils'
 
 interface AvatarUploadProps {
   avatarUrl: string | null
@@ -40,9 +41,10 @@ export function AvatarUpload({
     }
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (pendingFile) {
-      onUpload(pendingFile)
+      const optimizedFile = await optimizeImage(pendingFile)
+      onUpload(optimizedFile)
       clearPreview()
     }
   }

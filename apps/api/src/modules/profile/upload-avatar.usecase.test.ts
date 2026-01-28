@@ -55,7 +55,7 @@ describe('UploadAvatarUseCase', () => {
     const result = await useCase.execute('user-123', file)
 
     expect(result.avatar_url).toMatch(
-      /^https:\/\/avatars\.example\.com\/avatars\/user-123-\d+\.jpeg$/
+      /^https:\/\/avatars\.example\.com\/avatars\/user-123-\d+\.webp$/
     )
     expect(mockStorage.put).toHaveBeenCalled()
     expect(mockRepository.update).toHaveBeenCalled()
