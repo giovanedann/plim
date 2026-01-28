@@ -2,6 +2,7 @@ import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, createSalarySchema, salaryQuerySchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CreateSalaryUseCase } from './create-salary.usecase'
 import { GetSalaryUseCase } from './get-salary.usecase'
@@ -26,7 +27,7 @@ salaryController.get('/', sValidator('query', salaryQuerySchema), async (c) => {
 
   const salary = await useCase.execute(userId, month)
 
-  return c.json({ data: salary }, HTTP_STATUS.OK)
+  return success(c, salary, HTTP_STATUS.OK)
 })
 
 salaryController.get('/history', async (c) => {
@@ -39,7 +40,7 @@ salaryController.get('/history', async (c) => {
 
   const history = await useCase.execute(userId)
 
-  return c.json({ data: history }, HTTP_STATUS.OK)
+  return success(c, history, HTTP_STATUS.OK)
 })
 
 salaryController.post('/', sValidator('json', createSalarySchema), async (c) => {
@@ -53,7 +54,7 @@ salaryController.post('/', sValidator('json', createSalarySchema), async (c) => 
 
   const salary = await useCase.execute(userId, input)
 
-  return c.json({ data: salary }, HTTP_STATUS.CREATED)
+  return success(c, salary, HTTP_STATUS.CREATED)
 })
 
 export { salaryController }

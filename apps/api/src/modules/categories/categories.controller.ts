@@ -2,6 +2,7 @@ import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, createCategorySchema, updateCategorySchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CategoriesRepository } from './categories.repository'
 import { CreateCategoryUseCase } from './create-category.usecase'
@@ -26,7 +27,7 @@ categoriesController.get('/', async (c) => {
 
   const categories = await useCase.execute(userId)
 
-  return c.json({ data: categories }, HTTP_STATUS.OK)
+  return success(c, categories, HTTP_STATUS.OK)
 })
 
 categoriesController.post('/', sValidator('json', createCategorySchema), async (c) => {
@@ -40,7 +41,7 @@ categoriesController.post('/', sValidator('json', createCategorySchema), async (
 
   const category = await useCase.execute(userId, input)
 
-  return c.json({ data: category }, HTTP_STATUS.CREATED)
+  return success(c, category, HTTP_STATUS.CREATED)
 })
 
 categoriesController.patch('/:id', sValidator('json', updateCategorySchema), async (c) => {
@@ -55,7 +56,7 @@ categoriesController.patch('/:id', sValidator('json', updateCategorySchema), asy
 
   const category = await useCase.execute(userId, categoryId, input)
 
-  return c.json({ data: category }, HTTP_STATUS.OK)
+  return success(c, category, HTTP_STATUS.OK)
 })
 
 categoriesController.delete('/:id', async (c) => {

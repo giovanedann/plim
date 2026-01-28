@@ -8,6 +8,7 @@ import {
 } from '@plim/shared'
 import { Hono } from 'hono'
 import type { Bindings } from '../../lib/env'
+import { paginated, success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { createExpensesDependencies } from './expenses.factory'
 
@@ -29,7 +30,7 @@ expensesController.get('/', sValidator('query', expenseFiltersSchema), async (c)
 
   const expenses = await listExpenses.execute(userId, filters)
 
-  return c.json({ data: expenses }, HTTP_STATUS.OK)
+  return success(c, expenses, HTTP_STATUS.OK)
 })
 
 expensesController.get(
@@ -46,7 +47,7 @@ expensesController.get(
 
     const result = await listExpenses.executePaginated(userId, filters)
 
-    return c.json({ data: result }, HTTP_STATUS.OK)
+    return paginated(c, result.data, result.meta, HTTP_STATUS.OK)
   }
 )
 
@@ -61,7 +62,7 @@ expensesController.get('/installments/:groupId', async (c) => {
 
   const installments = await getInstallmentGroup.execute(userId, groupId)
 
-  return c.json({ data: installments }, HTTP_STATUS.OK)
+  return success(c, installments, HTTP_STATUS.OK)
 })
 
 expensesController.get('/:id', async (c) => {
@@ -75,7 +76,7 @@ expensesController.get('/:id', async (c) => {
 
   const expense = await getExpense.execute(userId, expenseId)
 
-  return c.json({ data: expense }, HTTP_STATUS.OK)
+  return success(c, expense, HTTP_STATUS.OK)
 })
 
 expensesController.post('/', sValidator('json', createExpenseSchema), async (c) => {
@@ -89,7 +90,7 @@ expensesController.post('/', sValidator('json', createExpenseSchema), async (c) 
 
   const expense = await createExpense.execute(userId, input)
 
-  return c.json({ data: expense }, HTTP_STATUS.CREATED)
+  return success(c, expense, HTTP_STATUS.CREATED)
 })
 
 expensesController.patch('/:id', sValidator('json', updateExpenseSchema), async (c) => {
@@ -104,7 +105,7 @@ expensesController.patch('/:id', sValidator('json', updateExpenseSchema), async 
 
   const expense = await updateExpense.execute(userId, expenseId, input)
 
-  return c.json({ data: expense }, HTTP_STATUS.OK)
+  return success(c, expense, HTTP_STATUS.OK)
 })
 
 expensesController.delete('/installments/:groupId', async (c) => {

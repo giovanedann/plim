@@ -7,6 +7,7 @@ import {
 } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { DashboardRepository } from './dashboard.repository'
 import { GetCategoryBreakdownUseCase } from './get-category-breakdown.usecase'
@@ -42,7 +43,7 @@ dashboardController.get('/', sValidator('query', getDashboardQuerySchema), async
 
   const data = await useCase.execute(userId, query)
 
-  return c.json({ data }, HTTP_STATUS.OK)
+  return success(c, data, HTTP_STATUS.OK)
 })
 
 dashboardController.get('/summary', sValidator('query', dashboardQuerySchema), async (c) => {
@@ -56,7 +57,7 @@ dashboardController.get('/summary', sValidator('query', dashboardQuerySchema), a
 
   const data = await useCase.execute(userId, query)
 
-  return c.json({ data }, HTTP_STATUS.OK)
+  return success(c, data, HTTP_STATUS.OK)
 })
 
 dashboardController.get(
@@ -73,7 +74,7 @@ dashboardController.get(
 
     const data = await useCase.execute(userId, query)
 
-    return c.json({ data }, HTTP_STATUS.OK)
+    return success(c, data, HTTP_STATUS.OK)
   }
 )
 
@@ -91,7 +92,7 @@ dashboardController.get(
 
     const data = await useCase.execute(userId, query)
 
-    return c.json({ data }, HTTP_STATUS.OK)
+    return success(c, data, HTTP_STATUS.OK)
   }
 )
 
@@ -109,7 +110,7 @@ dashboardController.get(
 
     const data = await useCase.execute(userId, query)
 
-    return c.json({ data }, HTTP_STATUS.OK)
+    return success(c, data, HTTP_STATUS.OK)
   }
 )
 
@@ -127,7 +128,7 @@ dashboardController.get(
 
     const data = await useCase.execute(userId, query)
 
-    return c.json({ data }, HTTP_STATUS.OK)
+    return success(c, data, HTTP_STATUS.OK)
   }
 )
 
@@ -145,7 +146,7 @@ dashboardController.get(
 
     const data = await useCase.execute(userId, query)
 
-    return c.json({ data }, HTTP_STATUS.OK)
+    return success(c, data, HTTP_STATUS.OK)
   }
 )
 
@@ -160,7 +161,7 @@ dashboardController.get('/savings-rate', sValidator('query', dashboardQuerySchem
 
   const data = await useCase.execute(userId, query)
 
-  return c.json({ data }, HTTP_STATUS.OK)
+  return success(c, data, HTTP_STATUS.OK)
 })
 
 dashboardController.get(
@@ -177,7 +178,7 @@ dashboardController.get(
 
     const data = await useCase.execute(userId, query)
 
-    return c.json({ data }, HTTP_STATUS.OK)
+    return success(c, data, HTTP_STATUS.OK)
   }
 )
 
@@ -191,7 +192,7 @@ dashboardController.get('/installment-forecast', async (c) => {
 
   const data = await useCase.execute(userId)
 
-  return c.json({ data }, HTTP_STATUS.OK)
+  return success(c, data, HTTP_STATUS.OK)
 })
 
 export { dashboardController }

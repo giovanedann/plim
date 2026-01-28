@@ -2,6 +2,7 @@ import { sValidator } from '@hono/standard-validator'
 import { ERROR_CODES, HTTP_STATUS, updateProfileSchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { AppError } from '../../middleware/error-handler.middleware'
 import { DeleteAvatarUseCase } from './delete-avatar.usecase'
@@ -27,7 +28,7 @@ profileController.get('/', async (c) => {
 
   const profile = await useCase.execute(userId)
 
-  return c.json({ data: profile }, HTTP_STATUS.OK)
+  return success(c, profile, HTTP_STATUS.OK)
 })
 
 profileController.patch('/', sValidator('json', updateProfileSchema), async (c) => {
@@ -41,7 +42,7 @@ profileController.patch('/', sValidator('json', updateProfileSchema), async (c) 
 
   const profile = await useCase.execute(userId, input)
 
-  return c.json({ data: profile }, HTTP_STATUS.OK)
+  return success(c, profile, HTTP_STATUS.OK)
 })
 
 profileController.post('/avatar', async (c) => {
@@ -65,7 +66,7 @@ profileController.post('/avatar', async (c) => {
 
   const result = await useCase.execute(userId, file)
 
-  return c.json({ data: result }, HTTP_STATUS.OK)
+  return success(c, result, HTTP_STATUS.OK)
 })
 
 profileController.delete('/avatar', async (c) => {

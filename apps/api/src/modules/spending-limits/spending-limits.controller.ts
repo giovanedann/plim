@@ -3,6 +3,7 @@ import { HTTP_STATUS, upsertSpendingLimitSchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { GetSpendingLimitUseCase } from './get-spending-limit.usecase'
 import { SpendingLimitsRepository } from './spending-limits.repository'
@@ -33,7 +34,7 @@ spendingLimitsController.get(
 
     const limit = await useCase.execute(userId, yearMonth)
 
-    return c.json({ data: limit }, HTTP_STATUS.OK)
+    return success(c, limit, HTTP_STATUS.OK)
   }
 )
 
@@ -48,7 +49,7 @@ spendingLimitsController.post('/', sValidator('json', upsertSpendingLimitSchema)
 
   const limit = await useCase.execute(userId, input)
 
-  return c.json({ data: limit }, HTTP_STATUS.CREATED)
+  return success(c, limit, HTTP_STATUS.CREATED)
 })
 
 export { spendingLimitsController }

@@ -2,6 +2,7 @@ import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, createCreditCardSchema, updateCreditCardSchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { CreateCreditCardUseCase } from './create-credit-card.usecase'
 import { CreditCardsRepository } from './credit-cards.repository'
@@ -26,7 +27,7 @@ creditCardsController.get('/', async (c) => {
 
   const creditCards = await useCase.execute(userId)
 
-  return c.json({ data: creditCards }, HTTP_STATUS.OK)
+  return success(c, creditCards, HTTP_STATUS.OK)
 })
 
 creditCardsController.post('/', sValidator('json', createCreditCardSchema), async (c) => {
@@ -40,7 +41,7 @@ creditCardsController.post('/', sValidator('json', createCreditCardSchema), asyn
 
   const creditCard = await useCase.execute(userId, input)
 
-  return c.json({ data: creditCard }, HTTP_STATUS.CREATED)
+  return success(c, creditCard, HTTP_STATUS.CREATED)
 })
 
 creditCardsController.patch('/:id', sValidator('json', updateCreditCardSchema), async (c) => {
@@ -55,7 +56,7 @@ creditCardsController.patch('/:id', sValidator('json', updateCreditCardSchema), 
 
   const creditCard = await useCase.execute(userId, creditCardId, input)
 
-  return c.json({ data: creditCard }, HTTP_STATUS.OK)
+  return success(c, creditCard, HTTP_STATUS.OK)
 })
 
 creditCardsController.delete('/:id', async (c) => {
