@@ -262,6 +262,7 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Add image optimization for avatar uploads (resize/compress)
 - [x] Analyze and optimize bundle size (code splitting)
 - [x] Add loading skeletons for better perceived performance
+- [x] Fix optimistic updates to handle both raw arrays and wrapped response shapes
 
 #### 18.5 Security Hardening
 - [x] Add rate limiting to API endpoints (Upstash Redis - 50 req/60s per IP)
