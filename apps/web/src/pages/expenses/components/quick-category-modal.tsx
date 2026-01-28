@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { isErrorResponse } from '@/lib/api-client'
 import type { CategoryIconName } from '@/lib/icons'
 import { categoryService } from '@/services/category.service'
 import type { Category } from '@plim/shared'
@@ -40,7 +41,7 @@ export function QuickCategoryModal({
     mutationFn: categoryService.createCategory,
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      if (response.data) {
+      if (!isErrorResponse(response) && 'data' in response && !('meta' in response)) {
         onCategoryCreated(response.data)
       }
       toast.success('Categoria criada com sucesso!')

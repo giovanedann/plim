@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { isErrorResponse } from '@/lib/api-client'
 import {
   type ExpenseChange,
   applyOptimisticDashboardUpdate,
@@ -48,10 +49,11 @@ export function InstallmentGroupModal({ open, onOpenChange, expense }: Installme
 
   const { data: installments, isLoading } = useQuery({
     queryKey: ['installment-group', expense?.installment_group_id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Expense[]> => {
       if (!expense?.installment_group_id) return []
       const result = await expenseService.getInstallmentGroup(expense.installment_group_id)
-      return result.data ?? []
+      if (isErrorResponse(result)) throw new Error(result.error.message)
+      return result.data as Expense[]
     },
     enabled: open && !!expense?.installment_group_id,
   })

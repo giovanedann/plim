@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { isErrorResponse } from '@/lib/api-client'
 import {
   type ExpenseChange,
   addExpensesToCache,
@@ -302,7 +303,7 @@ export function ExpenseModal({
       return { previousDashboards }
     },
     onSuccess: (response) => {
-      if (response.data) {
+      if (!isErrorResponse(response) && 'data' in response && !('meta' in response)) {
         addExpensesToCache(queryClient, response.data)
       }
       toast.success('Despesa criada com sucesso!')
@@ -379,7 +380,7 @@ export function ExpenseModal({
       return { previousDashboards, previousExpenses }
     },
     onSuccess: (response, { id }) => {
-      if (response.data) {
+      if (!isErrorResponse(response) && 'data' in response && !('meta' in response)) {
         applyOptimisticExpenseUpdate(queryClient, id, response.data)
       }
       toast.success('Despesa atualizada com sucesso!')

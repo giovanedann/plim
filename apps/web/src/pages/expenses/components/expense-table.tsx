@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { isErrorResponse } from '@/lib/api-client'
 import {
   type ExpenseChange,
   applyOptimisticDashboardUpdate,
@@ -507,7 +508,7 @@ export function ExpenseTable({
                 const result = await expenseService.getExpense(
                   projectedExpenseInfo.source_expense_id
                 )
-                if (result.data) {
+                if (!isErrorResponse(result) && 'data' in result && !('meta' in result)) {
                   setExpenseToEdit(result.data)
                 } else {
                   toast.error('Erro ao carregar despesa original')

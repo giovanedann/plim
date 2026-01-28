@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useCountUp } from '@/hooks/use-count-up'
+import { isErrorResponse } from '@/lib/api-client'
 import { salaryService } from '@/services'
 import { useUIStore } from '@/stores'
 import { centsToDecimal, formatBRL, parseBRL } from '@plim/shared'
@@ -105,7 +106,7 @@ export function SalaryDisplay({
         effective_from: effectiveFrom,
       })
 
-      if (response.error) {
+      if (isErrorResponse(response)) {
         const errorMsg = response.error.message || 'Erro ao salvar salário'
         setError(errorMsg)
         toast.error(errorMsg)
