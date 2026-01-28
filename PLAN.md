@@ -254,13 +254,13 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Document data handling practices (LGPD compliance for Brazil)
 
 #### 18.2 Error Handling
-- [ ] Create error boundary components for graceful failures
+- [x] Create error boundary components for graceful failures
 
 #### 18.4 Performance & Optimization
 - [x] Add React Query cache configuration for dashboard data
-- [ ] Implement pagination for expenses list (currently loads all)
-- [ ] Add image optimization for avatar uploads (resize/compress)
-- [ ] Analyze and optimize bundle size (code splitting)
+- [x] Implement pagination for expenses list (currently loads all)
+- [x] Add image optimization for avatar uploads (resize/compress)
+- [x] Analyze and optimize bundle size (code splitting)
 - [x] Add loading skeletons for better perceived performance
 
 #### 18.5 Security Hardening
