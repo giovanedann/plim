@@ -46,7 +46,7 @@ expensesController.get(
 
     const result = await listExpenses.executePaginated(userId, filters)
 
-    return c.json(result, HTTP_STATUS.OK)
+    return c.json({ data: result }, HTTP_STATUS.OK)
   }
 )
 
