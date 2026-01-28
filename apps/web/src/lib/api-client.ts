@@ -1,18 +1,25 @@
 import { useAuthStore } from '@/stores/auth.store'
+import type { ApiErrorResponse, ApiPaginatedResponse, ApiSuccessResponse } from '@plim/shared'
 import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
-// Client wrapper for API responses - provides consistent interface for frontend
-// Backend returns: { data: T } or { data: T[], meta: ... } or { error: {...} }
-// We wrap this to provide optional error handling
-export interface ApiResponse<T> {
-  data?: T
-  error?: {
-    code: string
-    message: string
-    details?: unknown
-  }
+// Use discriminated union from shared package
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiPaginatedResponse<T> | ApiErrorResponse
+
+// Type guards for discriminated union
+export function isErrorResponse<T>(response: ApiResponse<T>): response is ApiErrorResponse {
+  return 'error' in response
+}
+
+export function isPaginatedResponse<T>(
+  response: ApiResponse<T>
+): response is ApiPaginatedResponse<T> {
+  return 'meta' in response && 'data' in response
+}
+
+export function isSuccessResponse<T>(response: ApiResponse<T>): response is ApiSuccessResponse<T> {
+  return 'data' in response && !('meta' in response) && !('error' in response)
 }
 
 async function getAuthToken(): Promise<string | null> {
@@ -56,26 +63,20 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     }
   }
 
-  // Handle 204 No Content
+  // Handle 204 No Content - return empty success response
   if (response.status === 204) {
     return { data: undefined as T }
   }
 
-  const json = await response.json()
-
-  // Backend returns: { data: T } for success, { data: T[], meta: PaginationMeta } for paginated
-  // We wrap success responses to maintain consistent API, but preserve paginated structure
-  if (json.meta !== undefined) {
-    // Paginated response: wrap the entire structure
-    return { data: json }
-  }
-
-  // Regular success response: data is already at top level
-  return { data: json.data }
+  // Return backend response as-is - it already matches our shared types
+  return (await response.json()) as ApiResponse<T>
 }
 
 export const api = {
   get: <T>(endpoint: string) => request<T>(endpoint, { method: 'GET' }),
+
+  getPaginated: <T>(endpoint: string): Promise<ApiPaginatedResponse<T> | ApiErrorResponse> =>
+    request<T>(endpoint, { method: 'GET' }) as Promise<ApiPaginatedResponse<T> | ApiErrorResponse>,
 
   post: <T>(endpoint: string, body: unknown) =>
     request<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),

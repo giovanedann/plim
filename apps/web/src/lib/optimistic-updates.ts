@@ -372,8 +372,16 @@ export function rollbackDashboardUpdate(
 // Expenses List Optimistic Updates
 // ============================================================================
 
-interface ExpensesResponse {
-  data: Expense[]
+// Query cache can contain either wrapped response { data: Expense[] } or raw Expense[]
+type ExpensesCacheData = { data: Expense[] } | Expense[]
+
+function getExpensesArray(cacheData: ExpensesCacheData): Expense[] {
+  return Array.isArray(cacheData) ? cacheData : cacheData.data
+}
+
+function wrapExpensesArray(expenses: Expense[], original: ExpensesCacheData): ExpensesCacheData {
+  // Preserve the original shape
+  return Array.isArray(original) ? expenses : { data: expenses }
 }
 
 function expenseMatchesFilters(expense: Expense, filters: ExpenseFilters): boolean {
@@ -403,8 +411,8 @@ function expenseMatchesFilters(expense: Expense, filters: ExpenseFilters): boole
 export function applyOptimisticExpenseAdd(
   queryClient: QueryClient,
   expense: Expense
-): Map<readonly unknown[], ExpensesResponse | undefined> {
-  const previousExpenses = new Map<readonly unknown[], ExpensesResponse | undefined>()
+): Map<readonly unknown[], ExpensesCacheData | undefined> {
+  const previousExpenses = new Map<readonly unknown[], ExpensesCacheData | undefined>()
   const queryCache = queryClient.getQueryCache()
 
   const expensesQueries = queryCache.findAll({
@@ -417,13 +425,14 @@ export function applyOptimisticExpenseAdd(
 
     if (!expenseMatchesFilters(expense, filters)) continue
 
-    const previousData = queryClient.getQueryData<ExpensesResponse>(queryKey)
+    const previousData = queryClient.getQueryData<ExpensesCacheData>(queryKey)
     previousExpenses.set(queryKey, previousData)
 
-    queryClient.setQueryData<ExpensesResponse>(queryKey, (old) => {
-      if (!old) return { data: [expense] }
-      const newData = [...old.data, expense].sort((a, b) => b.date.localeCompare(a.date))
-      return { data: newData }
+    queryClient.setQueryData<ExpensesCacheData>(queryKey, (old) => {
+      if (!old) return [expense]
+      const expenses = getExpensesArray(old)
+      const newData = [...expenses, expense].sort((a, b) => b.date.localeCompare(a.date))
+      return wrapExpensesArray(newData, old)
     })
   }
 
@@ -434,8 +443,8 @@ export function applyOptimisticExpenseUpdate(
   queryClient: QueryClient,
   expenseId: string,
   updatedExpense: Expense
-): Map<readonly unknown[], ExpensesResponse | undefined> {
-  const previousExpenses = new Map<readonly unknown[], ExpensesResponse | undefined>()
+): Map<readonly unknown[], ExpensesCacheData | undefined> {
+  const previousExpenses = new Map<readonly unknown[], ExpensesCacheData | undefined>()
   const queryCache = queryClient.getQueryCache()
 
   const expensesQueries = queryCache.findAll({
@@ -446,28 +455,39 @@ export function applyOptimisticExpenseUpdate(
     const queryKey = query.queryKey as readonly [string, ExpenseFilters?]
     const filters = queryKey[1] ?? {}
 
-    const previousData = queryClient.getQueryData<ExpensesResponse>(queryKey)
+    const previousData = queryClient.getQueryData<ExpensesCacheData>(queryKey)
     if (!previousData) continue
 
     previousExpenses.set(queryKey, previousData)
 
+    const expenses = getExpensesArray(previousData)
     const matchesNow = expenseMatchesFilters(updatedExpense, filters)
-    const existedBefore = previousData.data.some((e) => e.id === expenseId)
+    const existedBefore = expenses.some((e) => e.id === expenseId)
 
-    queryClient.setQueryData<ExpensesResponse>(queryKey, (old) => {
+    queryClient.setQueryData<ExpensesCacheData>(queryKey, (old) => {
       if (!old) return old
+      const currentExpenses = getExpensesArray(old)
 
       if (existedBefore && matchesNow) {
-        const newData = old.data.map((e) => (e.id === expenseId ? updatedExpense : e))
-        return { data: newData.sort((a, b) => b.date.localeCompare(a.date)) }
+        const newData = currentExpenses.map((e) => (e.id === expenseId ? updatedExpense : e))
+        return wrapExpensesArray(
+          newData.sort((a, b) => b.date.localeCompare(a.date)),
+          old
+        )
       }
 
       if (existedBefore && !matchesNow) {
-        return { data: old.data.filter((e) => e.id !== expenseId) }
+        return wrapExpensesArray(
+          currentExpenses.filter((e) => e.id !== expenseId),
+          old
+        )
       }
 
       if (!existedBefore && matchesNow) {
-        return { data: [...old.data, updatedExpense].sort((a, b) => b.date.localeCompare(a.date)) }
+        return wrapExpensesArray(
+          [...currentExpenses, updatedExpense].sort((a, b) => b.date.localeCompare(a.date)),
+          old
+        )
       }
 
       return old
@@ -480,8 +500,8 @@ export function applyOptimisticExpenseUpdate(
 export function applyOptimisticExpenseRemove(
   queryClient: QueryClient,
   expenseId: string
-): Map<readonly unknown[], ExpensesResponse | undefined> {
-  const previousExpenses = new Map<readonly unknown[], ExpensesResponse | undefined>()
+): Map<readonly unknown[], ExpensesCacheData | undefined> {
+  const previousExpenses = new Map<readonly unknown[], ExpensesCacheData | undefined>()
   const queryCache = queryClient.getQueryCache()
 
   const expensesQueries = queryCache.findAll({
@@ -490,17 +510,22 @@ export function applyOptimisticExpenseRemove(
 
   for (const query of expensesQueries) {
     const queryKey = query.queryKey
-    const previousData = queryClient.getQueryData<ExpensesResponse>(queryKey)
+    const previousData = queryClient.getQueryData<ExpensesCacheData>(queryKey)
     if (!previousData) continue
 
-    const hasExpense = previousData.data.some((e) => e.id === expenseId)
+    const expenses = getExpensesArray(previousData)
+    const hasExpense = expenses.some((e) => e.id === expenseId)
     if (!hasExpense) continue
 
     previousExpenses.set(queryKey, previousData)
 
-    queryClient.setQueryData<ExpensesResponse>(queryKey, (old) => {
+    queryClient.setQueryData<ExpensesCacheData>(queryKey, (old) => {
       if (!old) return old
-      return { data: old.data.filter((e) => e.id !== expenseId) }
+      const currentExpenses = getExpensesArray(old)
+      return wrapExpensesArray(
+        currentExpenses.filter((e) => e.id !== expenseId),
+        old
+      )
     })
   }
 
@@ -510,8 +535,8 @@ export function applyOptimisticExpenseRemove(
 export function applyOptimisticExpenseGroupRemove(
   queryClient: QueryClient,
   groupId: string
-): Map<readonly unknown[], ExpensesResponse | undefined> {
-  const previousExpenses = new Map<readonly unknown[], ExpensesResponse | undefined>()
+): Map<readonly unknown[], ExpensesCacheData | undefined> {
+  const previousExpenses = new Map<readonly unknown[], ExpensesCacheData | undefined>()
   const queryCache = queryClient.getQueryCache()
 
   const expensesQueries = queryCache.findAll({
@@ -520,17 +545,22 @@ export function applyOptimisticExpenseGroupRemove(
 
   for (const query of expensesQueries) {
     const queryKey = query.queryKey
-    const previousData = queryClient.getQueryData<ExpensesResponse>(queryKey)
+    const previousData = queryClient.getQueryData<ExpensesCacheData>(queryKey)
     if (!previousData) continue
 
-    const hasGroupExpenses = previousData.data.some((e) => e.installment_group_id === groupId)
+    const expenses = getExpensesArray(previousData)
+    const hasGroupExpenses = expenses.some((e) => e.installment_group_id === groupId)
     if (!hasGroupExpenses) continue
 
     previousExpenses.set(queryKey, previousData)
 
-    queryClient.setQueryData<ExpensesResponse>(queryKey, (old) => {
+    queryClient.setQueryData<ExpensesCacheData>(queryKey, (old) => {
       if (!old) return old
-      return { data: old.data.filter((e) => e.installment_group_id !== groupId) }
+      const currentExpenses = getExpensesArray(old)
+      return wrapExpensesArray(
+        currentExpenses.filter((e) => e.installment_group_id !== groupId),
+        old
+      )
     })
   }
 
@@ -539,7 +569,7 @@ export function applyOptimisticExpenseGroupRemove(
 
 export function rollbackExpensesUpdate(
   queryClient: QueryClient,
-  previousExpenses: Map<readonly unknown[], ExpensesResponse | undefined>
+  previousExpenses: Map<readonly unknown[], ExpensesCacheData | undefined>
 ): void {
   for (const [key, data] of previousExpenses) {
     queryClient.setQueryData(key, data)
@@ -561,13 +591,17 @@ export function addExpensesToCache(queryClient: QueryClient, expenses: Expense |
     const matchingExpenses = expenseArray.filter((exp) => expenseMatchesFilters(exp, filters))
     if (matchingExpenses.length === 0) continue
 
-    queryClient.setQueryData<ExpensesResponse>(queryKey, (old) => {
-      if (!old) return { data: matchingExpenses }
-      const existingIds = new Set(old.data.map((e) => e.id))
+    queryClient.setQueryData<ExpensesCacheData>(queryKey, (old) => {
+      if (!old) return matchingExpenses
+      const currentExpenses = getExpensesArray(old)
+      const existingIds = new Set(currentExpenses.map((e) => e.id))
       const newExpenses = matchingExpenses.filter((e) => !existingIds.has(e.id))
       if (newExpenses.length === 0) return old
-      const combined = [...old.data, ...newExpenses]
-      return { data: combined.sort((a, b) => b.date.localeCompare(a.date)) }
+      const combined = [...currentExpenses, ...newExpenses]
+      return wrapExpensesArray(
+        combined.sort((a, b) => b.date.localeCompare(a.date)),
+        old
+      )
     })
   }
 }
