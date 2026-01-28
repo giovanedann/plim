@@ -247,11 +247,11 @@ Track these items while collecting beta feedback. Implement before public launch
 
 > **Note:** Some items from this phase have been moved to [BACKLOG.md](./BACKLOG.md) to prioritize AI features.
 
-#### 18.1 Legal & Compliance
-- [ ] Create `/privacy` page (Privacy Policy)
-- [ ] Create `/terms` page (Terms of Service)
-- [ ] Add footer links to legal pages
-- [ ] Document data handling practices (LGPD compliance for Brazil)
+#### 18.1 Legal & Compliance ✅
+- [x] Create `/privacy` page (Privacy Policy)
+- [x] Create `/terms` page (Terms of Service)
+- [x] Add footer links to legal pages
+- [x] Document data handling practices (LGPD compliance for Brazil)
 
 #### 18.2 Error Handling
 - [ ] Create error boundary components for graceful failures
