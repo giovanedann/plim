@@ -2,6 +2,7 @@ import { ExpenseChart } from './components/expense-chart'
 import { ExpenseFilters } from './components/expense-filters'
 import { ExpenseTable } from './components/expense-table'
 import { MonthSelector } from './components/month-selector'
+import { PaginationControls } from './components/pagination-controls'
 import { SalaryDisplay } from './components/salary-display'
 import { SpendingLimitCard } from './components/spending-limit-card'
 import { useExpensesPage } from './use-expenses.page'
@@ -22,6 +23,8 @@ export function ExpensesPage() {
     totalExpenses,
     balance,
     comparison,
+    setPage,
+    paginationMeta,
   } = useExpensesPage()
 
   return (
@@ -78,6 +81,12 @@ export function ExpensesPage() {
           totalExpenses={totalExpenses}
         />
       </div>
+
+      {paginationMeta && (
+        <div className="px-4 lg:px-6">
+          <PaginationControls meta={paginationMeta} onPageChange={setPage} isLoading={isLoading} />
+        </div>
+      )}
     </div>
   )
 }

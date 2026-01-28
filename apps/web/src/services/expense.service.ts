@@ -1,7 +1,14 @@
 import { api } from '@/lib/api-client'
-import type { CreateExpense, Expense, ExpenseFilters, UpdateExpense } from '@plim/shared'
+import type {
+  CreateExpense,
+  Expense,
+  ExpenseFilters,
+  PaginatedExpenseFilters,
+  PaginatedExpenses,
+  UpdateExpense,
+} from '@plim/shared'
 
-function buildQueryString(filters?: ExpenseFilters): string {
+function buildQueryString(filters?: ExpenseFilters | PaginatedExpenseFilters): string {
   if (!filters) return ''
 
   const params = new URLSearchParams()
@@ -11,6 +18,8 @@ function buildQueryString(filters?: ExpenseFilters): string {
   if (filters.payment_method) params.set('payment_method', filters.payment_method)
   if (filters.expense_type) params.set('expense_type', filters.expense_type)
   if (filters.credit_card_id) params.set('credit_card_id', filters.credit_card_id)
+  if ('page' in filters && filters.page) params.set('page', String(filters.page))
+  if ('limit' in filters && filters.limit) params.set('limit', String(filters.limit))
 
   const queryString = params.toString()
   return queryString ? `?${queryString}` : ''
@@ -19,6 +28,10 @@ function buildQueryString(filters?: ExpenseFilters): string {
 export const expenseService = {
   async listExpenses(filters?: ExpenseFilters) {
     return api.get<Expense[]>(`/expenses${buildQueryString(filters)}`)
+  },
+
+  async listExpensesPaginated(filters: PaginatedExpenseFilters) {
+    return api.get<PaginatedExpenses>(`/expenses/paginated${buildQueryString(filters)}`)
   },
 
   async getExpense(id: string) {

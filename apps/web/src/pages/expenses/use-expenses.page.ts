@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { salaryService, spendingLimitService } from '@/services'
 import { categoryService } from '@/services/category.service'
 import { creditCardService } from '@/services/credit-card.service'
 import { expenseService } from '@/services/expense.service'
-import type { ExpenseFilters } from '@plim/shared'
+import type { ExpenseFilters, PaginatedExpenseFilters, PaginationMeta } from '@plim/shared'
 
 function parseMonth(month: string): [number, number] {
   const parts = month.split('-').map(Number)
@@ -45,22 +45,26 @@ function getCurrentMonth() {
 export function useExpensesPage() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
   const [filters, setFilters] = useState<Omit<ExpenseFilters, 'start_date' | 'end_date'>>({})
+  const [page, setPage] = useState(1)
+  const limit = 20
 
   const monthBounds = useMemo(() => getMonthBounds(selectedMonth), [selectedMonth])
   const previousMonth = useMemo(() => getPreviousMonth(selectedMonth), [selectedMonth])
   const previousMonthBounds = useMemo(() => getMonthBounds(previousMonth), [previousMonth])
 
-  const expenseFilters: ExpenseFilters = useMemo(
+  const paginatedFilters: PaginatedExpenseFilters = useMemo(
     () => ({
       ...monthBounds,
       ...filters,
+      page,
+      limit,
     }),
-    [monthBounds, filters]
+    [monthBounds, filters, page]
   )
 
   const { data: expensesResponse, isLoading: isLoadingExpenses } = useQuery({
-    queryKey: queryKeys.expenses(expenseFilters),
-    queryFn: () => expenseService.listExpenses(expenseFilters),
+    queryKey: [...queryKeys.expenses(paginatedFilters), 'paginated'],
+    queryFn: () => expenseService.listExpensesPaginated(paginatedFilters),
     staleTime: queryConfig.staleTime.expenses,
   })
 
@@ -109,7 +113,8 @@ export function useExpensesPage() {
     staleTime: queryConfig.staleTime.spendingLimit,
   })
 
-  const expenses = expensesResponse?.data ?? []
+  const expenses = expensesResponse?.data?.data ?? []
+  const paginationMeta: PaginationMeta | null = expensesResponse?.data?.meta ?? null
   const allExpenses = allExpensesResponse?.data ?? []
   const previousExpenses = previousExpensesResponse?.data ?? []
   const categories = categoriesResponse?.data ?? []
@@ -160,6 +165,12 @@ export function useExpensesPage() {
     isLoadingSalary ||
     isLoadingSpendingLimit
 
+  // Reset page when filters or month change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentional - reset page when filters or month change
+  useEffect(() => {
+    setPage(1)
+  }, [filters, selectedMonth])
+
   return {
     selectedMonth,
     setSelectedMonth,
@@ -175,5 +186,8 @@ export function useExpensesPage() {
     totalExpenses,
     balance,
     comparison,
+    page,
+    setPage,
+    paginationMeta,
   }
 }
