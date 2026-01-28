@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { profileService } from '@/services/profile.service'
 import type { Profile } from '@plim/shared'
@@ -12,7 +13,11 @@ export function useProfilePage() {
 
   const { data: profileResponse, isLoading } = useQuery({
     queryKey: queryKeys.profile,
-    queryFn: () => profileService.getProfile(),
+    queryFn: async (): Promise<Profile> => {
+      const result = await profileService.getProfile()
+      if (isErrorResponse(result)) throw new Error(result.error.message)
+      return result.data as Profile
+    },
     staleTime: queryConfig.staleTime.profile,
   })
 
@@ -32,7 +37,7 @@ export function useProfilePage() {
   const uploadAvatarMutation = useMutation({
     mutationFn: (file: File) => profileService.uploadAvatar(file),
     onSuccess: (response) => {
-      if (response.error) {
+      if (isErrorResponse(response)) {
         toast.error(response.error.message)
         return
       }
@@ -55,7 +60,7 @@ export function useProfilePage() {
     },
   })
 
-  const profile = profileResponse?.data ?? null
+  const profile: Profile | null = profileResponse ?? null
 
   return {
     profile,

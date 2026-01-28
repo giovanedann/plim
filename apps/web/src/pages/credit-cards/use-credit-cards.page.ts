@@ -1,3 +1,4 @@
+import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { creditCardService } from '@/services/credit-card.service'
 import type { CreateCreditCard, CreditCard, UpdateCreditCard } from '@plim/shared'
@@ -13,9 +14,10 @@ export function useCreditCardsPage() {
 
   const creditCardsQuery = useQuery({
     queryKey: queryKeys.creditCards,
-    queryFn: async () => {
+    queryFn: async (): Promise<CreditCard[]> => {
       const response = await creditCardService.listCreditCards()
-      return response.data || []
+      if (isErrorResponse(response)) throw new Error(response.error.message)
+      return response.data as CreditCard[]
     },
     staleTime: queryConfig.staleTime.creditCards,
   })
