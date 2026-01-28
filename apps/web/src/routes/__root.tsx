@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/error-boundary'
 import type { User } from '@supabase/supabase-js'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -18,7 +19,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootLayout() {
   return (
     <>
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
       <Toaster richColors position="top-right" />
       {import.meta.env.DEV && <TanStackRouterDevtools />}
     </>
