@@ -1,9 +1,14 @@
-import type { Expense, ExpenseFilters } from '@plim/shared'
+import type { Expense, ExpenseFilters, PaginatedExpenseFilters, PaginationMeta } from '@plim/shared'
 import type { ExpensesRepository } from './expenses.repository'
 
 export interface ProjectedExpense extends Expense {
   is_projected: boolean
   source_expense_id?: string
+}
+
+export interface PaginatedResult {
+  data: ProjectedExpense[]
+  meta: PaginationMeta
 }
 
 export class ListExpensesUseCase {
@@ -41,6 +46,43 @@ export class ListExpensesUseCase {
     return [...regularExpenses, ...projectedExpenses].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     )
+  }
+
+  async executePaginated(
+    userId: string,
+    filters: PaginatedExpenseFilters
+  ): Promise<PaginatedResult> {
+    const { page, limit, ...expenseFilters } = filters
+
+    // For recurrent type or when projecting, we need full data then paginate in memory
+    if (filters.expense_type === 'recurrent' || (filters.start_date && filters.end_date)) {
+      const allExpenses = await this.execute(userId, expenseFilters)
+      const total = allExpenses.length
+      const totalPages = Math.ceil(total / limit)
+      const offset = (page - 1) * limit
+      const data = allExpenses.slice(offset, offset + limit)
+
+      return {
+        data,
+        meta: { page, limit, total, totalPages },
+      }
+    }
+
+    // For non-recurrent without projection, paginate at DB level
+    const { data: dbExpenses, total } = await this.expensesRepository.findByUserIdPaginated(
+      userId,
+      expenseFilters,
+      page,
+      limit
+    )
+
+    const data: ProjectedExpense[] = dbExpenses.map((e) => ({ ...e, is_projected: false }))
+    const totalPages = Math.ceil(total / limit)
+
+    return {
+      data,
+      meta: { page, limit, total, totalPages },
+    }
   }
 
   private projectRecurrentExpenses(

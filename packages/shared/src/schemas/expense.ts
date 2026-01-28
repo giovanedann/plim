@@ -83,9 +83,29 @@ export const expenseFiltersSchema = z.object({
   credit_card_id: z.union([z.uuid(), z.literal('none')]).optional(),
 })
 
+export const paginatedExpenseFiltersSchema = expenseFiltersSchema.extend({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(10).max(100).default(20),
+})
+
+export const paginationMetaSchema = z.object({
+  page: z.number().int().positive(),
+  limit: z.number().int().positive(),
+  total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+})
+
+export const paginatedExpensesSchema = z.object({
+  data: z.array(expenseSchema),
+  meta: paginationMetaSchema,
+})
+
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
 export type ExpenseType = z.infer<typeof expenseTypeSchema>
 export type Expense = z.infer<typeof expenseSchema>
 export type CreateExpense = z.infer<typeof createExpenseSchema>
 export type UpdateExpense = z.infer<typeof updateExpenseSchema>
 export type ExpenseFilters = z.infer<typeof expenseFiltersSchema>
+export type PaginatedExpenseFilters = z.infer<typeof paginatedExpenseFiltersSchema>
+export type PaginationMeta = z.infer<typeof paginationMetaSchema>
+export type PaginatedExpenses = z.infer<typeof paginatedExpensesSchema>

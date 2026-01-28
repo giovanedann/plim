@@ -3,6 +3,7 @@ import {
   HTTP_STATUS,
   createExpenseSchema,
   expenseFiltersSchema,
+  paginatedExpenseFiltersSchema,
   updateExpenseSchema,
 } from '@plim/shared'
 import { Hono } from 'hono'
@@ -30,6 +31,24 @@ expensesController.get('/', sValidator('query', expenseFiltersSchema), async (c)
 
   return c.json({ data: expenses }, HTTP_STATUS.OK)
 })
+
+expensesController.get(
+  '/paginated',
+  sValidator('query', paginatedExpenseFiltersSchema),
+  async (c) => {
+    const userId = c.get('userId')
+    const filters = c.req.valid('query')
+
+    const { listExpenses } = createExpensesDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
+
+    const result = await listExpenses.executePaginated(userId, filters)
+
+    return c.json(result, HTTP_STATUS.OK)
+  }
+)
 
 expensesController.get('/installments/:groupId', async (c) => {
   const userId = c.get('userId')
