@@ -1,4 +1,4 @@
-import { api } from '@/lib/api-client'
+import { type ApiResponse, api } from '@/lib/api-client'
 import type { DashboardData, TimelineGroupBy } from '@plim/shared'
 
 export interface DashboardQuery {
@@ -18,7 +18,7 @@ function buildQueryString(query: DashboardQuery): string {
 }
 
 export const dashboardService = {
-  async getDashboard(query: DashboardQuery) {
+  async getDashboard(query: DashboardQuery): Promise<ApiResponse<DashboardData>> {
     return api.get<DashboardData>(`/dashboard${buildQueryString(query)}`)
   },
 }

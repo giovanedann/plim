@@ -5,17 +5,17 @@ import type { AvatarUploadResponse, Profile } from '@plim/shared'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
 export const profileService = {
-  async getProfile() {
+  async getProfile(): Promise<ApiResponse<Profile>> {
     return api.get<Profile>('/profile')
   },
 
   async updateProfile(
     data: Partial<Pick<Profile, 'name' | 'avatar_url' | 'currency' | 'locale' | 'is_onboarded'>>
-  ) {
+  ): Promise<ApiResponse<Profile>> {
     return api.patch<Profile>('/profile', data)
   },
 
-  async markOnboarded() {
+  async markOnboarded(): Promise<ApiResponse<Profile>> {
     return api.patch<Profile>('/profile', { is_onboarded: true })
   },
 

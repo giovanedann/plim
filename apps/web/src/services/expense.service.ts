@@ -1,10 +1,11 @@
-import { api } from '@/lib/api-client'
+import { type ApiResponse, api } from '@/lib/api-client'
 import type {
+  ApiErrorResponse,
+  ApiPaginatedResponse,
   CreateExpense,
   Expense,
   ExpenseFilters,
   PaginatedExpenseFilters,
-  PaginatedExpenses,
   UpdateExpense,
 } from '@plim/shared'
 
@@ -26,39 +27,41 @@ function buildQueryString(filters?: ExpenseFilters | PaginatedExpenseFilters): s
 }
 
 export const expenseService = {
-  async listExpenses(filters?: ExpenseFilters) {
+  async listExpenses(filters?: ExpenseFilters): Promise<ApiResponse<Expense[]>> {
     return api.get<Expense[]>(`/expenses${buildQueryString(filters)}`)
   },
 
-  async listExpensesPaginated(filters: PaginatedExpenseFilters) {
-    return api.get<PaginatedExpenses>(`/expenses/paginated${buildQueryString(filters)}`)
+  async listExpensesPaginated(
+    filters: PaginatedExpenseFilters
+  ): Promise<ApiPaginatedResponse<Expense> | ApiErrorResponse> {
+    return api.getPaginated<Expense>(`/expenses/paginated${buildQueryString(filters)}`)
   },
 
-  async getExpense(id: string) {
+  async getExpense(id: string): Promise<ApiResponse<Expense>> {
     return api.get<Expense>(`/expenses/${id}`)
   },
 
-  async createExpense(data: CreateExpense) {
+  async createExpense(data: CreateExpense): Promise<ApiResponse<Expense>> {
     return api.post<Expense>('/expenses', data)
   },
 
-  async updateExpense(id: string, data: UpdateExpense) {
+  async updateExpense(id: string, data: UpdateExpense): Promise<ApiResponse<Expense>> {
     return api.patch<Expense>(`/expenses/${id}`, data)
   },
 
-  async deleteExpense(id: string) {
+  async deleteExpense(id: string): Promise<ApiResponse<void>> {
     return api.delete<void>(`/expenses/${id}`)
   },
 
-  async cancelRecurrence(id: string, endDate: string) {
+  async cancelRecurrence(id: string, endDate: string): Promise<ApiResponse<Expense>> {
     return api.patch<Expense>(`/expenses/${id}`, { recurrence_end: endDate })
   },
 
-  async getInstallmentGroup(groupId: string) {
+  async getInstallmentGroup(groupId: string): Promise<ApiResponse<Expense[]>> {
     return api.get<Expense[]>(`/expenses/installments/${groupId}`)
   },
 
-  async deleteInstallmentGroup(groupId: string) {
+  async deleteInstallmentGroup(groupId: string): Promise<ApiResponse<void>> {
     return api.delete<void>(`/expenses/installments/${groupId}`)
   },
 }
