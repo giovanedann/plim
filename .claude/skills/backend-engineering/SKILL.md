@@ -128,21 +128,49 @@ apps/api/src/
 - UseCases are framework-agnostic (no Hono types)
 - Repositories handle only data access, no business logic
 
-## TypeScript Rules
+## TypeScript Rules — Zero Tolerance for `any` and Untyped Code
+
+### Absolute Rules
+
+1. **NEVER use `any`** — Use `unknown` and narrow with Zod or type guards
+2. **NEVER use `as Type` casts** — If you need a cast, fix the underlying type (repository Supabase casts are the only exception)
+3. **ALL functions must have explicit return types** — Parameters can be inferred, returns must be declared
+4. **ALL variables must be typed** — Either explicitly or through proper initialization
+5. **NEVER ignore TypeScript errors** — Fix them, don't suppress them with `@ts-ignore` or `@ts-expect-error`
 
 ```typescript
-// NEVER
-const data: any = await response.json();
-function process(input: any) {}
+// FORBIDDEN - Will cause undefined errors at runtime
+const data: any = await response.json()
+function process(input: any) { return input.value }
+const user = result as User  // Hiding type issues
 
-// ALWAYS
-const data = responseSchema.parse(await response.json());
-function process(input: CreateExpenseInput) {}
+// CORRECT - Full type safety
+const data = responseSchema.parse(await response.json())
+function process(input: CreateExpenseInput): Expense { ... }
+const user = result  // Let TypeScript infer, or fix the source type
 ```
+
+### Repository Exception
+
+The only acceptable `as Type` cast is in repositories when receiving Supabase query results:
+
+```typescript
+// Acceptable - Supabase doesn't know our schema
+const { data } = await supabase.from('expenses').select('*')
+return data as Expense[]  // Supabase typing limitation
+```
+
+This is acceptable because:
+- Data comes from our controlled database
+- Schema is defined by us
+- Future improvement: Use Supabase codegen for full type safety
+
+### Additional Rules
 
 - Enable `strict: true` in tsconfig
 - Use Zod inference: `type Expense = z.infer<typeof expenseSchema>`
 - Prefer `unknown` over `any` when type is truly unknown, then narrow with Zod
+- All API responses must use the standardized response helpers
 
 ## Database & Data Integrity
 
@@ -173,6 +201,79 @@ await db.transaction(async (tx) => {
 - Use EXPLAIN ANALYZE for complex queries
 - Prefer single queries over N+1 patterns
 
+## API Response Format
+
+All API responses MUST use the standardized response types from `@plim/shared` and the response helper functions from `apps/api/src/lib/responses.ts`.
+
+### Response Types (from @plim/shared)
+
+```typescript
+// Success response wrapper
+interface ApiSuccessResponse<T> {
+  data: T
+}
+
+// Paginated response with flat structure
+interface ApiPaginatedResponse<T> {
+  data: T[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+// Error response
+interface ApiErrorResponse {
+  error: {
+    code: string
+    message: string
+    details?: unknown
+  }
+}
+```
+
+### Response Helper Functions
+
+Use the helpers in `apps/api/src/lib/responses.ts` for consistent responses:
+
+```typescript
+import { successResponse, paginatedResponse, errorResponse } from '@/lib/responses'
+
+// Single item - returns { data: T }
+return successResponse(c, expense)
+
+// Created item - returns { data: T } with 201 status
+return successResponse(c, expense, 201)
+
+// Paginated list - returns { data: T[], meta: {...} }
+return paginatedResponse(c, expenses, { page, limit, total })
+
+// Error - returns { error: { code, message, details? } }
+return errorResponse(c, 'NOT_FOUND', 'Expense not found', 404)
+```
+
+### Controller Pattern
+
+```typescript
+// GET /expenses/:id
+expensesController.get('/:id', async (c) => {
+  const result = await getExpenseUseCase.execute(userId, id)
+  if (!result) {
+    return errorResponse(c, 'NOT_FOUND', 'Expense not found', 404)
+  }
+  return successResponse(c, result)  // { data: Expense }
+})
+
+// GET /expenses/paginated
+expensesController.get('/paginated', zValidator('query', querySchema), async (c) => {
+  const { page, limit, ...filters } = c.req.valid('query')
+  const { expenses, total } = await listExpensesUseCase.execute(userId, filters, page, limit)
+  return paginatedResponse(c, expenses, { page, limit, total })  // { data: Expense[], meta: {...} }
+})
+```
+
 ## Error Handling
 
 ### Standard Error Response
@@ -184,15 +285,8 @@ interface ApiError {
   details?: unknown; // Optional additional context
 }
 
-// Usage
-return c.json<ApiError>(
-  {
-    code: "VALIDATION_ERROR",
-    message: "Invalid expense data",
-    details: zodError.flatten(),
-  },
-  400,
-);
+// Usage - prefer errorResponse helper
+return errorResponse(c, 'VALIDATION_ERROR', 'Invalid expense data', 400, zodError.flatten())
 ```
 
 ### Error Codes by Category

@@ -33,27 +33,83 @@ description: Use when designing or implementing API endpoints, routes, request/r
 
 ## Request/Response Format
 
-### Success Response
+All API responses use discriminated union types from `@plim/shared`. This enables TypeScript to correctly infer types after error checking.
+
+### Response Types (Defined in @plim/shared)
 
 ```typescript
-// Single item
-{
-  "data": {
-    "id": "exp_123",
-    "amount": 50.00,
-    "description": "Almoço",
-    "category": "food",
-    "createdAt": "2025-01-15T12:00:00Z"
+// Success response - wraps single items or arrays
+interface ApiSuccessResponse<T> {
+  data: T
+}
+
+// Paginated response - for list endpoints with pagination
+interface ApiPaginatedResponse<T> {
+  data: T[]  // Array of items
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
   }
 }
 
-// Collection
+// Error response - all errors use this format
+interface ApiErrorResponse {
+  error: {
+    code: string      // Machine-readable: 'EXPENSE_NOT_FOUND'
+    message: string   // Human-readable: 'Expense not found'
+    details?: unknown // Optional validation details
+  }
+}
+```
+
+### Client-Side Type Usage
+
+The frontend uses split types for proper inference:
+
+```typescript
+// For non-paginated endpoints
+type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
+
+// For paginated endpoints
+type ApiPaginatedResponseOrError<T> = ApiPaginatedResponse<T> | ApiErrorResponse
+```
+
+**Why split types?** A single union caused `data` to be ambiguous (`T | T[]`), forcing unsafe casts.
+
+### Success Response Examples
+
+```json
+// Single item: GET /expenses/123
 {
-  "data": [...],
+  "data": {
+    "id": "exp_123",
+    "amount_cents": 5000,
+    "description": "Almoço",
+    "category_id": "cat_456",
+    "date": "2025-01-15"
+  }
+}
+
+// Non-paginated list: GET /expenses
+{
+  "data": [
+    { "id": "exp_123", ... },
+    { "id": "exp_124", ... }
+  ]
+}
+
+// Paginated list: GET /expenses/paginated?page=1&limit=20
+{
+  "data": [
+    { "id": "exp_123", ... },
+    { "id": "exp_124", ... }
+  ],
   "meta": {
-    "total": 150,
     "page": 1,
-    "pageSize": 20,
+    "limit": 20,
+    "total": 150,
     "totalPages": 8
   }
 }
@@ -61,17 +117,50 @@ description: Use when designing or implementing API endpoints, routes, request/r
 
 ### Error Response
 
-```typescript
+```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Invalid expense data",
     "details": {
-      "amount": ["Must be a positive number"],
-      "category": ["Invalid category"]
+      "amount_cents": ["Must be a positive integer"],
+      "category_id": ["Invalid category"]
     }
   }
 }
+```
+
+### Type Guards for Responses
+
+```typescript
+// These type guards narrow the response correctly
+function isErrorResponse<T>(response: ApiResponse<T>): response is ApiErrorResponse {
+  return 'error' in response
+}
+
+function isSuccessResponse<T>(response: ApiResponse<T>): response is ApiSuccessResponse<T> {
+  return 'data' in response && !('error' in response)
+}
+
+function isPaginatedResponse<T>(
+  response: ApiPaginatedResponse<T> | ApiErrorResponse
+): response is ApiPaginatedResponse<T> {
+  return 'meta' in response && 'data' in response
+}
+```
+
+### Usage Pattern
+
+```typescript
+const result = await expenseService.listExpenses(filters)
+
+// After error check, TypeScript knows result.data is Expense[]
+if (isErrorResponse(result)) {
+  throw new Error(result.error.message)
+}
+
+// NO CAST NEEDED - TypeScript infers correctly
+const expenses = result.data  // Type: Expense[]
 ```
 
 ## Query Parameters
@@ -220,6 +309,40 @@ Auth header: `Authorization: Bearer <token>`
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1640000000
+```
+
+## Type Safety — Zero Tolerance Policy
+
+### Absolute Rules
+
+1. **NEVER use `any`** — All request/response types must be explicit
+2. **NEVER use `as Type` casts** on API responses — Fix the type definitions instead
+3. **ALL endpoints must have typed request and response schemas**
+4. **ALL Zod schemas must be defined in `@plim/shared`** — Never duplicate in API or frontend
+
+### Controller Typing
+
+```typescript
+// All request bodies validated with Zod from shared package
+import { createExpenseSchema, type CreateExpense, type Expense } from '@plim/shared'
+
+expensesController.post('/', zValidator('json', createExpenseSchema), async (c) => {
+  const input: CreateExpense = c.req.valid('json')  // Fully typed from shared
+  const expense: Expense = await useCase.execute(userId, input)
+  return successResponse(c, expense)  // Response type inferred
+})
+```
+
+### Query Parameter Typing
+
+```typescript
+// Define query schemas in @plim/shared
+import { expenseQuerySchema, type ExpenseQuery } from '@plim/shared'
+
+expensesController.get('/', zValidator('query', expenseQuerySchema), async (c) => {
+  const query: ExpenseQuery = c.req.valid('query')  // Fully typed
+  // ...
+})
 ```
 
 ## Brazilian Locale Considerations

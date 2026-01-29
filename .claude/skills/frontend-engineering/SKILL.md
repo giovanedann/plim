@@ -162,9 +162,29 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 ```
 
-## Type Safety — Single Source of Truth
+## Type Safety — Zero Tolerance for `any` and Untyped Code
 
 **ALL domain types and schemas MUST come from `@plim/shared`.** Never create duplicate type definitions in the frontend.
+
+### Absolute Rules
+
+1. **NEVER use `any`** — Use `unknown` and narrow with type guards or Zod
+2. **NEVER use `as Type` casts** — If you need a cast, fix the underlying type
+3. **ALL functions must have explicit return types** — Let TypeScript infer parameters, but declare returns
+4. **ALL variables must be typed** — Either explicitly or through initialization
+5. **NEVER ignore TypeScript errors** — Fix them, don't suppress them
+
+```typescript
+// FORBIDDEN - Will cause undefined errors
+const data: any = await response.json()
+function process(input: any) { return input.value }
+const result = response.data as Expense[]  // Hiding type issues
+
+// CORRECT - Full type safety
+const data = expenseSchema.parse(await response.json())
+function process(input: CreateExpense): Expense { ... }
+const result = response.data  // Let TypeScript infer from API response type
+```
 
 ### Why This Matters
 
@@ -172,41 +192,88 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 - Zod schemas validate at runtime AND provide TypeScript types
 - Changes propagate to both frontend and backend automatically
 - No drift between what API expects and what frontend sends
-
-### Rules
-
-```typescript
-// CORRECT: Import types from shared package
-import type { Profile, CreateSalary, SalaryHistory } from '@plim/shared'
-import { createExpenseSchema } from '@plim/shared'
-
-// WRONG: Never create local type definitions for API entities
-// apps/web/src/lib/api-types.ts  ← DELETE THIS FILE
-interface Profile { ... }  // ← NEVER DO THIS
-```
+- **Eliminates "undefined is not an object" runtime errors**
 
 ### What Goes in Shared vs Frontend
 
 | Location | What |
 |----------|------|
-| `@plim/shared` | All entity types (Profile, Expense, Category, Salary), Zod schemas, validation rules, constants |
+| `@plim/shared` | All entity types (Profile, Expense, Category, Salary), Zod schemas, validation rules, constants, API response types |
 | Frontend only | UI-specific types (component props, form state), React Query types, Zustand store types |
+
+## API Response Types
+
+The API client uses split response types for proper type inference:
+
+### Response Type Structure
+
+```typescript
+// Non-paginated responses (most endpoints)
+type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
+
+// Paginated responses (explicit, for list endpoints with pagination)
+type ApiPaginatedResponseOrError<T> = ApiPaginatedResponse<T> | ApiErrorResponse
+```
+
+### Why Split Types?
+
+Previously, a single union type caused `data` to be ambiguous:
+- `ApiSuccessResponse<Expense[]>.data` → `Expense[]`
+- `ApiPaginatedResponse<Expense[]>.data` → `Expense[][]` (wrong!)
+
+With split types, TypeScript correctly infers `data` as exactly `T`.
 
 ### Service Layer Pattern
 
 ```typescript
-// apps/web/src/services/profile.service.ts
-import { api } from '@/lib/api-client'
-import type { Profile, UpdateProfile } from '@plim/shared'
+// apps/web/src/services/expense.service.ts
+import { type ApiPaginatedResponseOrError, type ApiResponse, api } from '@/lib/api-client'
+import type { CreateExpense, Expense, PaginatedExpenseFilters } from '@plim/shared'
 
-export const profileService = {
-  async getProfile() {
-    return api.get<Profile>('/profile')
+export const expenseService = {
+  // Non-paginated: returns ApiResponse<T>
+  async listExpenses(filters?: ExpenseFilters): Promise<ApiResponse<Expense[]>> {
+    return api.get<Expense[]>(`/expenses${buildQueryString(filters)}`)
   },
-  async updateProfile(data: UpdateProfile) {
-    return api.patch<Profile>('/profile', data)
+
+  // Paginated: returns ApiPaginatedResponseOrError<T>
+  async listExpensesPaginated(
+    filters: PaginatedExpenseFilters
+  ): Promise<ApiPaginatedResponseOrError<Expense>> {
+    return api.getPaginated<Expense>(`/expenses/paginated${buildQueryString(filters)}`)
+  },
+
+  async createExpense(data: CreateExpense): Promise<ApiResponse<Expense>> {
+    return api.post<Expense>('/expenses', data)
   },
 }
+```
+
+### Hook Pattern (No Casts!)
+
+```typescript
+// After checking for errors, TypeScript knows the exact type
+const { data: expensesResponse } = useQuery({
+  queryKey: queryKeys.expenses(filters),
+  queryFn: async () => {
+    const result = await expenseService.listExpenses(filters)
+    if (isErrorResponse(result)) throw new Error(result.error.message)
+    return result.data  // TypeScript knows this is Expense[] - NO CAST NEEDED
+  },
+})
+```
+
+### Type Guards
+
+```typescript
+import { isErrorResponse, isPaginatedResponse, isSuccessResponse } from '@/lib/api-client'
+
+// These narrow the response type correctly
+if (isErrorResponse(result)) {
+  // result is ApiErrorResponse
+  throw new Error(result.error.message)
+}
+// After this check, result.data is correctly typed as T
 ```
 
 ## Component Organization (Co-location)
