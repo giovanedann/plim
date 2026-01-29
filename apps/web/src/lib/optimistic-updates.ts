@@ -4,6 +4,7 @@ import type {
   CreditCardBreakdownItem,
   CreditCardBreakdownResponse,
   DashboardData,
+  DashboardQuery,
   DashboardSummary,
   Expense,
   ExpenseFilters,
@@ -36,12 +37,6 @@ export interface ExpenseChange {
   date: string
   installment_total?: number
   operation: 'add' | 'remove'
-}
-
-interface DashboardQuery {
-  start_date: string
-  end_date: string
-  group_by: TimelineGroupBy
 }
 
 function recalculatePercentages<T extends { amount: number; percentage: number }>(
@@ -345,14 +340,15 @@ export function applyOptimisticDashboardUpdate(
   for (const query of dashboardQueries) {
     const queryKey = query.queryKey as readonly [string, DashboardQuery]
     const params = queryKey[1]
+    const groupBy = params?.group_by
 
-    if (!params?.group_by) continue
+    if (!groupBy) continue
 
     const previousData = queryClient.getQueryData<DashboardData>(queryKey)
     previousDashboards.set(queryKey, previousData)
 
     queryClient.setQueryData<DashboardData>(queryKey, (old) =>
-      updateDashboardOptimistically(old, change, params.group_by)
+      updateDashboardOptimistically(old, change, groupBy)
     )
   }
 
