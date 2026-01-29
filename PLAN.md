@@ -243,6 +243,8 @@
 
 ### Phase 18: Production Hardening (Post-Beta)
 
+**Sprint:** [SPRINT-06](.claude/sprints/SPRINT-06.md)
+
 Track these items while collecting beta feedback. Implement before public launch.
 
 > **Note:** Some items from this phase have been moved to [BACKLOG.md](./BACKLOG.md) to prioritize AI features.
@@ -268,72 +270,99 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Add rate limiting to API endpoints (Upstash Redis - 50 req/60s per IP)
 - [x] Add CORS configuration for production domain only
 - [x] Audit RLS policies with Supabase security advisor (8 auth_rls_initplan warnings fixed)
-- [ ] Review and document authentication token handling
+- [ ] Review and document authentication token handling (docs/AUTH.md)
 
-#### 18.6 Data & User Rights (LGPD)
-- [ ] Create data export feature (user can download their data)
-- [ ] Document data deletion procedure (account deletion)
+#### 18.6 Data & User Rights (LGPD) ✅
+- [x] Create data export feature (GET /api/v1/account/export/:table - CSV per table with rate limiting)
+- [x] Create account deletion feature (DELETE /api/v1/account with confirmation)
 
 #### 18.8 User Experience Polish
-- [ ] Add loading states to all async operations
+- [x] Add loading states to all async operations
 - [x] Add toast notifications for success/error feedback
-- [ ] Improve form validation error messages
-- [ ] Add keyboard shortcuts documentation
-- [ ] Test and fix mobile responsiveness issues
+- [ ] Improve form validation error messages (add error variant to Input component)
+- [ ] Improve Zod validation messages (user-friendly Portuguese)
 
 ---
 
-### Phase 19: AI-Powered Agentic Platform
+### Phase 19: Comprehensive Testing (NEW)
 
-**Sprint:** [SPRINT-06](.claude/sprints/SPRINT-06.md)
+**Sprint:** [SPRINT-07](.claude/sprints/SPRINT-07.md)
+
+> Establish comprehensive test coverage to prevent regressions and ensure code quality.
+
+#### 19.1 Testing Infrastructure Setup
+- [ ] Configure Vitest coverage reporting (v8 provider)
+- [ ] Add test:coverage and test:ui scripts to root package.json
+- [ ] Create test utilities and factories in packages/shared/src/test-utils/
+
+#### 19.2 API Testing (Expand Existing)
+- [ ] Add middleware tests (auth, error-handler, rate-limiter)
+- [ ] Add response format tests (verify envelope structure)
+- [ ] Add edge cases for business logic (recurrent expenses, installments)
+
+#### 19.3 Frontend Testing
+- [ ] Service layer tests (expense, category, credit-card, dashboard services)
+- [ ] Hook tests (use-expenses, use-categories, use-dashboard)
+- [ ] Optimistic updates tests (critical - prevent regressions)
+- [ ] API client tests (get, getPaginated methods)
+
+#### 19.4 Shared Package Testing
+- [ ] Schema validation tests (expense, category, credit-card schemas)
+- [ ] HTTP response type tests (discriminated unions)
+
+---
+
+### Phase 20: AI-Powered Agentic Platform
+
+**Sprint:** [SPRINT-08](.claude/sprints/SPRINT-08.md)
 
 > AI assistant for expense management via text, voice, and image input with natural language queries.
 
-#### 19.1 Foundation
+#### 20.1 Foundation
 - [ ] Create AI usage tracking database tables
 - [ ] Create subscription table for billing
 - [ ] Implement usage limits and tracking
 
-#### 19.2 AI Integration
+#### 20.2 AI Integration
 - [ ] Integrate Gemini 2.0 Flash API
 - [ ] Implement function calling for expense creation
 - [ ] Implement natural language queries
 
-#### 19.3 Multimodal Input
+#### 20.3 Multimodal Input
 - [ ] Text-to-expense (parse natural language)
 - [ ] Voice-to-expense (audio input)
 - [ ] Image-to-expense (receipt OCR)
 
-#### 19.4 Frontend UI
+#### 20.4 Frontend UI
 - [ ] Floating AI chat button
 - [ ] Chat drawer interface
 - [ ] Voice recorder component
 - [ ] Image uploader component
 
-#### 19.5 Monetization
+#### 20.5 Monetization
 - [ ] Usage tracking per user
 - [ ] Freemium tiers (30 free / 300 Pro / Unlimited)
 - [ ] Stripe integration (future sprint)
 
 ---
 
-### Phase 20: Guided Tutorials (Agentic Help)
+### Phase 21: Guided Tutorials (Agentic Help)
 
-**Sprint:** SPRINT-07 (to be created after Sprint 06 completion)
+**Sprint:** [SPRINT-09](.claude/sprints/SPRINT-09.md)
 
 > Interactive UI tutorials where users ask "how do I X" and the AI highlights UI elements step-by-step.
 
-#### 20.1 Infrastructure
+#### 21.1 Infrastructure
 - [ ] Create highlight/spotlight system for UI elements
 - [ ] Add data-tutorial-id attributes to key UI components
 - [ ] Create step-by-step instruction renderer
 
-#### 20.2 AI Integration
+#### 21.2 AI Integration
 - [ ] Add `show_tutorial` function to Gemini tools
 - [ ] Map user intents to tutorial sequences
 - [ ] Parse "Como faço para..." queries
 
-#### 20.3 Tutorial Content
+#### 21.3 Tutorial Content
 - [ ] Define tutorial sequences for common tasks
 - [ ] Create tutorial for adding expenses
 - [ ] Create tutorial for managing categories
