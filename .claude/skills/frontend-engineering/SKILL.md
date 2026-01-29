@@ -720,6 +720,19 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
 ## Testing
 
+### MANDATORY: No Code Without Tests
+
+**CRITICAL:** Every new component, hook, service, or utility MUST have tests. This is non-negotiable.
+
+- **NO feature is complete without tests**
+- **NO PR should be merged without test coverage for new code**
+- **ALWAYS invoke `/qa-engineering` skill** when writing tests
+
+Before claiming any task is done:
+1. Write the tests (invoke `/qa-engineering` first)
+2. Run the tests and ensure they pass
+3. Verify the new code is covered
+
 ### What to Test
 
 ```typescript
