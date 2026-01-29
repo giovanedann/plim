@@ -10,6 +10,8 @@ export default defineConfig({
     },
   },
   test: {
+    name: '@plim/web',
+    color: 'cyan',
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
   },
