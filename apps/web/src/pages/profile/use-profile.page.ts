@@ -13,10 +13,10 @@ export function useProfilePage() {
 
   const { data: profileResponse, isLoading } = useQuery({
     queryKey: queryKeys.profile,
-    queryFn: async (): Promise<Profile> => {
+    queryFn: async () => {
       const result = await profileService.getProfile()
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as Profile
+      return result.data
     },
     staleTime: queryConfig.staleTime.profile,
   })

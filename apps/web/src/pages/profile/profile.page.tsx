@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { AvatarUpload } from './components/avatar-upload'
+import { DangerZoneSection } from './components/danger-zone-section'
+import { DataExportSection } from './components/data-export-section'
 import { ProfileForm } from './components/profile-form'
 import { useProfilePage } from './use-profile.page'
 
@@ -85,8 +87,8 @@ export function ProfilePage() {
         <p className="text-sm text-muted-foreground">Gerencie suas informações pessoais</p>
       </div>
 
-      <div className="px-4 lg:px-6">
-        <Card className="mx-auto max-w-xl">
+      <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 lg:px-6">
+        <Card>
           <CardHeader>
             <CardTitle>Perfil</CardTitle>
             <CardDescription>Suas informações pessoais e preferências</CardDescription>
@@ -121,6 +123,10 @@ export function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        <DataExportSection />
+
+        <DangerZoneSection />
       </div>
     </div>
   )
