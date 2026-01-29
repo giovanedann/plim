@@ -3,6 +3,7 @@ import { type SupabaseClient, createClient } from '@supabase/supabase-js'
 export type Bindings = {
   SUPABASE_URL: string
   SUPABASE_PUBLISHABLE_KEY: string
+  SUPABASE_ACCOUNT_DELETE_SECRET_KEY: string
   AVATARS_BUCKET: R2Bucket
   R2_PUBLIC_URL: string
   ENVIRONMENT: 'development' | 'production'
@@ -20,6 +21,19 @@ export function createSupabaseClientWithAuth(env: Bindings, accessToken: string)
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+    },
+  })
+}
+
+/**
+ * Creates a Supabase client with admin privileges for account deletion.
+ * This client bypasses RLS - use only for account deletion operations.
+ */
+export function createSupabaseAdminClient(env: Bindings): SupabaseClient {
+  return createClient(env.SUPABASE_URL, env.SUPABASE_ACCOUNT_DELETE_SECRET_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
     },
   })
 }
