@@ -266,7 +266,7 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Add loading skeletons for better perceived performance
 - [x] Fix optimistic updates to handle both raw arrays and wrapped response shapes
 
-#### 18.5 Security Hardening
+#### 18.5 Security Hardening ✅
 - [x] Add rate limiting to API endpoints (Upstash Redis - 50 req/60s per IP)
 - [x] Add CORS configuration for production domain only
 - [x] Audit RLS policies with Supabase security advisor (8 auth_rls_initplan warnings fixed)
@@ -276,11 +276,11 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Create data export feature (GET /api/v1/account/export/:table - CSV per table with rate limiting)
 - [x] Create account deletion feature (DELETE /api/v1/account with confirmation)
 
-#### 18.8 User Experience Polish
+#### 18.8 User Experience Polish ✅
 - [x] Add loading states to all async operations
 - [x] Add toast notifications for success/error feedback
-- [ ] Improve form validation error messages (add error variant to Input component)
-- [ ] Improve Zod validation messages (user-friendly Portuguese)
+- [x] Improve form validation error messages (add error variant to Input component)
+- [x] Improve Zod validation messages (user-friendly Portuguese)
 
 ---
 
