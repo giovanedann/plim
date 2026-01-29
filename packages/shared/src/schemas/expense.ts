@@ -1,13 +1,18 @@
 import { z } from 'zod'
 
-export const paymentMethodSchema = z.enum(['credit_card', 'debit_card', 'pix', 'cash'])
+export const paymentMethodSchema = z.enum(['credit_card', 'debit_card', 'pix', 'cash'], {
+  message: 'Selecione um método de pagamento válido',
+})
 
 export const expenseSchema = z.object({
   id: z.uuid(),
   user_id: z.uuid(),
   category_id: z.uuid(),
-  description: z.string().min(1).max(255),
-  amount_cents: z.number().int().positive(),
+  description: z
+    .string()
+    .min(1, 'Descrição é obrigatória')
+    .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+  amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
   payment_method: paymentMethodSchema,
   date: z.iso.date(),
   is_recurrent: z.boolean().default(false),
@@ -28,34 +33,51 @@ export const createExpenseSchema = z.discriminatedUnion('type', [
   // One-time expense
   z.object({
     type: z.literal('one_time'),
-    category_id: z.uuid(),
-    description: z.string().min(1).max(255),
-    amount_cents: z.number().int().positive(),
+    category_id: z.uuid({ message: 'Selecione uma categoria' }),
+    description: z
+      .string()
+      .min(1, 'Descrição é obrigatória')
+      .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+    amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
     payment_method: paymentMethodSchema,
-    date: z.iso.date(),
+    date: z.iso.date({ message: 'Selecione uma data válida' }),
     credit_card_id: z.uuid().optional(),
   }),
   // Recurrent expense
   z.object({
     type: z.literal('recurrent'),
-    category_id: z.uuid(),
-    description: z.string().min(1).max(255),
-    amount_cents: z.number().int().positive(),
+    category_id: z.uuid({ message: 'Selecione uma categoria' }),
+    description: z
+      .string()
+      .min(1, 'Descrição é obrigatória')
+      .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+    amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
     payment_method: paymentMethodSchema,
-    recurrence_day: z.number().int().min(1).max(31),
-    recurrence_start: z.iso.date(),
+    recurrence_day: z
+      .number()
+      .int()
+      .min(1, 'Dia deve ser entre 1 e 31')
+      .max(31, 'Dia deve ser entre 1 e 31'),
+    recurrence_start: z.iso.date({ message: 'Selecione a data de início' }),
     recurrence_end: z.iso.date().optional(),
     credit_card_id: z.uuid().optional(),
   }),
   // Installment expense
   z.object({
     type: z.literal('installment'),
-    category_id: z.uuid(),
-    description: z.string().min(1).max(255),
-    amount_cents: z.number().int().positive(),
+    category_id: z.uuid({ message: 'Selecione uma categoria' }),
+    description: z
+      .string()
+      .min(1, 'Descrição é obrigatória')
+      .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+    amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
     payment_method: paymentMethodSchema,
-    date: z.iso.date(),
-    installment_total: z.number().int().min(2).max(48),
+    date: z.iso.date({ message: 'Selecione uma data válida' }),
+    installment_total: z
+      .number()
+      .int()
+      .min(2, 'Número de parcelas deve ser entre 2 e 48')
+      .max(48, 'Número de parcelas deve ser entre 2 e 48'),
     credit_card_id: z.uuid().optional(),
   }),
 ])
@@ -72,7 +94,9 @@ export const updateExpenseSchema = expenseSchema
   })
   .partial()
 
-export const expenseTypeSchema = z.enum(['one_time', 'recurrent', 'installment'])
+export const expenseTypeSchema = z.enum(['one_time', 'recurrent', 'installment'], {
+  message: 'Selecione um tipo de despesa válido',
+})
 
 export const expenseFiltersSchema = z.object({
   start_date: z.iso.date().optional(),

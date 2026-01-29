@@ -3,11 +3,11 @@ import { z } from 'zod'
 export const categorySchema = z.object({
   id: z.uuid(),
   user_id: z.uuid().nullable(),
-  name: z.string().min(1).max(50),
+  name: z.string().min(1, 'Nome é obrigatório').max(50, 'Nome deve ter no máximo 50 caracteres'),
   icon: z.string().nullable(),
   color: z
     .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Cor deve estar no formato hexadecimal (#000000)')
     .nullable(),
   is_active: z.boolean().default(true),
   created_at: z.iso.datetime(),

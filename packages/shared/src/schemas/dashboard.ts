@@ -1,11 +1,12 @@
 import { z } from 'zod'
 
+export const timelineGroupBySchema = z.enum(['day', 'week', 'month'])
+
 export const dashboardQuerySchema = z.object({
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  group_by: timelineGroupBySchema.optional(),
 })
-
-export const timelineGroupBySchema = z.enum(['day', 'week', 'month'])
 
 export const expensesTimelineQuerySchema = dashboardQuerySchema.extend({
   group_by: timelineGroupBySchema.default('day'),

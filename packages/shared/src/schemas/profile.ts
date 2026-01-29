@@ -3,8 +3,8 @@ import { z } from 'zod'
 export const profileSchema = z.object({
   user_id: z.uuid(),
   name: z.string().nullable(),
-  email: z.email(),
-  avatar_url: z.url().nullable(),
+  email: z.email('Email inválido'),
+  avatar_url: z.url('URL inválida').nullable(),
   currency: z.string().default('BRL'),
   locale: z.string().default('pt-BR'),
   is_onboarded: z.boolean().default(false),
@@ -12,10 +12,9 @@ export const profileSchema = z.object({
   updated_at: z.iso.datetime(),
 })
 
-// Create update schema without defaults - define fields explicitly to avoid inheriting defaults
 export const updateProfileSchema = z.object({
   name: z.string().nullable().optional(),
-  avatar_url: z.url().nullable().optional(),
+  avatar_url: z.url('URL inválida').nullable().optional(),
   currency: z.string().optional(),
   locale: z.string().optional(),
   is_onboarded: z.boolean().optional(),
