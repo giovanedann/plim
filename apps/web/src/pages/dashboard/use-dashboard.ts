@@ -1,7 +1,7 @@
 import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
-import { type DashboardQuery, dashboardService } from '@/services/dashboard.service'
-import type { DashboardData, TimelineGroupBy } from '@plim/shared'
+import { dashboardService } from '@/services/dashboard.service'
+import type { DashboardQuery, TimelineGroupBy } from '@plim/shared'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
@@ -54,10 +54,10 @@ export function useDashboard() {
 
   const dashboardQuery = useQuery({
     queryKey: [...queryKeys.dashboard.all, query] as const,
-    queryFn: async (): Promise<DashboardData> => {
+    queryFn: async () => {
       const result = await dashboardService.getDashboard(query)
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as DashboardData
+      return result.data
     },
     staleTime: queryConfig.staleTime.dashboard,
   })

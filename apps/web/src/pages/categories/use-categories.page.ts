@@ -1,7 +1,7 @@
 import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { categoryService } from '@/services/category.service'
-import type { Category, CreateCategory, UpdateCategory } from '@plim/shared'
+import type { CreateCategory, UpdateCategory } from '@plim/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -10,10 +10,10 @@ export function useCategoriesPage() {
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
-    queryFn: async (): Promise<Category[]> => {
+    queryFn: async () => {
       const result = await categoryService.listCategories()
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as Category[]
+      return result.data
     },
     staleTime: queryConfig.staleTime.categories,
   })

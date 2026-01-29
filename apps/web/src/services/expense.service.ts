@@ -1,7 +1,5 @@
-import { type ApiResponse, api } from '@/lib/api-client'
+import { type ApiPaginatedResponseOrError, type ApiResponse, api } from '@/lib/api-client'
 import type {
-  ApiErrorResponse,
-  ApiPaginatedResponse,
   CreateExpense,
   Expense,
   ExpenseFilters,
@@ -33,7 +31,7 @@ export const expenseService = {
 
   async listExpensesPaginated(
     filters: PaginatedExpenseFilters
-  ): Promise<ApiPaginatedResponse<Expense> | ApiErrorResponse> {
+  ): Promise<ApiPaginatedResponseOrError<Expense>> {
     return api.getPaginated<Expense>(`/expenses/paginated${buildQueryString(filters)}`)
   },
 

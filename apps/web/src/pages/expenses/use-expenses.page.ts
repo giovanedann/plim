@@ -7,17 +7,7 @@ import { salaryService, spendingLimitService } from '@/services'
 import { categoryService } from '@/services/category.service'
 import { creditCardService } from '@/services/credit-card.service'
 import { expenseService } from '@/services/expense.service'
-import type {
-  ApiPaginatedResponse,
-  Category,
-  CreditCard,
-  EffectiveSpendingLimit,
-  Expense,
-  ExpenseFilters,
-  PaginatedExpenseFilters,
-  PaginationMeta,
-  SalaryHistory,
-} from '@plim/shared'
+import type { ExpenseFilters, PaginatedExpenseFilters, PaginationMeta } from '@plim/shared'
 
 function parseMonth(month: string): [number, number] {
   const parts = month.split('-').map(Number)
@@ -75,7 +65,7 @@ export function useExpensesPage() {
 
   const { data: expensesResponse, isLoading: isLoadingExpenses } = useQuery({
     queryKey: [...queryKeys.expenses(paginatedFilters), 'paginated'],
-    queryFn: async (): Promise<ApiPaginatedResponse<Expense>> => {
+    queryFn: async () => {
       const result = await expenseService.listExpensesPaginated(paginatedFilters)
       if (isErrorResponse(result)) throw new Error(result.error.message)
       return result
@@ -85,70 +75,70 @@ export function useExpensesPage() {
 
   const { data: allExpensesResponse, isLoading: isLoadingAllExpenses } = useQuery({
     queryKey: queryKeys.expenses(monthBounds),
-    queryFn: async (): Promise<Expense[]> => {
+    queryFn: async () => {
       const result = await expenseService.listExpenses(monthBounds)
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as Expense[]
+      return result.data
     },
     staleTime: queryConfig.staleTime.expenses,
   })
 
   const { data: previousExpensesResponse } = useQuery({
     queryKey: queryKeys.expenses(previousMonthBounds),
-    queryFn: async (): Promise<Expense[]> => {
+    queryFn: async () => {
       const result = await expenseService.listExpenses(previousMonthBounds)
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as Expense[]
+      return result.data
     },
     staleTime: queryConfig.staleTime.expenses,
   })
 
   const { data: previousSalaryResponse } = useQuery({
     queryKey: queryKeys.salary(previousMonth),
-    queryFn: async (): Promise<SalaryHistory> => {
+    queryFn: async () => {
       const result = await salaryService.getSalary(previousMonth)
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as SalaryHistory
+      return result.data
     },
     staleTime: queryConfig.staleTime.salary,
   })
 
   const { data: categoriesResponse, isLoading: isLoadingCategories } = useQuery({
     queryKey: queryKeys.categories,
-    queryFn: async (): Promise<Category[]> => {
+    queryFn: async () => {
       const result = await categoryService.listCategories()
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as Category[]
+      return result.data
     },
     staleTime: queryConfig.staleTime.categories,
   })
 
   const { data: creditCardsResponse, isLoading: isLoadingCreditCards } = useQuery({
     queryKey: queryKeys.creditCards,
-    queryFn: async (): Promise<CreditCard[]> => {
+    queryFn: async () => {
       const response = await creditCardService.listCreditCards()
       if (isErrorResponse(response)) throw new Error(response.error.message)
-      return response.data as CreditCard[]
+      return response.data
     },
     staleTime: queryConfig.staleTime.creditCards,
   })
 
   const { data: salaryResponse, isLoading: isLoadingSalary } = useQuery({
     queryKey: queryKeys.salary(selectedMonth),
-    queryFn: async (): Promise<SalaryHistory> => {
+    queryFn: async () => {
       const result = await salaryService.getSalary(selectedMonth)
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as SalaryHistory
+      return result.data
     },
     staleTime: queryConfig.staleTime.salary,
   })
 
   const { data: spendingLimitResponse, isLoading: isLoadingSpendingLimit } = useQuery({
     queryKey: queryKeys.spendingLimit(selectedMonth),
-    queryFn: async (): Promise<EffectiveSpendingLimit | null> => {
+    queryFn: async () => {
       const result = await spendingLimitService.getSpendingLimit(selectedMonth)
       if (isErrorResponse(result)) throw new Error(result.error.message)
-      return result.data as EffectiveSpendingLimit | null
+      return result.data
     },
     staleTime: queryConfig.staleTime.spendingLimit,
   })

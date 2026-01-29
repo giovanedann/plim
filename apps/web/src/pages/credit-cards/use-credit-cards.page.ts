@@ -14,10 +14,10 @@ export function useCreditCardsPage() {
 
   const creditCardsQuery = useQuery({
     queryKey: queryKeys.creditCards,
-    queryFn: async (): Promise<CreditCard[]> => {
+    queryFn: async () => {
       const response = await creditCardService.listCreditCards()
       if (isErrorResponse(response)) throw new Error(response.error.message)
-      return response.data as CreditCard[]
+      return response.data
     },
     staleTime: queryConfig.staleTime.creditCards,
   })

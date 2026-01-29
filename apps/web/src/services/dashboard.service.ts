@@ -1,11 +1,5 @@
 import { type ApiResponse, api } from '@/lib/api-client'
-import type { DashboardData, TimelineGroupBy } from '@plim/shared'
-
-export interface DashboardQuery {
-  start_date: string
-  end_date: string
-  group_by?: TimelineGroupBy
-}
+import type { DashboardData, DashboardQuery } from '@plim/shared'
 
 function buildQueryString(query: DashboardQuery): string {
   const params = new URLSearchParams()
