@@ -270,7 +270,7 @@ Track these items while collecting beta feedback. Implement before public launch
 - [x] Add rate limiting to API endpoints (Upstash Redis - 50 req/60s per IP)
 - [x] Add CORS configuration for production domain only
 - [x] Audit RLS policies with Supabase security advisor (8 auth_rls_initplan warnings fixed)
-- [ ] Review and document authentication token handling (docs/AUTH.md)
+- [x] Review and document authentication token handling (docs/AUTH.md)
 
 #### 18.6 Data & User Rights (LGPD) ✅
 - [x] Create data export feature (GET /api/v1/account/export/:table - CSV per table with rate limiting)
