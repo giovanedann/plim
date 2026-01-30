@@ -172,6 +172,102 @@ describe('ListExpensesUseCase', () => {
       expect(result).toHaveLength(0)
     })
 
+    it('filters projected expenses by payment_method', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        payment_method: 'credit_card',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense]) // has debit_card
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it('includes projected expenses matching payment_method filter', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        payment_method: 'debit_card',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense]) // has debit_card
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result.length).toBeGreaterThan(0)
+    })
+
+    it('filters projected expenses by credit_card_id none', async () => {
+      const recurrentWithCard: Expense = {
+        ...recurrentExpense,
+        credit_card_id: 'card-123',
+      }
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        credit_card_id: 'none',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentWithCard])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it('includes projected expenses with null credit_card_id when filtering by none', async () => {
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        credit_card_id: 'none',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense]) // has null credit_card_id
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result.length).toBeGreaterThan(0)
+    })
+
+    it('filters projected expenses by specific credit_card_id', async () => {
+      const recurrentWithCard: Expense = {
+        ...recurrentExpense,
+        credit_card_id: 'card-123',
+      }
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        credit_card_id: 'different-card',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentWithCard])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it('includes projected expenses matching specific credit_card_id', async () => {
+      const recurrentWithCard: Expense = {
+        ...recurrentExpense,
+        credit_card_id: 'card-123',
+      }
+      const filters: ExpenseFilters = {
+        start_date: '2024-01-01',
+        end_date: '2024-03-31',
+        credit_card_id: 'card-123',
+      }
+      mockRepository.findByUserId.mockResolvedValue([])
+      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentWithCard])
+
+      const result = await useCase.execute('user-123', filters)
+
+      expect(result.length).toBeGreaterThan(0)
+    })
+
     it('combines regular and projected expenses sorted by date descending', async () => {
       const filters: ExpenseFilters = {
         start_date: '2024-01-01',
