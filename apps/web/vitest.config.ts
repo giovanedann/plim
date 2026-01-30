@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     name: '@plim/web',
-    color: 'magenta',
+    color: 'cyan',
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
   },
