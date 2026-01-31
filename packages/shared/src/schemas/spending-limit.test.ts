@@ -78,7 +78,7 @@ describe('spendingLimitSchema', () => {
     const result = sut.safeParse(limit)
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Month must be in YYYY-MM format')
+    expect(result.error!.issues[0]!.message).toBe('Mês deve estar no formato AAAA-MM')
   })
 
   it('rejects spending limit with full date year_month', () => {
@@ -87,7 +87,7 @@ describe('spendingLimitSchema', () => {
     const result = sut.safeParse(limit)
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Month must be in YYYY-MM format')
+    expect(result.error!.issues[0]!.message).toBe('Mês deve estar no formato AAAA-MM')
   })
 
   it('rejects spending limit with single digit month', () => {
@@ -96,7 +96,7 @@ describe('spendingLimitSchema', () => {
     const result = sut.safeParse(limit)
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Month must be in YYYY-MM format')
+    expect(result.error!.issues[0]!.message).toBe('Mês deve estar no formato AAAA-MM')
   })
 
   it('rejects spending limit with invalid created_at format', () => {
@@ -201,7 +201,7 @@ describe('upsertSpendingLimitSchema', () => {
     const result = sut.safeParse(input)
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Month must be in YYYY-MM format')
+    expect(result.error!.issues[0]!.message).toBe('Mês deve estar no formato AAAA-MM')
   })
 
   it('rejects non-integer amount', () => {
