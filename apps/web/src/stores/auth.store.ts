@@ -1,3 +1,4 @@
+import { translateAuthError } from '@/lib/auth-errors'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
 import { create } from 'zustand'
@@ -52,7 +53,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })
       if (error) throw error
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Erro ao entrar com Google' })
+      set({
+        error: err instanceof Error ? translateAuthError(err.message) : 'Erro ao entrar com Google',
+      })
     } finally {
       set({ isLoading: false })
     }
@@ -67,7 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })
       if (error) throw error
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Erro ao entrar' })
+      set({ error: err instanceof Error ? translateAuthError(err.message) : 'Erro ao entrar' })
       throw err
     } finally {
       set({ isLoading: false })
@@ -87,7 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })
       if (error) throw error
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Erro ao criar conta' })
+      set({ error: err instanceof Error ? translateAuthError(err.message) : 'Erro ao criar conta' })
       throw err
     } finally {
       set({ isLoading: false })
@@ -100,7 +103,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { error } = await supabase.auth.resetPasswordForEmail(email)
       if (error) throw error
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Erro ao enviar email de recuperação' })
+      set({
+        error:
+          err instanceof Error
+            ? translateAuthError(err.message)
+            : 'Erro ao enviar email de recuperação',
+      })
       throw err
     } finally {
       set({ isLoading: false })
@@ -118,7 +126,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error
       set({ isInRecoveryMode: true })
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Código inválido ou expirado' })
+      set({
+        error:
+          err instanceof Error ? translateAuthError(err.message) : 'Código inválido ou expirado',
+      })
       throw err
     } finally {
       set({ isLoading: false })
@@ -132,7 +143,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error
       set({ isInRecoveryMode: false })
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Erro ao atualizar senha' })
+      set({
+        error: err instanceof Error ? translateAuthError(err.message) : 'Erro ao atualizar senha',
+      })
       throw err
     } finally {
       set({ isLoading: false })
