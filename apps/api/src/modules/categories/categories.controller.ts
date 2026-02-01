@@ -1,14 +1,10 @@
 import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, createCategorySchema, updateCategorySchema } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import type { Bindings } from '../../lib/env'
 import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
-import { CategoriesRepository } from './categories.repository'
-import { CreateCategoryUseCase } from './create-category.usecase'
-import { DeleteCategoryUseCase } from './delete-category.usecase'
-import { ListCategoriesUseCase } from './list-categories.usecase'
-import { UpdateCategoryUseCase } from './update-category.usecase'
+import { createCategoriesDependencies } from './categories.factory'
 
 type CategoriesEnv = {
   Bindings: Bindings
@@ -19,56 +15,56 @@ const categoriesController = new Hono<CategoriesEnv>()
 
 categoriesController.get('/', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new CategoriesRepository(supabase)
-  const useCase = new ListCategoriesUseCase(repository)
+  const { listCategories } = createCategoriesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const categories = await useCase.execute(userId)
+  const categories = await listCategories.execute(userId)
 
   return success(c, categories, HTTP_STATUS.OK)
 })
 
 categoriesController.post('/', sValidator('json', createCategorySchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const input = c.req.valid('json')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new CategoriesRepository(supabase)
-  const useCase = new CreateCategoryUseCase(repository)
+  const { createCategory } = createCategoriesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const category = await useCase.execute(userId, input)
+  const category = await createCategory.execute(userId, input)
 
   return success(c, category, HTTP_STATUS.CREATED)
 })
 
 categoriesController.patch('/:id', sValidator('json', updateCategorySchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const categoryId = c.req.param('id')
   const input = c.req.valid('json')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new CategoriesRepository(supabase)
-  const useCase = new UpdateCategoryUseCase(repository)
+  const { updateCategory } = createCategoriesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const category = await useCase.execute(userId, categoryId, input)
+  const category = await updateCategory.execute(userId, categoryId, input)
 
   return success(c, category, HTTP_STATUS.OK)
 })
 
 categoriesController.delete('/:id', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const categoryId = c.req.param('id')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new CategoriesRepository(supabase)
-  const useCase = new DeleteCategoryUseCase(repository)
+  const { deleteCategory } = createCategoriesDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  await useCase.execute(userId, categoryId)
+  await deleteCategory.execute(userId, categoryId)
 
   return c.body(null, HTTP_STATUS.NO_CONTENT)
 })

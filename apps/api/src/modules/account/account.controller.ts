@@ -1,16 +1,11 @@
 import { sValidator } from '@hono/standard-validator'
 import { ERROR_CODES, HTTP_STATUS, deleteAccountSchema } from '@plim/shared'
 import { Hono } from 'hono'
-import {
-  type Bindings,
-  createSupabaseAdminClient,
-  createSupabaseClientWithAuth,
-} from '../../lib/env'
+import type { Bindings } from '../../lib/env'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { AppError } from '../../middleware/error-handler.middleware'
-import { AccountRepository, type ExportableTable } from './account.repository'
-import { DeleteAccountUseCase } from './delete-account.usecase'
-import { ExportDataUseCase } from './export-data.usecase'
+import { createAccountDependencies } from './account.factory'
+import type { ExportableTable } from './account.repository'
 
 type AccountEnv = {
   Bindings: Bindings
@@ -37,7 +32,6 @@ const accountController = new Hono<AccountEnv>()
 
 accountController.get('/export/:table', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const table = c.req.param('table') as ExportableTable
 
   if (!VALID_TABLES.includes(table)) {
@@ -48,11 +42,12 @@ accountController.get('/export/:table', async (c) => {
     )
   }
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new AccountRepository(supabase)
-  const useCase = new ExportDataUseCase(repository)
+  const { exportData } = createAccountDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const csvData = await useCase.execute(userId, table)
+  const csvData = await exportData.execute(userId, table)
 
   const filename = `plim-${TABLE_FILENAMES[table]}-${new Date().toISOString().split('T')[0]}.csv`
 
@@ -67,12 +62,12 @@ accountController.get('/export/:table', async (c) => {
 
 accountController.delete('/', sValidator('json', deleteAccountSchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const { password } = c.req.valid('json')
 
-  const userSupabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const adminSupabase = createSupabaseAdminClient(c.env)
-  const repository = new AccountRepository(userSupabase)
+  const { repository, deleteAccount } = createAccountDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
   const email = await repository.getUserEmail(userId)
 
@@ -80,8 +75,7 @@ accountController.delete('/', sValidator('json', deleteAccountSchema), async (c)
     throw new AppError(ERROR_CODES.NOT_FOUND, 'Perfil não encontrado', HTTP_STATUS.NOT_FOUND)
   }
 
-  const useCase = new DeleteAccountUseCase(userSupabase, adminSupabase)
-  await useCase.execute(userId, email, password)
+  await deleteAccount.execute(userId, email, password)
 
   return c.body(null, HTTP_STATUS.NO_CONTENT)
 })

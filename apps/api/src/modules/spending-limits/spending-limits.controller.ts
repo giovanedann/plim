@@ -2,12 +2,10 @@ import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, upsertSpendingLimitSchema } from '@plim/shared'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import type { Bindings } from '../../lib/env'
 import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
-import { GetSpendingLimitUseCase } from './get-spending-limit.usecase'
-import { SpendingLimitsRepository } from './spending-limits.repository'
-import { UpsertSpendingLimitUseCase } from './upsert-spending-limit.usecase'
+import { createSpendingLimitsDependencies } from './spending-limits.factory'
 
 type SpendingLimitsEnv = {
   Bindings: Bindings
@@ -25,14 +23,14 @@ spendingLimitsController.get(
   sValidator('param', yearMonthParamSchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const { yearMonth } = c.req.valid('param')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new SpendingLimitsRepository(supabase)
-    const useCase = new GetSpendingLimitUseCase(repository)
+    const { getSpendingLimit } = createSpendingLimitsDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const limit = await useCase.execute(userId, yearMonth)
+    const limit = await getSpendingLimit.execute(userId, yearMonth)
 
     return success(c, limit, HTTP_STATUS.OK)
   }
@@ -40,14 +38,14 @@ spendingLimitsController.get(
 
 spendingLimitsController.post('/', sValidator('json', upsertSpendingLimitSchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const input = c.req.valid('json')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new SpendingLimitsRepository(supabase)
-  const useCase = new UpsertSpendingLimitUseCase(repository)
+  const { upsertSpendingLimit } = createSpendingLimitsDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const limit = await useCase.execute(userId, input)
+  const limit = await upsertSpendingLimit.execute(userId, input)
 
   return success(c, limit, HTTP_STATUS.CREATED)
 })

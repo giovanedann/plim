@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import { CreateExpenseUseCase } from './create-expense.usecase'
 import { DeleteExpenseUseCase } from './delete-expense.usecase'
@@ -25,11 +24,11 @@ interface CreateDependenciesOptions {
   accessToken: string
 }
 
-interface CreateDependenciesWithClientOptions {
-  supabase: SupabaseClient
-}
-
-function createDependenciesFromRepository(repository: ExpensesRepository): ExpensesDependencies {
+export function createExpensesDependencies(
+  options: CreateDependenciesOptions
+): ExpensesDependencies {
+  const supabase = createSupabaseClientWithAuth(options.env, options.accessToken)
+  const repository = new ExpensesRepository(supabase)
   return {
     repository,
     listExpenses: new ListExpensesUseCase(repository),
@@ -40,27 +39,4 @@ function createDependenciesFromRepository(repository: ExpensesRepository): Expen
     getInstallmentGroup: new GetInstallmentGroupUseCase(repository),
     deleteInstallmentGroup: new DeleteInstallmentGroupUseCase(repository),
   }
-}
-
-/**
- * Creates all expenses module dependencies from environment and access token.
- * Use this in controllers where Hono context provides env and accessToken.
- */
-export function createExpensesDependencies(
-  options: CreateDependenciesOptions
-): ExpensesDependencies {
-  const supabase = createSupabaseClientWithAuth(options.env, options.accessToken)
-  const repository = new ExpensesRepository(supabase)
-  return createDependenciesFromRepository(repository)
-}
-
-/**
- * Creates all expenses module dependencies from a Supabase client.
- * Use this in tests where you want to inject a mock client.
- */
-export function createExpensesDependenciesWithClient(
-  options: CreateDependenciesWithClientOptions
-): ExpensesDependencies {
-  const repository = new ExpensesRepository(options.supabase)
-  return createDependenciesFromRepository(repository)
 }

@@ -6,20 +6,10 @@ import {
   timelineGroupBySchema,
 } from '@plim/shared'
 import { Hono } from 'hono'
-import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import type { Bindings } from '../../lib/env'
 import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
-import { DashboardRepository } from './dashboard.repository'
-import { GetCategoryBreakdownUseCase } from './get-category-breakdown.usecase'
-import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.usecase'
-import { GetDashboardUseCase } from './get-dashboard.usecase'
-import { GetExpensesTimelineUseCase } from './get-expenses-timeline.usecase'
-import { GetIncomeVsExpensesUseCase } from './get-income-vs-expenses.usecase'
-import { GetInstallmentForecastUseCase } from './get-installment-forecast.usecase'
-import { GetPaymentBreakdownUseCase } from './get-payment-breakdown.usecase'
-import { GetSalaryTimelineUseCase } from './get-salary-timeline.usecase'
-import { GetSavingsRateUseCase } from './get-savings-rate.usecase'
-import { GetSummaryUseCase } from './get-summary.usecase'
+import { createDashboardDependencies } from './dashboard.factory'
 
 type DashboardEnv = {
   Bindings: Bindings
@@ -34,28 +24,28 @@ const getDashboardQuerySchema = dashboardQuerySchema.extend({
 
 dashboardController.get('/', sValidator('query', getDashboardQuerySchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const query = c.req.valid('query')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new DashboardRepository(supabase)
-  const useCase = new GetDashboardUseCase(repository)
+  const { getDashboard } = createDashboardDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const data = await useCase.execute(userId, query)
+  const data = await getDashboard.execute(userId, query)
 
   return success(c, data, HTTP_STATUS.OK)
 })
 
 dashboardController.get('/summary', sValidator('query', dashboardQuerySchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const query = c.req.valid('query')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new DashboardRepository(supabase)
-  const useCase = new GetSummaryUseCase(repository)
+  const { getSummary } = createDashboardDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const data = await useCase.execute(userId, query)
+  const data = await getSummary.execute(userId, query)
 
   return success(c, data, HTTP_STATUS.OK)
 })
@@ -65,14 +55,14 @@ dashboardController.get(
   sValidator('query', expensesTimelineQuerySchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const query = c.req.valid('query')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new DashboardRepository(supabase)
-    const useCase = new GetExpensesTimelineUseCase(repository)
+    const { getExpensesTimeline } = createDashboardDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const data = await useCase.execute(userId, query)
+    const data = await getExpensesTimeline.execute(userId, query)
 
     return success(c, data, HTTP_STATUS.OK)
   }
@@ -83,14 +73,14 @@ dashboardController.get(
   sValidator('query', dashboardQuerySchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const query = c.req.valid('query')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new DashboardRepository(supabase)
-    const useCase = new GetIncomeVsExpensesUseCase(repository)
+    const { getIncomeVsExpenses } = createDashboardDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const data = await useCase.execute(userId, query)
+    const data = await getIncomeVsExpenses.execute(userId, query)
 
     return success(c, data, HTTP_STATUS.OK)
   }
@@ -101,14 +91,14 @@ dashboardController.get(
   sValidator('query', dashboardQuerySchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const query = c.req.valid('query')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new DashboardRepository(supabase)
-    const useCase = new GetCategoryBreakdownUseCase(repository)
+    const { getCategoryBreakdown } = createDashboardDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const data = await useCase.execute(userId, query)
+    const data = await getCategoryBreakdown.execute(userId, query)
 
     return success(c, data, HTTP_STATUS.OK)
   }
@@ -119,14 +109,14 @@ dashboardController.get(
   sValidator('query', dashboardQuerySchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const query = c.req.valid('query')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new DashboardRepository(supabase)
-    const useCase = new GetPaymentBreakdownUseCase(repository)
+    const { getPaymentBreakdown } = createDashboardDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const data = await useCase.execute(userId, query)
+    const data = await getPaymentBreakdown.execute(userId, query)
 
     return success(c, data, HTTP_STATUS.OK)
   }
@@ -137,14 +127,14 @@ dashboardController.get(
   sValidator('query', dashboardQuerySchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const query = c.req.valid('query')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new DashboardRepository(supabase)
-    const useCase = new GetCreditCardBreakdownUseCase(repository)
+    const { getCreditCardBreakdown } = createDashboardDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const data = await useCase.execute(userId, query)
+    const data = await getCreditCardBreakdown.execute(userId, query)
 
     return success(c, data, HTTP_STATUS.OK)
   }
@@ -152,14 +142,14 @@ dashboardController.get(
 
 dashboardController.get('/savings-rate', sValidator('query', dashboardQuerySchema), async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
   const query = c.req.valid('query')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new DashboardRepository(supabase)
-  const useCase = new GetSavingsRateUseCase(repository)
+  const { getSavingsRate } = createDashboardDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const data = await useCase.execute(userId, query)
+  const data = await getSavingsRate.execute(userId, query)
 
   return success(c, data, HTTP_STATUS.OK)
 })
@@ -169,14 +159,14 @@ dashboardController.get(
   sValidator('query', dashboardQuerySchema),
   async (c) => {
     const userId = c.get('userId')
-    const accessToken = c.get('accessToken')
     const query = c.req.valid('query')
 
-    const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-    const repository = new DashboardRepository(supabase)
-    const useCase = new GetSalaryTimelineUseCase(repository)
+    const { getSalaryTimeline } = createDashboardDependencies({
+      env: c.env,
+      accessToken: c.get('accessToken'),
+    })
 
-    const data = await useCase.execute(userId, query)
+    const data = await getSalaryTimeline.execute(userId, query)
 
     return success(c, data, HTTP_STATUS.OK)
   }
@@ -184,13 +174,13 @@ dashboardController.get(
 
 dashboardController.get('/installment-forecast', async (c) => {
   const userId = c.get('userId')
-  const accessToken = c.get('accessToken')
 
-  const supabase = createSupabaseClientWithAuth(c.env, accessToken)
-  const repository = new DashboardRepository(supabase)
-  const useCase = new GetInstallmentForecastUseCase(repository)
+  const { getInstallmentForecast } = createDashboardDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-  const data = await useCase.execute(userId)
+  const data = await getInstallmentForecast.execute(userId)
 
   return success(c, data, HTTP_STATUS.OK)
 })
