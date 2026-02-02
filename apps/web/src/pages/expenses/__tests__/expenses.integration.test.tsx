@@ -4,25 +4,23 @@
  * Tests the integration between:
  * - ExpensesPage component
  * - useExpensesPage hook
- * - API services (mocked)
+ * - Service layer (mocked)
  * - React Query state management
  *
  * These tests verify that the page correctly:
- * - Displays expenses from API
+ * - Displays expenses from services
  * - Handles loading states
  * - Filters expenses
  * - Renders empty states
  */
 
 import { ThemeProvider } from '@/components/theme-provider'
-import {
-  createMockApiPaginatedResponse,
-  createMockApiResponse,
-  createMockCategory,
-  createMockExpense,
-  mockApiResponse,
-  resetApiMocks,
-} from '@/test-utils/ui-integration'
+import { categoryService } from '@/services/category.service'
+import { creditCardService } from '@/services/credit-card.service'
+import { expenseService } from '@/services/expense.service'
+import { salaryService } from '@/services/salary.service'
+import { spendingLimitService } from '@/services/spending-limit.service'
+import { createMockCategory, createMockExpense } from '@/test-utils/ui-integration'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -49,17 +47,11 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-function setupBasicMocks(additionalMocks: Record<string, unknown> = {}) {
-  mockApiResponse('/categories', createMockApiResponse([]))
-  mockApiResponse('/credit-cards', createMockApiResponse([]))
-  mockApiResponse('/salary?month=2024-01', createMockApiResponse(null))
-  mockApiResponse('/spending-limits?month=2024-01', createMockApiResponse(null))
-  mockApiResponse('/expenses?start_date=2023-12-01&end_date=2023-12-31', createMockApiResponse([]))
-  mockApiResponse('/salary?month=2023-12', createMockApiResponse(null))
-
-  Object.entries(additionalMocks).forEach(([endpoint, response]) => {
-    mockApiResponse(endpoint, response)
-  })
+function setupBasicServiceMocks() {
+  vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [] })
+  vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
+  vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null })
+  vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null })
 }
 
 describe('ExpensesPage Integration', () => {
@@ -68,21 +60,22 @@ describe('ExpensesPage Integration', () => {
   beforeEach(() => {
     user = userEvent.setup()
     vi.clearAllMocks()
-    resetApiMocks()
     vi.setSystemTime(new Date('2024-01-15T12:00:00Z'))
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
   describe('basic rendering', () => {
     it('renders page description', async () => {
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -92,11 +85,12 @@ describe('ExpensesPage Integration', () => {
     })
 
     it('shows empty state when no expenses exist', async () => {
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -119,11 +113,12 @@ describe('ExpensesPage Integration', () => {
         }),
       ]
 
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse(mockExpenses, { page: 1, limit: 20, total: 2 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse(mockExpenses),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: mockExpenses,
+        meta: { page: 1, limit: 20, total: 2, total_pages: 1 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: mockExpenses })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -138,12 +133,15 @@ describe('ExpensesPage Integration', () => {
     it('displays category filter', async () => {
       const mockCategory = createMockCategory({ name: 'Food', icon: 'utensils' })
 
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
-        '/categories': createMockApiResponse([mockCategory]),
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [mockCategory] })
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
+      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null })
+      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null })
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -154,11 +152,12 @@ describe('ExpensesPage Integration', () => {
     })
 
     it('displays payment method filter', async () => {
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -171,11 +170,12 @@ describe('ExpensesPage Integration', () => {
 
   describe('expense CRUD operations', () => {
     it('shows create expense button', async () => {
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -190,11 +190,12 @@ describe('ExpensesPage Integration', () => {
         amount_cents: 5000,
       })
 
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([mockExpense], { page: 1, limit: 20, total: 1 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([mockExpense]),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [mockExpense],
+        meta: { page: 1, limit: 20, total: 1, total_pages: 1 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [mockExpense] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -216,11 +217,12 @@ describe('ExpensesPage Integration', () => {
 
   describe('monthly navigation', () => {
     it('shows month selector', async () => {
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -240,11 +242,12 @@ describe('ExpensesPage Integration', () => {
         })
       )
 
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse(mockExpenses, { page: 1, limit: 20, total: 50 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse(mockExpenses),
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: mockExpenses,
+        meta: { page: 1, limit: 20, total: 50, total_pages: 3 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: mockExpenses })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -259,12 +262,15 @@ describe('ExpensesPage Integration', () => {
     it('displays salary card when available', async () => {
       const mockSalary = { amount_cents: 500000, month: '2024-01' }
 
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
-        '/salary?month=2024-01': createMockApiResponse(mockSalary),
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [] })
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
+      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: mockSalary })
+      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null })
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
@@ -282,12 +288,15 @@ describe('ExpensesPage Integration', () => {
         updated_at: '2024-01-01',
       }
 
-      setupBasicMocks({
-        '/expenses/paginated?start_date=2024-01-01&end_date=2024-01-31&page=1&limit=20':
-          createMockApiPaginatedResponse([], { page: 1, limit: 20, total: 0 }),
-        '/expenses?start_date=2024-01-01&end_date=2024-01-31': createMockApiResponse([]),
-        '/spending-limits?month=2024-01': createMockApiResponse(mockLimit),
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [] })
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
+      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null })
+      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: mockLimit })
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
       })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
