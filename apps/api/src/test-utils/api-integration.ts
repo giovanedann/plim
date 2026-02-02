@@ -94,6 +94,7 @@ export function createMockSupabaseQuery(): MockSupabaseQuery {
 
 /**
  * Creates a mock Supabase client for integration testing.
+ * Note: from() returns a fresh query builder each time to handle multiple queries per request.
  */
 export function createMockSupabaseClient(): MockSupabaseClient {
   const mockQuery = createMockSupabaseQuery()
