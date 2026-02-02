@@ -79,9 +79,11 @@ interface RouterIntegrationOptions {
  * Creates a test router for integration testing with routing.
  * Use this for testing pages and components that depend on routing context.
  *
+ * Returns both the router and a wrapper component that includes QueryClientProvider.
+ *
  * @example
- * const router = createTestRouter({ initialRoute: '/expenses' })
- * render(<RouterProvider router={router} />)
+ * const { router, wrapper } = createTestRouter({ initialRoute: '/expenses' })
+ * render(<RouterProvider router={router} />, { wrapper })
  */
 export function createTestRouter(options: RouterIntegrationOptions = {}) {
   const {
@@ -93,7 +95,7 @@ export function createTestRouter(options: RouterIntegrationOptions = {}) {
 
   const memoryHistory = createMemoryHistory({ initialEntries: [initialRoute] })
 
-  return createRouter({
+  const router = createRouter({
     routeTree,
     history: memoryHistory,
     context: {
@@ -104,6 +106,29 @@ export function createTestRouter(options: RouterIntegrationOptions = {}) {
       },
     },
   })
+
+  // Create a fresh QueryClient for each test
+  const testQueryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  })
+
+  function RouterTestWrapper({ children }: { children: ReactNode }) {
+    return (
+      <ThemeProvider defaultTheme="light">
+        <QueryClientProvider client={testQueryClient}>{children}</QueryClientProvider>
+      </ThemeProvider>
+    )
+  }
+
+  return { router, wrapper: RouterTestWrapper }
 }
 
 // ============================================================================
@@ -144,6 +169,9 @@ export function createMockApiPaginatedResponse<T>(
   }
 }
 
+// Store for accumulated API mocks
+const apiMockStore = new Map<string, { response: unknown; status: number; method: string }>()
+
 /**
  * Mocks global fetch for API requests.
  * Use this helper to mock API responses in integration tests.
@@ -153,21 +181,33 @@ export function createMockApiPaginatedResponse<T>(
  * mockApiResponse('/expenses/123', createMockApiError('NOT_FOUND', 'Expense not found'), 404)
  */
 export function mockApiResponse(endpoint: string, response: unknown, status = 200, method = 'GET') {
-  const fetchMock = vi.fn()
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+  const targetUrl = `${apiUrl}/api/v1${endpoint}`
+  const key = `${method}:${targetUrl}`
 
-  fetchMock.mockImplementation((url: string, options?: RequestInit) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
-    const targetUrl = `${apiUrl}/api/v1${endpoint}`
+  // Add this mock to the store
+  apiMockStore.set(key, { response, status, method })
 
-    if (url === targetUrl && (options?.method || 'GET') === method) {
+  // Create/update the global fetch mock with all accumulated mocks
+  const fetchMock = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+    const requestMethod = options?.method || 'GET'
+    const requestKey = `${requestMethod}:${url}`
+
+    console.log(`[FETCH] ${requestMethod} ${url}`)
+    console.log(`[FETCH] Available mocks:`, Array.from(apiMockStore.keys()))
+
+    const mock = apiMockStore.get(requestKey)
+    if (mock) {
+      console.log(`[FETCH] ✓ Matched mock for ${requestKey}`)
       return Promise.resolve({
-        ok: status >= 200 && status < 300,
-        status,
-        json: () => Promise.resolve(response),
+        ok: mock.status >= 200 && mock.status < 300,
+        status: mock.status,
+        json: () => Promise.resolve(mock.response),
       })
     }
 
-    return Promise.reject(new Error(`Unhandled request: ${method} ${url}`))
+    console.warn(`[FETCH] ✗ Unhandled request: ${requestMethod} ${url}`)
+    return Promise.reject(new Error(`Unhandled request: ${requestMethod} ${url}`))
   })
 
   global.fetch = fetchMock as unknown as typeof fetch
@@ -178,5 +218,6 @@ export function mockApiResponse(endpoint: string, response: unknown, status = 20
  * Resets all API mocks.
  */
 export function resetApiMocks() {
+  apiMockStore.clear()
   vi.restoreAllMocks()
 }
