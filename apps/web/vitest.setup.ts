@@ -45,38 +45,17 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
-// Mock Auth Store
-vi.mock('@/stores/auth.store', () => ({
-  useAuthStore: vi.fn((selector) => {
-    const state = {
-      user: {
-        id: 'user-00000000-0000-0000-0000-000000000001',
-        email: 'test@example.com',
-      },
-      isInitialized: true,
-      isInRecoveryMode: false,
-      setSession: vi.fn(),
-      initialize: vi.fn(),
-    }
-    return selector ? selector(state) : state
-  }),
-}))
-
-// Mock UI Store
-vi.mock('@/stores/ui.store', () => ({
-  useUIStore: vi.fn((selector) => {
-    const state = {
-      sidebarOpen: true,
-      hideValues: false,
-      toggleSidebar: vi.fn(),
-      setSidebarOpen: vi.fn(),
-      toggleHideValues: vi.fn(),
-    }
-    return selector ? selector(state) : state
-  }),
-}))
+// Mock Zustand using official testing pattern
+// This allows stores to be reset between tests for proper isolation
+vi.mock('zustand')
 
 // Cleanup after each test
-afterEach(() => {
+afterEach(async () => {
   cleanup()
+
+  // Reset all Zustand stores to initial state
+  const { storeResetFns } = await import('./__mocks__/zustand')
+  storeResetFns.forEach((resetFn) => {
+    resetFn()
+  })
 })
