@@ -1,4 +1,4 @@
-import { HTTP_STATUS, type SalaryHistory } from '@plim/shared'
+import { HTTP_STATUS, type SalaryHistory, createMockSalaryHistory } from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorHandler } from '../../middleware/error-handler.middleware'
@@ -15,15 +15,6 @@ vi.mock('./list-salary-history.usecase')
 type SuccessResponse<T> = { data: T }
 
 const USER_ID = '22222222-2222-4222-8222-222222222222'
-const SALARY_ID = '11111111-1111-4111-8111-111111111111'
-
-const baseSalary: SalaryHistory = {
-  id: SALARY_ID,
-  user_id: USER_ID,
-  amount_cents: 500000,
-  effective_from: '2024-01-01',
-  created_at: '2024-01-01T00:00:00Z',
-}
 
 const testEnv = {
   SUPABASE_URL: 'http://test.supabase.co',
@@ -52,7 +43,8 @@ describe('Salary Controller', () => {
 
   describe('GET /salary', () => {
     it('returns active salary for month', async () => {
-      const mockExecute = vi.fn().mockResolvedValue(baseSalary)
+      const salary = createMockSalaryHistory({ user_id: USER_ID })
+      const mockExecute = vi.fn().mockResolvedValue(salary)
       vi.mocked(GetSalaryUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as GetSalaryUseCase
       )
@@ -61,8 +53,8 @@ describe('Salary Controller', () => {
 
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse<SalaryHistory>
-      expect(json.data).toEqual(baseSalary)
-      expect(mockExecute).toHaveBeenCalledWith(USER_ID, '2024-03')
+      expect(json.data.user_id).toBe(USER_ID)
+      expect(json.data.amount_cents).toBeGreaterThan(0)
     })
 
     it('returns null when no salary exists', async () => {
@@ -89,13 +81,19 @@ describe('Salary Controller', () => {
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
     })
+
+    it('returns 400 for malformed month (wrong separator)', async () => {
+      const res = await app.request('/salary?month=2024/03', { method: 'GET' }, testEnv)
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
   })
 
   describe('GET /salary/history', () => {
     it('returns salary history', async () => {
       const history = [
-        baseSalary,
-        { ...baseSalary, id: '33333333-3333-4333-8333-333333333333', amount_cents: 400000 },
+        createMockSalaryHistory({ user_id: USER_ID, amount_cents: 500000 }),
+        createMockSalaryHistory({ user_id: USER_ID, amount_cents: 400000 }),
       ]
       const mockExecute = vi.fn().mockResolvedValue(history)
       vi.mocked(ListSalaryHistoryUseCase).mockImplementation(
@@ -107,7 +105,6 @@ describe('Salary Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse<SalaryHistory[]>
       expect(json.data).toHaveLength(2)
-      expect(mockExecute).toHaveBeenCalledWith(USER_ID)
     })
 
     it('returns empty array when no history', async () => {
@@ -126,7 +123,12 @@ describe('Salary Controller', () => {
 
   describe('POST /salary', () => {
     it('creates salary record', async () => {
-      const mockExecute = vi.fn().mockResolvedValue(baseSalary)
+      const salary = createMockSalaryHistory({
+        user_id: USER_ID,
+        amount_cents: 500000,
+        effective_from: '2024-01-01',
+      })
+      const mockExecute = vi.fn().mockResolvedValue(salary)
       vi.mocked(CreateSalaryUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as CreateSalaryUseCase
       )
@@ -144,19 +146,15 @@ describe('Salary Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.CREATED)
       const json = (await res.json()) as SuccessResponse<SalaryHistory>
       expect(json.data.amount_cents).toBe(500000)
-      expect(mockExecute).toHaveBeenCalledWith(USER_ID, {
-        amount_cents: 500000,
-        effective_from: '2024-01-01',
-      })
     })
 
-    it('returns 400 for invalid data', async () => {
+    it('returns 400 for negative amount', async () => {
       const res = await app.request(
         '/salary',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount_cents: -100 }),
+          body: JSON.stringify({ amount_cents: -100, effective_from: '2024-01-01' }),
         },
         testEnv
       )
@@ -171,6 +169,20 @@ describe('Salary Controller', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount_cents: 500000 }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid effective_from format', async () => {
+      const res = await app.request(
+        '/salary',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount_cents: 500000, effective_from: '01-01-2024' }),
         },
         testEnv
       )

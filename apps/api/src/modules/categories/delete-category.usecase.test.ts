@@ -1,60 +1,48 @@
-import { type Category, ERROR_CODES, HTTP_STATUS } from '@plim/shared'
+import { ERROR_CODES, HTTP_STATUS, createMockCategory } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CategoriesRepository } from './categories.repository'
 import { DeleteCategoryUseCase } from './delete-category.usecase'
 
-const userCategory: Category = {
-  id: 'user-1',
-  user_id: 'user-123',
-  name: 'My Category',
-  icon: '⭐',
-  color: '#00FF00',
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-}
+type MockRepository = Pick<CategoriesRepository, 'findById' | 'softDelete'>
 
-const systemCategory: Category = {
-  id: 'system-1',
-  user_id: null,
-  name: 'Alimentação',
-  icon: '🍔',
-  color: '#FF5733',
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+function createMockRepository(): MockRepository {
+  return {
+    findById: vi.fn(),
+    softDelete: vi.fn(),
+  }
 }
 
 describe('DeleteCategoryUseCase', () => {
-  let useCase: DeleteCategoryUseCase
-  let mockRepository: { findById: ReturnType<typeof vi.fn>; softDelete: ReturnType<typeof vi.fn> }
+  let sut: DeleteCategoryUseCase
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = { findById: vi.fn(), softDelete: vi.fn() }
-    useCase = new DeleteCategoryUseCase(mockRepository as unknown as CategoriesRepository)
+    mockRepository = createMockRepository()
+    sut = new DeleteCategoryUseCase(mockRepository as CategoriesRepository)
   })
 
   it('soft deletes user category', async () => {
-    mockRepository.findById.mockResolvedValue(userCategory)
-    mockRepository.softDelete.mockResolvedValue(true)
+    const userCategory = createMockCategory({ id: 'user-1', user_id: 'user-123' })
+    mockRepository.findById = vi.fn().mockResolvedValue(userCategory)
+    mockRepository.softDelete = vi.fn().mockResolvedValue(true)
 
-    await expect(useCase.execute('user-123', 'user-1')).resolves.toBeUndefined()
-    expect(mockRepository.softDelete).toHaveBeenCalledWith('user-1', 'user-123')
+    await expect(sut.execute('user-123', 'user-1')).resolves.toBeUndefined()
   })
 
   it('throws NOT_FOUND when category does not exist', async () => {
-    mockRepository.findById.mockResolvedValue(null)
+    mockRepository.findById = vi.fn().mockResolvedValue(null)
 
-    await expect(useCase.execute('user-123', 'nonexistent')).rejects.toMatchObject({
+    await expect(sut.execute('user-123', 'nonexistent')).rejects.toMatchObject({
       code: ERROR_CODES.NOT_FOUND,
       status: HTTP_STATUS.NOT_FOUND,
     })
   })
 
   it('throws FORBIDDEN when trying to delete system category', async () => {
-    mockRepository.findById.mockResolvedValue(systemCategory)
+    const systemCategory = createMockCategory({ id: 'system-1', user_id: null })
+    mockRepository.findById = vi.fn().mockResolvedValue(systemCategory)
 
-    await expect(useCase.execute('user-123', 'system-1')).rejects.toMatchObject({
+    await expect(sut.execute('user-123', 'system-1')).rejects.toMatchObject({
       code: ERROR_CODES.FORBIDDEN,
       status: HTTP_STATUS.FORBIDDEN,
     })

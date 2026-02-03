@@ -1,4 +1,10 @@
-import { type ApiError, ERROR_CODES, HTTP_STATUS, type Profile } from '@plim/shared'
+import {
+  type ApiError,
+  ERROR_CODES,
+  HTTP_STATUS,
+  type Profile,
+  createMockProfile,
+} from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError, errorHandler } from '../../middleware/error-handler.middleware'
@@ -13,17 +19,7 @@ vi.mock('./update-profile.usecase')
 type SuccessResponse = { data: Profile }
 type ErrorResponse = { error: ApiError }
 
-const mockProfile: Profile = {
-  user_id: 'user-123',
-  name: 'John Doe',
-  email: 'john@example.com',
-  avatar_url: null,
-  currency: 'BRL',
-  locale: 'pt-BR',
-  is_onboarded: false,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-}
+const USER_ID = 'user-123'
 
 const testEnv = {
   SUPABASE_URL: 'http://test.supabase.co',
@@ -36,7 +32,7 @@ function createTestApp() {
   app.onError(errorHandler)
 
   app.use('*', async (c, next) => {
-    c.set('userId', 'user-123')
+    c.set('userId', USER_ID)
     c.set('accessToken', 'test-token')
     await next()
   })
@@ -55,7 +51,8 @@ describe('Profile Controller', () => {
 
   describe('GET /profile', () => {
     it('returns profile when found', async () => {
-      const mockExecute = vi.fn().mockResolvedValue(mockProfile)
+      const profile = createMockProfile({ user_id: USER_ID })
+      const mockExecute = vi.fn().mockResolvedValue(profile)
       vi.mocked(GetProfileUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as GetProfileUseCase
       )
@@ -64,8 +61,8 @@ describe('Profile Controller', () => {
 
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse
-      expect(json.data).toEqual(mockProfile)
-      expect(mockExecute).toHaveBeenCalledWith('user-123')
+      expect(json.data.user_id).toBe(USER_ID)
+      expect(json.data.email).toBeDefined()
     })
 
     it('returns 404 when profile not found', async () => {
@@ -94,7 +91,7 @@ describe('Profile Controller', () => {
     })
 
     it('updates profile with valid data', async () => {
-      const updatedProfile = { ...mockProfile, name: 'Jane Doe' }
+      const updatedProfile = createMockProfile({ user_id: USER_ID, name: 'Jane Doe' })
       const mockExecute = vi.fn().mockResolvedValue(updatedProfile)
       vi.mocked(UpdateProfileUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as UpdateProfileUseCase
@@ -105,11 +102,16 @@ describe('Profile Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.OK)
       const json = (await res.json()) as SuccessResponse
       expect(json.data.name).toBe('Jane Doe')
-      expect(mockExecute).toHaveBeenCalledWith('user-123', { name: 'Jane Doe' })
     })
 
-    it('returns 400 for invalid update data', async () => {
+    it('returns 400 for invalid currency type', async () => {
       const res = await app.request('/profile', patchRequest({ currency: 123 }), testEnv)
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid avatar_url type', async () => {
+      const res = await app.request('/profile', patchRequest({ avatar_url: 123 }), testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
     })

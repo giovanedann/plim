@@ -1,57 +1,59 @@
-import { HTTP_STATUS } from '@plim/shared'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  TEST_ENV,
-  TEST_USER_ID,
-  createIntegrationApp,
+  ERROR_CODES,
+  type Expense,
+  HTTP_STATUS,
   createMockExpense,
-  createMockSupabaseClient,
   resetIdCounter,
-} from '../../test-utils/api-integration'
-import { expensesController } from './expenses.controller'
+} from '@plim/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AppError } from '../../middleware/error-handler.middleware'
+import { TEST_USER_ID, createIntegrationApp } from '../../test-utils/api-integration'
+import type { ExpensesDependencies } from './expenses.factory'
+import { createExpensesRouterWithDeps } from './expenses.routes'
 
-// Mock the Supabase client creation
-vi.mock('../../lib/env', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../lib/env')>()
-  return {
-    ...actual,
-    createSupabaseClientWithAuth: vi.fn(),
-  }
-})
+// Mock use cases
+const mockListExpenses = {
+  execute: vi.fn(),
+  executePaginated: vi.fn(),
+}
+const mockGetExpense = { execute: vi.fn() }
+const mockCreateExpense = { execute: vi.fn() }
+const mockUpdateExpense = { execute: vi.fn() }
+const mockDeleteExpense = { execute: vi.fn() }
+const mockGetInstallmentGroup = { execute: vi.fn() }
+const mockDeleteInstallmentGroup = { execute: vi.fn() }
 
-import { createSupabaseClientWithAuth } from '../../lib/env'
+const mockDependencies = {
+  repository: {},
+  listExpenses: mockListExpenses,
+  getExpense: mockGetExpense,
+  createExpense: mockCreateExpense,
+  updateExpense: mockUpdateExpense,
+  deleteExpense: mockDeleteExpense,
+  getInstallmentGroup: mockGetInstallmentGroup,
+  deleteInstallmentGroup: mockDeleteInstallmentGroup,
+} as unknown as ExpensesDependencies
 
 describe('Expenses Integration', () => {
   let app: ReturnType<typeof createIntegrationApp>
-  let mockSupabase: ReturnType<typeof createMockSupabaseClient>
 
   beforeEach(() => {
     vi.clearAllMocks()
     resetIdCounter()
 
-    mockSupabase = createMockSupabaseClient()
-
-    // Mock the Supabase client creation to return our mock
-    vi.mocked(createSupabaseClientWithAuth).mockReturnValue(
-      mockSupabase as unknown as ReturnType<typeof createSupabaseClientWithAuth>
-    )
-
     app = createIntegrationApp(TEST_USER_ID)
-    app.route('/expenses', expensesController)
+    const router = createExpensesRouterWithDeps(mockDependencies)
+    app.route('/expenses', router)
   })
 
   describe('POST /expenses - One-time expense', () => {
     it('creates single expense with valid input', async () => {
       const expense = createMockExpense({
-        type: 'one_time',
         amount_cents: 5000,
         description: 'Grocery shopping',
       })
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.insert.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: expense, error: null })
+      mockCreateExpense.execute.mockResolvedValue(expense)
 
       const res = await app.request('/expenses', {
         method: 'POST',
@@ -66,34 +68,30 @@ describe('Expenses Integration', () => {
           payment_method: expense.payment_method,
           date: expense.date,
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
 
-      const body = await res.json()
-      expect(body).toEqual({ data: expense })
-      expect(mockQuery.insert).toHaveBeenCalledWith(
+      const body = (await res.json()) as { data: Expense }
+      expect(body.data).toEqual(expense)
+      expect(mockCreateExpense.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
         expect.objectContaining({
-          user_id: TEST_USER_ID,
+          type: 'one_time',
           description: 'Grocery shopping',
           amount_cents: 5000,
-          is_recurrent: false,
         })
       )
     })
 
     it('creates expense with credit card', async () => {
+      const creditCardId = '20000000-0000-4000-8000-000000000001'
       const expense = createMockExpense({
-        type: 'one_time',
         payment_method: 'credit_card',
-        credit_card_id: 'card-123',
+        credit_card_id: creditCardId,
       })
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.insert.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: expense, error: null })
+      mockCreateExpense.execute.mockResolvedValue(expense)
 
       const res = await app.request('/expenses', {
         method: 'POST',
@@ -104,17 +102,17 @@ describe('Expenses Integration', () => {
           description: expense.description,
           amount_cents: expense.amount_cents,
           payment_method: 'credit_card',
-          credit_card_id: 'card-123',
+          credit_card_id: creditCardId,
           date: expense.date,
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
-      expect(mockQuery.insert).toHaveBeenCalledWith(
+      expect(mockCreateExpense.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
         expect.objectContaining({
           payment_method: 'credit_card',
-          credit_card_id: 'card-123',
+          credit_card_id: creditCardId,
         })
       )
     })
@@ -127,7 +125,6 @@ describe('Expenses Integration', () => {
           type: 'one_time',
           // Missing required fields
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
@@ -157,44 +154,36 @@ describe('Expenses Integration', () => {
         }),
       ]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.insert.mockReturnValue(mockQuery)
-      mockQuery.select.mockResolvedValue({ data: installments, error: null })
+      mockCreateExpense.execute.mockResolvedValue(installments)
 
       const res = await app.request('/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'installment',
-          category_id: installments[0].category_id,
+          category_id: installments[0]!.category_id,
           description: 'TV Purchase',
           amount_cents: 10000,
           payment_method: 'credit_card',
           date: '2024-01-01',
           installment_total: 3,
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
 
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense[] }
       expect(body.data).toHaveLength(3)
 
       // Verify amount distribution
-      const totalAmount = body.data.reduce(
-        (sum: number, exp: { amount_cents: number }) => sum + exp.amount_cents,
-        0
-      )
+      const totalAmount = body.data.reduce((sum, exp) => sum + exp.amount_cents, 0)
       expect(totalAmount).toBe(10000)
 
       // Verify installment metadata
-      expect(body.data[0].installment_current).toBe(1)
-      expect(body.data[1].installment_current).toBe(2)
-      expect(body.data[2].installment_current).toBe(3)
-      expect(
-        body.data.every((exp: { installment_total: number }) => exp.installment_total === 3)
-      ).toBe(true)
+      expect(body.data[0]!.installment_current).toBe(1)
+      expect(body.data[1]!.installment_current).toBe(2)
+      expect(body.data[2]!.installment_current).toBe(3)
+      expect(body.data.every((exp) => exp.installment_total === 3)).toBe(true)
     })
 
     it('generates unique group ID for installments', async () => {
@@ -203,35 +192,28 @@ describe('Expenses Integration', () => {
         createMockExpense({ installment_group_id: 'group-abc' }),
       ]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.insert.mockReturnValue(mockQuery)
-      mockQuery.select.mockResolvedValue({ data: installments, error: null })
+      mockCreateExpense.execute.mockResolvedValue(installments)
 
       const res = await app.request('/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'installment',
-          category_id: installments[0].category_id,
+          category_id: installments[0]!.category_id,
           description: 'Test',
           amount_cents: 1000,
           payment_method: 'credit_card',
           date: '2024-01-01',
           installment_total: 2,
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
 
-      const body = await res.json()
-      const groupId = body.data[0].installment_group_id
-      expect(groupId).toBeTruthy()
-      expect(
-        body.data.every(
-          (exp: { installment_group_id: string }) => exp.installment_group_id === groupId
-        )
-      ).toBe(true)
+      const body = (await res.json()) as { data: Expense[] }
+      const groupId = body.data[0]!.installment_group_id
+      expect(groupId).toBeDefined()
+      expect(body.data.every((exp) => exp.installment_group_id === groupId)).toBe(true)
     })
   })
 
@@ -244,10 +226,7 @@ describe('Expenses Integration', () => {
         recurrence_end: null,
       })
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.insert.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: expense, error: null })
+      mockCreateExpense.execute.mockResolvedValue(expense)
 
       const res = await app.request('/expenses', {
         method: 'POST',
@@ -261,12 +240,11 @@ describe('Expenses Integration', () => {
           recurrence_day: 15,
           recurrence_start: '2024-01-15',
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
 
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense }
       expect(body.data.is_recurrent).toBe(true)
       expect(body.data.recurrence_day).toBe(15)
       expect(body.data.recurrence_start).toBe('2024-01-15')
@@ -275,13 +253,12 @@ describe('Expenses Integration', () => {
     it('creates recurrent expense with end date', async () => {
       const expense = createMockExpense({
         is_recurrent: true,
+        recurrence_day: 1,
+        recurrence_start: '2024-01-01',
         recurrence_end: '2024-12-31',
       })
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.insert.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: expense, error: null })
+      mockCreateExpense.execute.mockResolvedValue(expense)
 
       const res = await app.request('/expenses', {
         method: 'POST',
@@ -296,11 +273,10 @@ describe('Expenses Integration', () => {
           recurrence_start: '2024-01-01',
           recurrence_end: '2024-12-31',
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense }
       expect(body.data.recurrence_end).toBe('2024-12-31')
     })
   })
@@ -309,179 +285,175 @@ describe('Expenses Integration', () => {
     it('lists all expenses for user', async () => {
       const expenses = [createMockExpense(), createMockExpense(), createMockExpense()]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
 
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense[] }
       expect(body.data).toHaveLength(3)
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(TEST_USER_ID, expect.any(Object))
     })
 
     it('filters by date range', async () => {
       const expenses = [createMockExpense({ date: '2024-01-15' })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.gte.mockReturnValue(mockQuery)
-      mockQuery.lte.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses?start_date=2024-01-01&end_date=2024-01-31', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.gte).toHaveBeenCalledWith('date', '2024-01-01')
-      expect(mockQuery.lte).toHaveBeenCalledWith('date', '2024-01-31')
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          start_date: '2024-01-01',
+          end_date: '2024-01-31',
+        })
+      )
     })
 
     it('filters by category', async () => {
-      const expenses = [createMockExpense({ category_id: 'cat-123' })]
+      const categoryId = '10000000-0000-4000-8000-000000000001'
+      const expenses = [createMockExpense({ category_id: categoryId })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
-      const res = await app.request('/expenses?category_id=cat-123', {
+      const res = await app.request(`/expenses?category_id=${categoryId}`, {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.eq).toHaveBeenCalledWith('category_id', 'cat-123')
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          category_id: categoryId,
+        })
+      )
     })
 
     it('filters by payment method', async () => {
       const expenses = [createMockExpense({ payment_method: 'credit_card' })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses?payment_method=credit_card', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.eq).toHaveBeenCalledWith('payment_method', 'credit_card')
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          payment_method: 'credit_card',
+        })
+      )
     })
 
     it('filters by expense type - one_time', async () => {
       const expenses = [createMockExpense({ is_recurrent: false, installment_total: null })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.is.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses?expense_type=one_time', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_recurrent', false)
-      expect(mockQuery.is).toHaveBeenCalledWith('installment_total', null)
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          expense_type: 'one_time',
+        })
+      )
     })
 
     it('filters by expense type - recurrent', async () => {
       const expenses = [createMockExpense({ is_recurrent: true })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses?expense_type=recurrent', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_recurrent', true)
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          expense_type: 'recurrent',
+        })
+      )
     })
 
     it('filters by expense type - installment', async () => {
       const expenses = [createMockExpense({ installment_total: 3 })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.not.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses?expense_type=installment', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.not).toHaveBeenCalledWith('installment_total', 'is', null)
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          expense_type: 'installment',
+        })
+      )
     })
 
     it('filters by credit card', async () => {
-      const expenses = [createMockExpense({ credit_card_id: 'card-123' })]
+      const cardId = '20000000-0000-4000-8000-000000000002'
+      const expenses = [createMockExpense({ credit_card_id: cardId })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
-      const res = await app.request('/expenses?credit_card_id=card-123', {
+      const res = await app.request(`/expenses?credit_card_id=${cardId}`, {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.eq).toHaveBeenCalledWith('credit_card_id', 'card-123')
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          credit_card_id: cardId,
+        })
+      )
     })
 
     it('filters for expenses without credit card', async () => {
       const expenses = [createMockExpense({ credit_card_id: null })]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.is.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: expenses, error: null })
+      mockListExpenses.execute.mockResolvedValue(expenses)
 
       const res = await app.request('/expenses?credit_card_id=none', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.is).toHaveBeenCalledWith('credit_card_id', null)
+      expect(mockListExpenses.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          credit_card_id: 'none',
+        })
+      )
     })
 
     it('returns empty array when no expenses exist', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: [], error: null })
+      mockListExpenses.execute.mockResolvedValue([])
 
       const res = await app.request('/expenses', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense[] }
       expect(body.data).toEqual([])
     })
   })
@@ -490,20 +462,26 @@ describe('Expenses Integration', () => {
     it('returns paginated expenses with metadata', async () => {
       const expenses = Array.from({ length: 10 }, () => createMockExpense())
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockReturnValue(mockQuery)
-      mockQuery.range.mockResolvedValue({ data: expenses, error: null, count: 25 })
+      mockListExpenses.executePaginated.mockResolvedValue({
+        data: expenses,
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 25,
+          total_pages: 3,
+        },
+      })
 
       const res = await app.request('/expenses/paginated?page=1&limit=10', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
 
-      const body = await res.json()
+      const body = (await res.json()) as {
+        data: Expense[]
+        meta: { page: number; limit: number; total: number; total_pages: number }
+      }
       expect(body.data).toHaveLength(10)
       expect(body.meta).toEqual({
         page: 1,
@@ -516,19 +494,28 @@ describe('Expenses Integration', () => {
     it('handles pagination for second page', async () => {
       const expenses = Array.from({ length: 10 }, () => createMockExpense())
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockReturnValue(mockQuery)
-      mockQuery.range.mockResolvedValue({ data: expenses, error: null, count: 25 })
+      mockListExpenses.executePaginated.mockResolvedValue({
+        data: expenses,
+        meta: {
+          page: 2,
+          limit: 10,
+          total: 25,
+          total_pages: 3,
+        },
+      })
 
       const res = await app.request('/expenses/paginated?page=2&limit=10', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockQuery.range).toHaveBeenCalledWith(10, 19)
+      expect(mockListExpenses.executePaginated).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          page: 2,
+          limit: 10,
+        })
+      )
     })
   })
 
@@ -536,56 +523,41 @@ describe('Expenses Integration', () => {
     it('returns expense by ID', async () => {
       const expense = createMockExpense({ id: 'exp-123' })
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: expense, error: null })
+      mockGetExpense.execute.mockResolvedValue(expense)
 
       const res = await app.request('/expenses/exp-123', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
 
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense }
       expect(body.data.id).toBe('exp-123')
-      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'exp-123')
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockGetExpense.execute).toHaveBeenCalledWith(TEST_USER_ID, 'exp-123')
     })
 
     it('returns 404 when expense not found', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({
-        data: null,
-        error: { code: 'PGRST116' } as unknown as Error,
-      })
+      mockGetExpense.execute.mockRejectedValue(
+        new AppError(ERROR_CODES.NOT_FOUND, 'Expense not found', HTTP_STATUS.NOT_FOUND)
+      )
 
       const res = await app.request('/expenses/nonexistent', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
     })
 
     it('enforces user ownership', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({
-        data: null,
-        error: { code: 'PGRST116' } as unknown as Error,
-      })
+      const expense = createMockExpense({ id: 'exp-123' })
 
-      const _res = await app.request('/expenses/exp-123', {
+      mockGetExpense.execute.mockResolvedValue(expense)
+
+      await app.request('/expenses/exp-123', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockGetExpense.execute).toHaveBeenCalledWith(TEST_USER_ID, 'exp-123')
     })
   })
 
@@ -597,11 +569,7 @@ describe('Expenses Integration', () => {
         amount_cents: 7500,
       })
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.update.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: updatedExpense, error: null })
+      mockUpdateExpense.execute.mockResolvedValue(updatedExpense)
 
       const res = await app.request('/expenses/exp-123', {
         method: 'PATCH',
@@ -610,15 +578,16 @@ describe('Expenses Integration', () => {
           description: 'Updated description',
           amount_cents: 7500,
         }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
 
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense }
       expect(body.data.description).toBe('Updated description')
       expect(body.data.amount_cents).toBe(7500)
-      expect(mockQuery.update).toHaveBeenCalledWith(
+      expect(mockUpdateExpense.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        'exp-123',
         expect.objectContaining({
           description: 'Updated description',
           amount_cents: 7500,
@@ -627,86 +596,70 @@ describe('Expenses Integration', () => {
     })
 
     it('returns 404 when updating nonexistent expense', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.update.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({
-        data: null,
-        error: { code: 'PGRST116' } as unknown as Error,
-      })
+      mockUpdateExpense.execute.mockRejectedValue(
+        new AppError(ERROR_CODES.NOT_FOUND, 'Expense not found', HTTP_STATUS.NOT_FOUND)
+      )
 
       const res = await app.request('/expenses/nonexistent', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: 'Updated' }),
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
     })
 
     it('enforces user ownership on update', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.update.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.single.mockResolvedValue({ data: null, error: null })
+      const updatedExpense = createMockExpense({ id: 'exp-123' })
+
+      mockUpdateExpense.execute.mockResolvedValue(updatedExpense)
 
       await app.request('/expenses/exp-123', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: 'Updated' }),
-        env: TEST_ENV,
       })
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockUpdateExpense.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        'exp-123',
+        expect.any(Object)
+      )
     })
   })
 
   describe('DELETE /expenses/:id', () => {
     it('deletes expense successfully', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.delete.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.eq.mockResolvedValue({ error: null, count: 1 })
+      mockDeleteExpense.execute.mockResolvedValue(undefined)
 
       const res = await app.request('/expenses/exp-123', {
         method: 'DELETE',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NO_CONTENT)
-      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'exp-123')
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockDeleteExpense.execute).toHaveBeenCalledWith(TEST_USER_ID, 'exp-123')
     })
 
     it('returns 404 when deleting nonexistent expense', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.delete.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.eq.mockResolvedValue({ error: null, count: 0 })
+      mockDeleteExpense.execute.mockRejectedValue(
+        new AppError(ERROR_CODES.NOT_FOUND, 'Expense not found', HTTP_STATUS.NOT_FOUND)
+      )
 
       const res = await app.request('/expenses/nonexistent', {
         method: 'DELETE',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
     })
 
     it('enforces user ownership on delete', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.delete.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.eq.mockResolvedValue({ error: null, count: 1 })
+      mockDeleteExpense.execute.mockResolvedValue(undefined)
 
       await app.request('/expenses/exp-123', {
         method: 'DELETE',
-        env: TEST_ENV,
       })
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockDeleteExpense.execute).toHaveBeenCalledWith(TEST_USER_ID, 'exp-123')
     })
   })
 
@@ -730,35 +683,29 @@ describe('Expenses Integration', () => {
         }),
       ]
 
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: installments, error: null })
+      mockGetInstallmentGroup.execute.mockResolvedValue(installments)
 
       const res = await app.request('/expenses/installments/group-123', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.OK)
 
-      const body = await res.json()
+      const body = (await res.json()) as { data: Expense[] }
       expect(body.data).toHaveLength(3)
-      expect(body.data[0].installment_current).toBe(1)
-      expect(body.data[1].installment_current).toBe(2)
-      expect(body.data[2].installment_current).toBe(3)
-      expect(mockQuery.eq).toHaveBeenCalledWith('installment_group_id', 'group-123')
+      expect(body.data[0]!.installment_current).toBe(1)
+      expect(body.data[1]!.installment_current).toBe(2)
+      expect(body.data[2]!.installment_current).toBe(3)
+      expect(mockGetInstallmentGroup.execute).toHaveBeenCalledWith(TEST_USER_ID, 'group-123')
     })
 
     it('returns 404 for nonexistent group', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: [], error: null })
+      mockGetInstallmentGroup.execute.mockRejectedValue(
+        new AppError(ERROR_CODES.NOT_FOUND, 'Installment group not found', HTTP_STATUS.NOT_FOUND)
+      )
 
       const res = await app.request('/expenses/installments/nonexistent', {
         method: 'GET',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
@@ -767,62 +714,126 @@ describe('Expenses Integration', () => {
 
   describe('DELETE /expenses/installments/:groupId', () => {
     it('deletes all installments in group', async () => {
-      const installments = [createMockExpense({ installment_group_id: 'group-123' })]
-
-      const mockQuery = mockSupabase.from('expense')
-      // First call: findByGroupId
-      mockQuery.select.mockReturnValueOnce(mockQuery)
-      mockQuery.eq.mockReturnValueOnce(mockQuery)
-      mockQuery.order.mockResolvedValueOnce({ data: installments, error: null })
-
-      // Second call: deleteByGroupId
-      mockQuery.delete.mockReturnValueOnce(mockQuery)
-      mockQuery.eq.mockReturnValueOnce(mockQuery)
-      mockQuery.eq.mockResolvedValueOnce({ error: null, count: 3 })
+      mockDeleteInstallmentGroup.execute.mockResolvedValue(undefined)
 
       const res = await app.request('/expenses/installments/group-123', {
         method: 'DELETE',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NO_CONTENT)
+      expect(mockDeleteInstallmentGroup.execute).toHaveBeenCalledWith(TEST_USER_ID, 'group-123')
     })
 
     it('returns 404 when deleting nonexistent group', async () => {
-      const mockQuery = mockSupabase.from('expense')
-      // findByGroupId returns empty
-      mockQuery.select.mockReturnValue(mockQuery)
-      mockQuery.eq.mockReturnValue(mockQuery)
-      mockQuery.order.mockResolvedValue({ data: [], error: null })
+      mockDeleteInstallmentGroup.execute.mockRejectedValue(
+        new AppError(ERROR_CODES.NOT_FOUND, 'Installment group not found', HTTP_STATUS.NOT_FOUND)
+      )
 
       const res = await app.request('/expenses/installments/nonexistent', {
         method: 'DELETE',
-        env: TEST_ENV,
       })
 
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
     })
 
     it('enforces user ownership when deleting group', async () => {
-      const installments = [createMockExpense({ installment_group_id: 'group-123' })]
-
-      const mockQuery = mockSupabase.from('expense')
-      // First call: findByGroupId
-      mockQuery.select.mockReturnValueOnce(mockQuery)
-      mockQuery.eq.mockReturnValueOnce(mockQuery)
-      mockQuery.order.mockResolvedValueOnce({ data: installments, error: null })
-
-      // Second call: deleteByGroupId
-      mockQuery.delete.mockReturnValueOnce(mockQuery)
-      mockQuery.eq.mockReturnValueOnce(mockQuery)
-      mockQuery.eq.mockResolvedValueOnce({ error: null, count: 3 })
+      mockDeleteInstallmentGroup.execute.mockResolvedValue(undefined)
 
       await app.request('/expenses/installments/group-123', {
         method: 'DELETE',
-        env: TEST_ENV,
       })
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', TEST_USER_ID)
+      expect(mockDeleteInstallmentGroup.execute).toHaveBeenCalledWith(TEST_USER_ID, 'group-123')
+    })
+  })
+
+  describe('Boundary cases', () => {
+    it('handles zero amount', async () => {
+      const res = await app.request('/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'one_time',
+          category_id: '10000000-0000-4000-8000-000000000001',
+          description: 'Test',
+          amount_cents: 0,
+          payment_method: 'pix',
+          date: '2024-01-01',
+        }),
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('handles negative amount', async () => {
+      const res = await app.request('/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'one_time',
+          category_id: '10000000-0000-4000-8000-000000000001',
+          description: 'Test',
+          amount_cents: -1000,
+          payment_method: 'pix',
+          date: '2024-01-01',
+        }),
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('handles maximum installment count', async () => {
+      const installments = Array.from({ length: 12 }, (_, i) =>
+        createMockExpense({
+          installment_current: i + 1,
+          installment_total: 12,
+          installment_group_id: 'group-max',
+        })
+      )
+
+      mockCreateExpense.execute.mockResolvedValue(installments)
+
+      const res = await app.request('/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'installment',
+          category_id: '10000000-0000-4000-8000-000000000001',
+          description: 'Large purchase',
+          amount_cents: 120000,
+          payment_method: 'credit_card',
+          date: '2024-01-01',
+          installment_total: 12,
+        }),
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.CREATED)
+      const body = (await res.json()) as { data: Expense[] }
+      expect(body.data).toHaveLength(12)
+    })
+
+    it('handles maximum pagination page', async () => {
+      mockListExpenses.executePaginated.mockResolvedValue({
+        data: [],
+        meta: {
+          page: 999,
+          limit: 10,
+          total: 0,
+          total_pages: 0,
+        },
+      })
+
+      const res = await app.request('/expenses/paginated?page=999&limit=10', {
+        method: 'GET',
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.OK)
+      const body = (await res.json()) as {
+        data: Expense[]
+        meta: { page: number; limit: number; total: number; total_pages: number }
+      }
+      expect(body.data).toEqual([])
+      expect(body.meta.page).toBe(999)
     })
   })
 })

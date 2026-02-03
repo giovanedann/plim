@@ -1,4 +1,9 @@
-import { type EffectiveSpendingLimit, HTTP_STATUS, type SpendingLimit } from '@plim/shared'
+import {
+  type EffectiveSpendingLimit,
+  HTTP_STATUS,
+  type SpendingLimit,
+  createMockSpendingLimit,
+} from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorHandler } from '../../middleware/error-handler.middleware'
@@ -13,22 +18,6 @@ vi.mock('./upsert-spending-limit.usecase')
 type SuccessResponse<T> = { data: T }
 
 const USER_ID = '33333333-3333-4333-8333-333333333333'
-
-const baseSpendingLimit: SpendingLimit = {
-  id: '44444444-4444-4444-8444-444444444444',
-  user_id: USER_ID,
-  year_month: '2024-02',
-  amount_cents: 500000,
-  created_at: '2024-02-01T00:00:00Z',
-  updated_at: '2024-02-01T00:00:00Z',
-}
-
-const effectiveLimit: EffectiveSpendingLimit = {
-  year_month: '2024-02',
-  amount_cents: 500000,
-  is_carried_over: false,
-  source_month: null,
-}
 
 const testEnv = {
   SUPABASE_URL: 'http://test.supabase.co',
@@ -57,6 +46,12 @@ describe('Spending Limits Controller', () => {
 
   describe('GET /spending-limits/:yearMonth', () => {
     it('returns spending limit for month', async () => {
+      const effectiveLimit: EffectiveSpendingLimit = {
+        year_month: '2024-02',
+        amount_cents: 500000,
+        is_carried_over: false,
+        source_month: null,
+      }
       const mockExecute = vi.fn().mockResolvedValue(effectiveLimit)
       vi.mocked(GetSpendingLimitUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as GetSpendingLimitUseCase
@@ -68,6 +63,7 @@ describe('Spending Limits Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.OK)
       expect(body.data.year_month).toBe('2024-02')
       expect(body.data.amount_cents).toBe(500000)
+      expect(body.data.is_carried_over).toBe(false)
     })
 
     it('returns carried-over limit when no explicit limit', async () => {
@@ -103,8 +99,14 @@ describe('Spending Limits Controller', () => {
       expect(body.data).toBeNull()
     })
 
-    it('returns validation error for invalid yearMonth format', async () => {
+    it('returns 400 for invalid yearMonth format (single digit month)', async () => {
       const res = await app.request('/spending-limits/2024-1', { method: 'GET' }, testEnv)
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid yearMonth format (year only)', async () => {
+      const res = await app.request('/spending-limits/2024', { method: 'GET' }, testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
     })
@@ -112,7 +114,12 @@ describe('Spending Limits Controller', () => {
 
   describe('POST /spending-limits', () => {
     it('creates spending limit', async () => {
-      const mockExecute = vi.fn().mockResolvedValue(baseSpendingLimit)
+      const spendingLimit = createMockSpendingLimit({
+        user_id: USER_ID,
+        year_month: '2024-02',
+        amount_cents: 500000,
+      })
+      const mockExecute = vi.fn().mockResolvedValue(spendingLimit)
       vi.mocked(UpsertSpendingLimitUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as UpsertSpendingLimitUseCase
       )
@@ -133,9 +140,10 @@ describe('Spending Limits Controller', () => {
 
       expect(res.status).toBe(HTTP_STATUS.CREATED)
       expect(body.data.year_month).toBe('2024-02')
+      expect(body.data.amount_cents).toBe(500000)
     })
 
-    it('returns validation error for invalid input', async () => {
+    it('returns 400 for negative amount', async () => {
       const res = await app.request(
         '/spending-limits',
         {
@@ -152,13 +160,47 @@ describe('Spending Limits Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
     })
 
-    it('returns validation error for missing year_month', async () => {
+    it('returns 400 for zero amount', async () => {
       const res = await app.request(
         '/spending-limits',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            year_month: '2024-02',
+            amount_cents: 0,
+          }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for missing year_month', async () => {
+      const res = await app.request(
+        '/spending-limits',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount_cents: 500000,
+          }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid year_month format', async () => {
+      const res = await app.request(
+        '/spending-limits',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            year_month: '2024/02',
             amount_cents: 500000,
           }),
         },

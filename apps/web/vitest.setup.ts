@@ -6,7 +6,8 @@ import { afterEach, vi } from 'vitest'
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
-    matches: false,
+    // Enable reduced motion in tests to skip animations
+    matches: query === '(prefers-reduced-motion: reduce)',
     media: query,
     onchange: null,
     addListener: () => {}, // deprecated
@@ -23,6 +24,13 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 }
+
+// Mock IntersectionObserver (used by Framer Motion)
+global.IntersectionObserver = class IntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof IntersectionObserver
 
 // Mock Zustand using official testing pattern
 // This allows stores to be reset between tests for proper isolation

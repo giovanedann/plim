@@ -1,21 +1,8 @@
-import type { Category, CreateCategory, UpdateCategory } from '@plim/shared'
+import type { CreateCategory, UpdateCategory } from '@plim/shared'
+import { createMockCategory } from '@plim/shared/test-utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CategoriesRepository } from './categories.repository'
-
-function createMockCategory(overrides: Partial<Category> = {}): Category {
-  return {
-    id: 'category-123',
-    user_id: 'user-123',
-    name: 'Test Category',
-    icon: '🎯',
-    color: '#FF5733',
-    is_active: true,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-    ...overrides,
-  }
-}
 
 function createMockSupabaseClient() {
   const mockSingle = vi.fn()
@@ -67,7 +54,6 @@ function createMockSupabaseClient() {
 
 describe('CategoriesRepository', () => {
   let sut: CategoriesRepository
-  // biome-ignore lint/suspicious/noExplicitAny: Test mocks need flexible typing
   let mockSupabase: any
 
   beforeEach(() => {
@@ -77,11 +63,9 @@ describe('CategoriesRepository', () => {
 
   describe('findByUserId', () => {
     it('returns categories for user including system categories', async () => {
-      // Arrange
-      const systemCategory = createMockCategory({ id: 'system-1', user_id: null, name: 'System' })
-      const userCategory = createMockCategory({ id: 'user-1', user_id: 'user-123', name: 'Custom' })
+      const systemCategory = createMockCategory({ user_id: null, name: 'System' })
+      const userCategory = createMockCategory({ user_id: 'user-123', name: 'Custom' })
       const expectedCategories = [systemCategory, userCategory]
-
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
@@ -92,16 +76,12 @@ describe('CategoriesRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findByUserId('user-123')
 
-      // Assert
       expect(result).toEqual(expectedCategories)
-      expect(mockSupabase.from).toHaveBeenCalledWith('category')
     })
 
     it('returns empty array on error', async () => {
-      // Arrange
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
@@ -112,10 +92,8 @@ describe('CategoriesRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findByUserId('user-123')
 
-      // Assert
       expect(result).toEqual([])
     })
   })

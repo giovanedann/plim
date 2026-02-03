@@ -75,7 +75,6 @@ function createMockSupabaseClient() {
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: Test factory needs flexible typing for various input shapes
 function createMockExpense(overrides: any = {}): Expense {
   return {
     id: 'expense-1',

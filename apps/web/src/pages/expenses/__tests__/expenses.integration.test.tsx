@@ -1,26 +1,15 @@
-/**
- * Expenses Page Integration Tests
- *
- * Tests the integration between:
- * - ExpensesPage component
- * - useExpensesPage hook
- * - Service layer (mocked)
- * - React Query state management
- *
- * These tests verify that the page correctly:
- * - Displays expenses from services
- * - Handles loading states
- * - Filters expenses
- * - Renders empty states
- */
-
 import { ThemeProvider } from '@/components/theme-provider'
 import { categoryService } from '@/services/category.service'
 import { creditCardService } from '@/services/credit-card.service'
 import { expenseService } from '@/services/expense.service'
 import { salaryService } from '@/services/salary.service'
 import { spendingLimitService } from '@/services/spending-limit.service'
-import { createMockCategory, createMockExpense } from '@/test-utils/ui-integration'
+import {
+  createMockCategory,
+  createMockExpense,
+  createMockSalaryHistory,
+  resetIdCounter,
+} from '@plim/shared'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -50,8 +39,8 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 function setupBasicServiceMocks() {
   vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [] })
   vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
-  vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null })
-  vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null })
+  vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null } as any)
+  vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null } as any)
 }
 
 describe('ExpensesPage Integration', () => {
@@ -60,6 +49,7 @@ describe('ExpensesPage Integration', () => {
   beforeEach(() => {
     user = userEvent.setup()
     vi.clearAllMocks()
+    resetIdCounter()
     vi.setSystemTime(new Date('2024-01-15T12:00:00Z'))
   })
 
@@ -73,7 +63,7 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
@@ -88,7 +78,7 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
@@ -116,7 +106,7 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: mockExpenses,
-        meta: { page: 1, limit: 20, total: 2, total_pages: 1 },
+        meta: { page: 1, limit: 20, total: 2, totalPages: 1 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: mockExpenses })
 
@@ -135,19 +125,18 @@ describe('ExpensesPage Integration', () => {
 
       vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [mockCategory] })
       vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
-      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null })
-      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null })
+      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null } as any)
+      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null } as any)
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        const categoryFilter = screen.getByRole('combobox', { name: /categoria/i })
-        expect(categoryFilter).toBeInTheDocument()
+        expect(screen.getByText('Categoria')).toBeInTheDocument()
       })
     })
 
@@ -155,15 +144,14 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        const paymentFilter = screen.getByRole('combobox', { name: /forma de pagamento/i })
-        expect(paymentFilter).toBeInTheDocument()
+        expect(screen.getByText('Forma de Pagamento')).toBeInTheDocument()
       })
     })
   })
@@ -173,14 +161,14 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /criar despesa/i })).toBeInTheDocument()
+        expect(screen.getByText('Nova Despesa')).toBeInTheDocument()
       })
     })
 
@@ -193,7 +181,7 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [mockExpense],
-        meta: { page: 1, limit: 20, total: 1, total_pages: 1 },
+        meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [mockExpense] })
 
@@ -203,11 +191,10 @@ describe('ExpensesPage Integration', () => {
         expect(screen.getByText('Test Expense')).toBeInTheDocument()
       })
 
-      // Click the more options button
-      const moreButton = screen.getByRole('button', { name: /more/i })
-      await user.click(moreButton)
+      // Dropdown menu button has sr-only text "Abrir menu"
+      const menuButton = screen.getByRole('button', { name: /abrir menu/i })
+      await user.click(menuButton)
 
-      // Check for edit and delete options
       await waitFor(() => {
         expect(screen.getByText(/Editar/i)).toBeInTheDocument()
         expect(screen.getByText(/Excluir/i)).toBeInTheDocument()
@@ -220,15 +207,14 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        // Month selector shows current month
-        expect(screen.getByRole('button', { name: /janeiro 2024/i })).toBeInTheDocument()
+        expect(screen.getByText(/Janeiro\/2024/i)).toBeInTheDocument()
       })
     })
   })
@@ -245,64 +231,70 @@ describe('ExpensesPage Integration', () => {
       setupBasicServiceMocks()
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: mockExpenses,
-        meta: { page: 1, limit: 20, total: 50, total_pages: 3 },
+        meta: { page: 1, limit: 20, total: 50, totalPages: 3 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: mockExpenses })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        // Check if pagination controls appear
-        expect(screen.getByText(/Página 1 de 3/i)).toBeInTheDocument()
+        expect(screen.getByText('1')).toBeInTheDocument()
+        expect(screen.getByText('2')).toBeInTheDocument()
+        expect(screen.getByText('Anterior')).toBeInTheDocument()
+        expect(screen.getByText('Próximo')).toBeInTheDocument()
       })
     })
   })
 
   describe('financial summary', () => {
     it('displays salary card when available', async () => {
-      const mockSalary = { amount_cents: 500000, month: '2024-01' }
+      const mockSalary = createMockSalaryHistory({
+        amount_cents: 500000,
+        effective_from: '2024-01-01',
+      })
 
       vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [] })
       vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
       vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: mockSalary })
-      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null })
+      vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: null } as any)
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        // Salary display shows formatted amount
-        expect(screen.getByText(/R\$ 5\.000,00/i)).toBeInTheDocument()
+        expect(screen.getByText('Salário')).toBeInTheDocument()
+        // With 0 expenses: both salary and balance show R$ 5.000,00
+        expect(screen.getAllByText('R$ 5.000,00')).toHaveLength(2)
       })
     })
 
     it('displays spending limit card when available', async () => {
       const mockLimit = {
-        month: '2024-01',
+        year_month: '2024-01',
         amount_cents: 300000,
-        created_at: '2024-01-01',
-        updated_at: '2024-01-01',
+        is_carried_over: false,
+        source_month: null,
       }
 
       vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: [] })
       vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
-      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null })
+      vi.spyOn(salaryService, 'getSalary').mockResolvedValue({ data: null } as any)
       vi.spyOn(spendingLimitService, 'getSpendingLimit').mockResolvedValue({ data: mockLimit })
       vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
         data: [],
-        meta: { page: 1, limit: 20, total: 0, total_pages: 0 },
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       })
       vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
 
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        // Spending limit card shows formatted amount
-        expect(screen.getByText(/R\$ 3\.000,00/i)).toBeInTheDocument()
+        expect(screen.getByText('Limite de Gastos')).toBeInTheDocument()
+        expect(screen.getByText(/de R\$ 3\.000,00/)).toBeInTheDocument()
       })
     })
   })

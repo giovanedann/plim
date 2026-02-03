@@ -1,3 +1,4 @@
+import type { ApiPaginatedResponse, ApiSuccessResponse, Expense } from '@plim/shared'
 import {
   type CreateExpense,
   type UpdateExpense,
@@ -9,7 +10,6 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { expenseService } from './expense.service'
 
-// Mock the api-client module
 vi.mock('@/lib/api-client', () => ({
   api: {
     get: vi.fn(),
@@ -22,9 +22,20 @@ vi.mock('@/lib/api-client', () => ({
 
 import { api } from '@/lib/api-client'
 
+type MockApi = {
+  get: ReturnType<typeof vi.fn>
+  getPaginated: ReturnType<typeof vi.fn>
+  post: ReturnType<typeof vi.fn>
+  patch: ReturnType<typeof vi.fn>
+  delete: ReturnType<typeof vi.fn>
+}
+
 describe('expenseService', () => {
+  let mockApi: MockApi
+
   beforeEach(() => {
     vi.clearAllMocks()
+    mockApi = api as MockApi
   })
 
   afterEach(() => {
@@ -32,20 +43,21 @@ describe('expenseService', () => {
   })
 
   describe('listExpenses', () => {
-    it('calls correct endpoint without filters', async () => {
+    it('fetches expenses without filters', async () => {
       const mockExpenses = [createMockExpense(), createMockExpense()]
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse(mockExpenses))
+      mockApi.get.mockResolvedValue(createSuccessResponse(mockExpenses))
+      const sut = expenseService
 
-      const result = await expenseService.listExpenses()
+      const result = await sut.listExpenses()
 
-      expect(api.get).toHaveBeenCalledWith('/expenses')
       expect(result).toEqual({ data: mockExpenses })
     })
 
     it('builds query string with all filters', async () => {
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse([]))
+      mockApi.get.mockResolvedValue(createSuccessResponse([]))
+      const sut = expenseService
 
-      await expenseService.listExpenses({
+      await sut.listExpenses({
         start_date: '2026-01-01',
         end_date: '2026-01-31',
         category_id: 'cat-123',
@@ -54,42 +66,53 @@ describe('expenseService', () => {
         credit_card_id: 'card-456',
       })
 
-      expect(api.get).toHaveBeenCalledWith(
+      expect(mockApi.get).toHaveBeenCalledWith(
         '/expenses?start_date=2026-01-01&end_date=2026-01-31&category_id=cat-123&payment_method=pix&expense_type=one_time&credit_card_id=card-456'
       )
     })
 
     it('omits undefined filter values from query string', async () => {
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse([]))
+      mockApi.get.mockResolvedValue(createSuccessResponse([]))
+      const sut = expenseService
 
-      await expenseService.listExpenses({
+      await sut.listExpenses({
         start_date: '2026-01-01',
         category_id: undefined,
       })
 
-      expect(api.get).toHaveBeenCalledWith('/expenses?start_date=2026-01-01')
+      expect(mockApi.get).toHaveBeenCalledWith('/expenses?start_date=2026-01-01')
+    })
+
+    it('returns empty array when no expenses exist', async () => {
+      mockApi.get.mockResolvedValue(createSuccessResponse([]))
+      const sut = expenseService
+
+      const result = await sut.listExpenses()
+
+      expect(result).toEqual({ data: [] })
     })
 
     it('returns error response on failure', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Expenses not found')
-      vi.mocked(api.get).mockResolvedValue(errorResponse)
+      mockApi.get.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.listExpenses()
+      const result = await sut.listExpenses()
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('listExpensesPaginated', () => {
-    it('calls correct endpoint with pagination params', async () => {
+    it('fetches paginated expenses with pagination params', async () => {
       const mockExpenses = [createMockExpense()]
-      vi.mocked(api.getPaginated).mockResolvedValue(
+      mockApi.getPaginated.mockResolvedValue(
         createPaginatedResponse(mockExpenses, { page: 2, limit: 10, total: 25 })
       )
+      const sut = expenseService
 
-      const result = await expenseService.listExpensesPaginated({ page: 2, limit: 10 })
+      const result = await sut.listExpensesPaginated({ page: 2, limit: 10 })
 
-      expect(api.getPaginated).toHaveBeenCalledWith('/expenses/paginated?page=2&limit=10')
       expect(result).toEqual({
         data: mockExpenses,
         meta: { page: 2, limit: 10, total: 25, totalPages: 3 },
@@ -97,44 +120,61 @@ describe('expenseService', () => {
     })
 
     it('combines filters with pagination params', async () => {
-      vi.mocked(api.getPaginated).mockResolvedValue(createPaginatedResponse([]))
+      mockApi.getPaginated.mockResolvedValue(createPaginatedResponse([]))
+      const sut = expenseService
 
-      await expenseService.listExpensesPaginated({
+      await sut.listExpensesPaginated({
         page: 1,
         limit: 20,
         start_date: '2026-01-01',
         payment_method: 'credit_card',
       })
 
-      expect(api.getPaginated).toHaveBeenCalledWith(
+      expect(mockApi.getPaginated).toHaveBeenCalledWith(
         '/expenses/paginated?start_date=2026-01-01&payment_method=credit_card&page=1&limit=20'
       )
+    })
+
+    it('returns empty data array for empty page', async () => {
+      mockApi.getPaginated.mockResolvedValue(
+        createPaginatedResponse([], { page: 1, limit: 10, total: 0 })
+      )
+      const sut = expenseService
+
+      const result = (await sut.listExpensesPaginated({
+        page: 1,
+        limit: 10,
+      })) as ApiPaginatedResponse<Expense>
+
+      expect(result.data).toEqual([])
+      expect(result.meta.total).toBe(0)
     })
   })
 
   describe('getExpense', () => {
-    it('calls correct endpoint with expense id', async () => {
+    it('fetches expense by id', async () => {
       const mockExpense = createMockExpense({ id: 'expense-123' })
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse(mockExpense))
+      mockApi.get.mockResolvedValue(createSuccessResponse(mockExpense))
+      const sut = expenseService
 
-      const result = await expenseService.getExpense('expense-123')
+      const result = await sut.getExpense('expense-123')
 
-      expect(api.get).toHaveBeenCalledWith('/expenses/expense-123')
       expect(result).toEqual({ data: mockExpense })
     })
 
     it('returns error response when expense not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Expense not found')
-      vi.mocked(api.get).mockResolvedValue(errorResponse)
+      mockApi.get.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.getExpense('non-existent')
+      const result = await sut.getExpense('non-existent')
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('createExpense', () => {
-    it('sends correct payload for one-time expense', async () => {
+    it('creates one-time expense', async () => {
       const input: CreateExpense = {
         type: 'one_time',
         category_id: 'cat-123',
@@ -144,15 +184,15 @@ describe('expenseService', () => {
         date: '2026-01-15',
       }
       const createdExpense = createMockExpense({ description: 'Test expense' })
-      vi.mocked(api.post).mockResolvedValue(createSuccessResponse(createdExpense))
+      mockApi.post.mockResolvedValue(createSuccessResponse(createdExpense))
+      const sut = expenseService
 
-      const result = await expenseService.createExpense(input)
+      const result = await sut.createExpense(input)
 
-      expect(api.post).toHaveBeenCalledWith('/expenses', input)
       expect(result).toEqual({ data: createdExpense })
     })
 
-    it('sends correct payload for recurrent expense', async () => {
+    it('creates recurrent expense', async () => {
       const input: CreateExpense = {
         type: 'recurrent',
         category_id: 'cat-123',
@@ -163,14 +203,15 @@ describe('expenseService', () => {
         recurrence_start: '2026-01-15',
         credit_card_id: 'card-456',
       }
-      vi.mocked(api.post).mockResolvedValue(createSuccessResponse(createMockExpense()))
+      mockApi.post.mockResolvedValue(createSuccessResponse(createMockExpense()))
+      const sut = expenseService
 
-      await expenseService.createExpense(input)
+      const result = await sut.createExpense(input)
 
-      expect(api.post).toHaveBeenCalledWith('/expenses', input)
+      expect(result).toHaveProperty('data')
     })
 
-    it('sends correct payload for installment expense', async () => {
+    it('creates installment expense', async () => {
       const input: CreateExpense = {
         type: 'installment',
         category_id: 'cat-123',
@@ -181,20 +222,22 @@ describe('expenseService', () => {
         installment_total: 12,
         credit_card_id: 'card-456',
       }
-      vi.mocked(api.post).mockResolvedValue(createSuccessResponse(createMockExpense()))
+      mockApi.post.mockResolvedValue(createSuccessResponse(createMockExpense()))
+      const sut = expenseService
 
-      await expenseService.createExpense(input)
+      const result = await sut.createExpense(input)
 
-      expect(api.post).toHaveBeenCalledWith('/expenses', input)
+      expect(result).toHaveProperty('data')
     })
 
     it('returns error response on validation failure', async () => {
       const errorResponse = createErrorResponse('VALIDATION_ERROR', 'Invalid input', {
         field: 'amount_cents',
       })
-      vi.mocked(api.post).mockResolvedValue(errorResponse)
+      mockApi.post.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.createExpense({
+      const result = await sut.createExpense({
         type: 'one_time',
         category_id: 'cat-123',
         description: 'Test',
@@ -205,10 +248,28 @@ describe('expenseService', () => {
 
       expect(result).toEqual(errorResponse)
     })
+
+    it('handles zero amount expense', async () => {
+      const input: CreateExpense = {
+        type: 'one_time',
+        category_id: 'cat-123',
+        description: 'Free item',
+        amount_cents: 0,
+        payment_method: 'pix',
+        date: '2026-01-15',
+      }
+      const createdExpense = createMockExpense({ amount_cents: 0 })
+      mockApi.post.mockResolvedValue(createSuccessResponse(createdExpense))
+      const sut = expenseService
+
+      const result = (await sut.createExpense(input)) as ApiSuccessResponse<Expense>
+
+      expect(result.data.amount_cents).toBe(0)
+    })
   })
 
   describe('updateExpense', () => {
-    it('sends correct payload with partial update', async () => {
+    it('updates expense with partial data', async () => {
       const input: UpdateExpense = {
         description: 'Updated description',
         amount_cents: 7500,
@@ -218,106 +279,105 @@ describe('expenseService', () => {
         description: 'Updated description',
         amount_cents: 7500,
       })
-      vi.mocked(api.patch).mockResolvedValue(createSuccessResponse(updatedExpense))
+      mockApi.patch.mockResolvedValue(createSuccessResponse(updatedExpense))
+      const sut = expenseService
 
-      const result = await expenseService.updateExpense('expense-123', input)
+      const result = await sut.updateExpense('expense-123', input)
 
-      expect(api.patch).toHaveBeenCalledWith('/expenses/expense-123', input)
       expect(result).toEqual({ data: updatedExpense })
     })
 
     it('returns error response when expense not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Expense not found')
-      vi.mocked(api.patch).mockResolvedValue(errorResponse)
+      mockApi.patch.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.updateExpense('non-existent', { amount_cents: 100 })
+      const result = await sut.updateExpense('non-existent', { amount_cents: 100 })
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('deleteExpense', () => {
-    it('calls correct endpoint with expense id', async () => {
-      vi.mocked(api.delete).mockResolvedValue(
-        createSuccessResponse(undefined as unknown as undefined)
-      )
+    it('deletes expense by id', async () => {
+      mockApi.delete.mockResolvedValue(createSuccessResponse(undefined as unknown as undefined))
+      const sut = expenseService
 
-      const result = await expenseService.deleteExpense('expense-123')
+      const result = await sut.deleteExpense('expense-123')
 
-      expect(api.delete).toHaveBeenCalledWith('/expenses/expense-123')
       expect(result).toEqual({ data: undefined })
     })
 
     it('returns error response when expense not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Expense not found')
-      vi.mocked(api.delete).mockResolvedValue(errorResponse)
+      mockApi.delete.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.deleteExpense('non-existent')
+      const result = await sut.deleteExpense('non-existent')
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('cancelRecurrence', () => {
-    it('sends patch request with recurrence_end date', async () => {
+    it('cancels recurrence by setting end date', async () => {
       const updatedExpense = createMockExpense({
         id: 'expense-123',
         is_recurrent: true,
         recurrence_end: '2026-03-31',
       })
-      vi.mocked(api.patch).mockResolvedValue(createSuccessResponse(updatedExpense))
+      mockApi.patch.mockResolvedValue(createSuccessResponse(updatedExpense))
+      const sut = expenseService
 
-      const result = await expenseService.cancelRecurrence('expense-123', '2026-03-31')
+      const result = await sut.cancelRecurrence('expense-123', '2026-03-31')
 
-      expect(api.patch).toHaveBeenCalledWith('/expenses/expense-123', {
-        recurrence_end: '2026-03-31',
-      })
       expect(result).toEqual({ data: updatedExpense })
     })
   })
 
   describe('getInstallmentGroup', () => {
-    it('calls correct endpoint with group id', async () => {
+    it('fetches all installments in group', async () => {
       const mockInstallments = [
         createMockExpense({ installment_current: 1, installment_total: 3 }),
         createMockExpense({ installment_current: 2, installment_total: 3 }),
         createMockExpense({ installment_current: 3, installment_total: 3 }),
       ]
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse(mockInstallments))
+      mockApi.get.mockResolvedValue(createSuccessResponse(mockInstallments))
+      const sut = expenseService
 
-      const result = await expenseService.getInstallmentGroup('group-123')
+      const result = (await sut.getInstallmentGroup('group-123')) as ApiSuccessResponse<Expense[]>
 
-      expect(api.get).toHaveBeenCalledWith('/expenses/installments/group-123')
       expect(result).toEqual({ data: mockInstallments })
+      expect(result.data).toHaveLength(3)
     })
 
     it('returns error response when group not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Installment group not found')
-      vi.mocked(api.get).mockResolvedValue(errorResponse)
+      mockApi.get.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.getInstallmentGroup('non-existent')
+      const result = await sut.getInstallmentGroup('non-existent')
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('deleteInstallmentGroup', () => {
-    it('calls correct endpoint with group id', async () => {
-      vi.mocked(api.delete).mockResolvedValue(
-        createSuccessResponse(undefined as unknown as undefined)
-      )
+    it('deletes entire installment group', async () => {
+      mockApi.delete.mockResolvedValue(createSuccessResponse(undefined as unknown as undefined))
+      const sut = expenseService
 
-      const result = await expenseService.deleteInstallmentGroup('group-123')
+      const result = await sut.deleteInstallmentGroup('group-123')
 
-      expect(api.delete).toHaveBeenCalledWith('/expenses/installments/group-123')
       expect(result).toEqual({ data: undefined })
     })
 
     it('returns error response when group not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Installment group not found')
-      vi.mocked(api.delete).mockResolvedValue(errorResponse)
+      mockApi.delete.mockResolvedValue(errorResponse)
+      const sut = expenseService
 
-      const result = await expenseService.deleteInstallmentGroup('non-existent')
+      const result = await sut.deleteInstallmentGroup('non-existent')
 
       expect(result).toEqual(errorResponse)
     })

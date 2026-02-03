@@ -23,3 +23,46 @@
 2. Invoke the Skill tool with the appropriate skill name
 3. Read and follow the skill instructions
 4. Then write the code
+
+## Command Permissions
+
+**Auto-approved commands** (no confirmation needed):
+
+### Git Operations (Read-only)
+- `git status`, `git diff`, `git log`, `git show`
+- `git branch`, `git remote`, `git tag`
+- `git ls-files`, `git ls-tree`
+- `git blame`, `git reflog`
+
+### Git Operations (Safe Writes)
+- `git add`, `git commit`, `git push`
+- `git checkout`, `git switch`, `git merge`
+- `git stash`, `git pull`, `git fetch`
+
+### File Operations (Read-only)
+- `cat`, `head`, `tail`, `less`, `more`
+- `ls`, `find`, `tree`, `pwd`, `which`
+- `grep`, `rg`, `ag`, `ack`
+- `wc`, `file`, `stat`, `du`, `df`
+
+### Package Management
+- `npm test`, `npm run test`, `pnpm test`, `pnpm run test`
+- `npm run build`, `pnpm build`, `pnpm run build`
+- `npm run lint`, `pnpm lint`, `pnpm run lint`
+- `npm list`, `pnpm list`, `npm ls`, `pnpm ls`
+- `npm install`, `pnpm install` (with specific packages)
+- `node`, `tsx`, `ts-node`
+
+### Testing & Quality
+- `vitest`, `jest`, `mocha`, `ava`
+- `eslint`, `prettier`, `tsc --noEmit`
+- `pnpm test`, `pnpm run test:*`
+
+### Build & Development
+- `pnpm dev`, `pnpm start`, `pnpm build`
+- `pnpm run *` (any pnpm script)
+
+### System Info
+- `echo`, `printf`, `env`, `printenv`
+- `date`, `uptime`, `whoami`
+- `node --version`, `npm --version`, `pnpm --version`

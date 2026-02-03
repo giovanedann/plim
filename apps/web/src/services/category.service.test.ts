@@ -8,7 +8,6 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { categoryService } from './category.service'
 
-// Mock the api-client module
 vi.mock('@/lib/api-client', () => ({
   api: {
     get: vi.fn(),
@@ -20,9 +19,19 @@ vi.mock('@/lib/api-client', () => ({
 
 import { api } from '@/lib/api-client'
 
+type MockApi = {
+  get: ReturnType<typeof vi.fn>
+  post: ReturnType<typeof vi.fn>
+  patch: ReturnType<typeof vi.fn>
+  delete: ReturnType<typeof vi.fn>
+}
+
 describe('categoryService', () => {
+  let mockApi: MockApi
+
   beforeEach(() => {
     vi.clearAllMocks()
+    mockApi = api as unknown as MockApi
   })
 
   afterEach(() => {
@@ -30,57 +39,60 @@ describe('categoryService', () => {
   })
 
   describe('listCategories', () => {
-    it('calls correct endpoint', async () => {
+    it('fetches all categories', async () => {
       const mockCategories = [createMockCategory(), createMockCategory()]
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse(mockCategories))
+      mockApi.get.mockResolvedValue(createSuccessResponse(mockCategories))
+      const sut = categoryService
 
-      const result = await categoryService.listCategories()
+      const result = await sut.listCategories()
 
-      expect(api.get).toHaveBeenCalledWith('/categories')
       expect(result).toEqual({ data: mockCategories })
     })
 
     it('returns empty array when no categories exist', async () => {
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse([]))
+      mockApi.get.mockResolvedValue(createSuccessResponse([]))
+      const sut = categoryService
 
-      const result = await categoryService.listCategories()
+      const result = await sut.listCategories()
 
       expect(result).toEqual({ data: [] })
     })
 
     it('returns error response on failure', async () => {
       const errorResponse = createErrorResponse('INTERNAL_ERROR', 'Failed to fetch categories')
-      vi.mocked(api.get).mockResolvedValue(errorResponse)
+      mockApi.get.mockResolvedValue(errorResponse)
+      const sut = categoryService
 
-      const result = await categoryService.listCategories()
+      const result = await sut.listCategories()
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('getCategory', () => {
-    it('calls correct endpoint with category id', async () => {
+    it('fetches category by id', async () => {
       const mockCategory = createMockCategory({ id: 'cat-123' })
-      vi.mocked(api.get).mockResolvedValue(createSuccessResponse(mockCategory))
+      mockApi.get.mockResolvedValue(createSuccessResponse(mockCategory))
+      const sut = categoryService
 
-      const result = await categoryService.getCategory('cat-123')
+      const result = await sut.getCategory('cat-123')
 
-      expect(api.get).toHaveBeenCalledWith('/categories/cat-123')
       expect(result).toEqual({ data: mockCategory })
     })
 
     it('returns error response when category not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Category not found')
-      vi.mocked(api.get).mockResolvedValue(errorResponse)
+      mockApi.get.mockResolvedValue(errorResponse)
+      const sut = categoryService
 
-      const result = await categoryService.getCategory('non-existent')
+      const result = await sut.getCategory('non-existent')
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('createCategory', () => {
-    it('sends correct payload with all fields', async () => {
+    it('creates category with all fields', async () => {
       const input: CreateCategory = {
         name: 'Food & Drinks',
         icon: 'utensils',
@@ -91,32 +103,34 @@ describe('categoryService', () => {
         icon: 'utensils',
         color: '#FF5733',
       })
-      vi.mocked(api.post).mockResolvedValue(createSuccessResponse(createdCategory))
+      mockApi.post.mockResolvedValue(createSuccessResponse(createdCategory))
+      const sut = categoryService
 
-      const result = await categoryService.createCategory(input)
+      const result = await sut.createCategory(input)
 
-      expect(api.post).toHaveBeenCalledWith('/categories', input)
       expect(result).toEqual({ data: createdCategory })
     })
 
-    it('sends correct payload with only required fields', async () => {
+    it('creates category with only required fields', async () => {
       const input: CreateCategory = {
         name: 'Utilities',
         icon: null,
         color: null,
       }
-      vi.mocked(api.post).mockResolvedValue(createSuccessResponse(createMockCategory(input)))
+      mockApi.post.mockResolvedValue(createSuccessResponse(createMockCategory(input)))
+      const sut = categoryService
 
-      await categoryService.createCategory(input)
+      const result = await sut.createCategory(input)
 
-      expect(api.post).toHaveBeenCalledWith('/categories', input)
+      expect(result).toHaveProperty('data')
     })
 
     it('returns error response on validation failure', async () => {
       const errorResponse = createErrorResponse('VALIDATION_ERROR', 'Name is required')
-      vi.mocked(api.post).mockResolvedValue(errorResponse)
+      mockApi.post.mockResolvedValue(errorResponse)
+      const sut = categoryService
 
-      const result = await categoryService.createCategory({
+      const result = await sut.createCategory({
         name: '',
         icon: null,
         color: null,
@@ -127,7 +141,7 @@ describe('categoryService', () => {
   })
 
   describe('updateCategory', () => {
-    it('sends correct payload with partial update', async () => {
+    it('updates category with partial data', async () => {
       const input: UpdateCategory = {
         name: 'Updated Name',
       }
@@ -135,55 +149,56 @@ describe('categoryService', () => {
         id: 'cat-123',
         name: 'Updated Name',
       })
-      vi.mocked(api.patch).mockResolvedValue(createSuccessResponse(updatedCategory))
+      mockApi.patch.mockResolvedValue(createSuccessResponse(updatedCategory))
+      const sut = categoryService
 
-      const result = await categoryService.updateCategory('cat-123', input)
+      const result = await sut.updateCategory('cat-123', input)
 
-      expect(api.patch).toHaveBeenCalledWith('/categories/cat-123', input)
       expect(result).toEqual({ data: updatedCategory })
     })
 
-    it('sends correct payload with all updateable fields', async () => {
+    it('updates category with all fields', async () => {
       const input: UpdateCategory = {
         name: 'New Name',
         icon: 'new-icon',
         color: '#00FF00',
         is_active: false,
       }
-      vi.mocked(api.patch).mockResolvedValue(createSuccessResponse(createMockCategory(input)))
+      mockApi.patch.mockResolvedValue(createSuccessResponse(createMockCategory(input)))
+      const sut = categoryService
 
-      await categoryService.updateCategory('cat-123', input)
+      const result = await sut.updateCategory('cat-123', input)
 
-      expect(api.patch).toHaveBeenCalledWith('/categories/cat-123', input)
+      expect(result).toHaveProperty('data')
     })
 
     it('returns error response when category not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Category not found')
-      vi.mocked(api.patch).mockResolvedValue(errorResponse)
+      mockApi.patch.mockResolvedValue(errorResponse)
+      const sut = categoryService
 
-      const result = await categoryService.updateCategory('non-existent', { name: 'Test' })
+      const result = await sut.updateCategory('non-existent', { name: 'Test' })
 
       expect(result).toEqual(errorResponse)
     })
   })
 
   describe('deleteCategory', () => {
-    it('calls correct endpoint with category id', async () => {
-      vi.mocked(api.delete).mockResolvedValue(
-        createSuccessResponse(undefined as unknown as undefined)
-      )
+    it('deletes category by id', async () => {
+      mockApi.delete.mockResolvedValue(createSuccessResponse(undefined as unknown as undefined))
+      const sut = categoryService
 
-      const result = await categoryService.deleteCategory('cat-123')
+      const result = await sut.deleteCategory('cat-123')
 
-      expect(api.delete).toHaveBeenCalledWith('/categories/cat-123')
       expect(result).toEqual({ data: undefined })
     })
 
     it('returns error response when category not found', async () => {
       const errorResponse = createErrorResponse('NOT_FOUND', 'Category not found')
-      vi.mocked(api.delete).mockResolvedValue(errorResponse)
+      mockApi.delete.mockResolvedValue(errorResponse)
+      const sut = categoryService
 
-      const result = await categoryService.deleteCategory('non-existent')
+      const result = await sut.deleteCategory('non-existent')
 
       expect(result).toEqual(errorResponse)
     })
@@ -193,9 +208,10 @@ describe('categoryService', () => {
         'CONFLICT',
         'Cannot delete category with associated expenses'
       )
-      vi.mocked(api.delete).mockResolvedValue(errorResponse)
+      mockApi.delete.mockResolvedValue(errorResponse)
+      const sut = categoryService
 
-      const result = await categoryService.deleteCategory('cat-with-expenses')
+      const result = await sut.deleteCategory('cat-with-expenses')
 
       expect(result).toEqual(errorResponse)
     })

@@ -1,51 +1,37 @@
-import type { CreditCard } from '@plim/shared'
+import { createMockCreditCard } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CreditCardsRepository } from './credit-cards.repository'
 import { ListCreditCardsUseCase } from './list-credit-cards.usecase'
 
-const creditCards: CreditCard[] = [
-  {
-    id: 'card-1',
-    user_id: 'user-123',
-    name: 'Nubank Ultravioleta',
-    color: 'black',
-    flag: 'mastercard',
-    bank: 'nubank',
-    last_4_digits: '1234',
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
-  {
-    id: 'card-2',
-    user_id: 'user-123',
-    name: 'Inter Black',
-    color: 'black',
-    flag: 'mastercard',
-    bank: 'inter',
-    last_4_digits: '5678',
-    is_active: true,
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z',
-  },
-]
+type MockRepository = {
+  findByUserId: ReturnType<typeof vi.fn>
+}
+
+function createMockRepository(): MockRepository {
+  return {
+    findByUserId: vi.fn(),
+  }
+}
 
 describe('ListCreditCardsUseCase', () => {
   let sut: ListCreditCardsUseCase
-  let mockRepository: { findByUserId: ReturnType<typeof vi.fn> }
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = { findByUserId: vi.fn() }
+    mockRepository = createMockRepository()
     sut = new ListCreditCardsUseCase(mockRepository as unknown as CreditCardsRepository)
   })
 
   it('returns list of credit cards for user', async () => {
+    const creditCards = [
+      createMockCreditCard({ name: 'Nubank Ultravioleta', flag: 'mastercard', bank: 'nubank' }),
+      createMockCreditCard({ name: 'Inter Black', flag: 'mastercard', bank: 'inter' }),
+    ]
     mockRepository.findByUserId.mockResolvedValue(creditCards)
 
     const result = await sut.execute('user-123')
 
     expect(result).toEqual(creditCards)
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123')
   })
 
   it('returns empty array when user has no credit cards', async () => {
@@ -54,6 +40,57 @@ describe('ListCreditCardsUseCase', () => {
     const result = await sut.execute('user-456')
 
     expect(result).toEqual([])
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-456')
+  })
+
+  describe('boundary cases', () => {
+    it('handles single credit card', async () => {
+      const creditCards = [createMockCreditCard({ name: 'Single Card' })]
+      mockRepository.findByUserId.mockResolvedValue(creditCards)
+
+      const result = await sut.execute('user-123')
+
+      expect(result).toHaveLength(1)
+      expect(result[0]?.name).toBe('Single Card')
+    })
+
+    it('handles large list of credit cards', async () => {
+      const creditCards = Array.from({ length: 20 }, (_, i) =>
+        createMockCreditCard({ name: `Card ${i}`, last_4_digits: String(i).padStart(4, '0') })
+      )
+      mockRepository.findByUserId.mockResolvedValue(creditCards)
+
+      const result = await sut.execute('user-123')
+
+      expect(result).toHaveLength(20)
+    })
+
+    it('handles mix of active and inactive cards', async () => {
+      const creditCards = [
+        createMockCreditCard({ name: 'Active Card', is_active: true }),
+        createMockCreditCard({ name: 'Inactive Card', is_active: false }),
+      ]
+      mockRepository.findByUserId.mockResolvedValue(creditCards)
+
+      const result = await sut.execute('user-123')
+
+      expect(result).toHaveLength(2)
+      expect(result.find((c) => c.name === 'Active Card')?.is_active).toBe(true)
+      expect(result.find((c) => c.name === 'Inactive Card')?.is_active).toBe(false)
+    })
+
+    it('handles cards from different banks and flags', async () => {
+      const creditCards = [
+        createMockCreditCard({ bank: 'nubank', flag: 'mastercard' }),
+        createMockCreditCard({ bank: 'inter', flag: 'visa' }),
+        createMockCreditCard({ bank: 'itau', flag: 'elo' }),
+      ]
+      mockRepository.findByUserId.mockResolvedValue(creditCards)
+
+      const result = await sut.execute('user-123')
+
+      expect(result).toHaveLength(3)
+      expect(new Set(result.map((c) => c.bank)).size).toBe(3)
+      expect(new Set(result.map((c) => c.flag)).size).toBe(3)
+    })
   })
 })

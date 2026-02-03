@@ -7,7 +7,7 @@ import { accountController } from './modules/account/account.controller'
 import { categoriesController } from './modules/categories/categories.controller'
 import { creditCardsController } from './modules/credit-cards/credit-cards.controller'
 import { dashboardController } from './modules/dashboard/dashboard.controller'
-import { expensesController } from './modules/expenses/expenses.controller'
+import { expensesRouter } from './modules/expenses/expenses.routes'
 import { profileController } from './modules/profile/profile.controller'
 import { salaryController } from './modules/salary/salary.controller'
 import { spendingLimitsController } from './modules/spending-limits/spending-limits.controller'
@@ -47,7 +47,7 @@ api.use('*', rateLimitMiddleware)
 api.use('*', authMiddleware)
 api.route('/profile', profileController)
 api.route('/categories', categoriesController)
-api.route('/expenses', expensesController)
+api.route('/expenses', expensesRouter)
 api.route('/salary', salaryController)
 api.route('/spending-limits', spendingLimitsController)
 api.route('/dashboard', dashboardController)

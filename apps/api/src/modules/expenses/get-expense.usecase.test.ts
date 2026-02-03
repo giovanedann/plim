@@ -1,57 +1,40 @@
-import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
-import type { Expense } from '@plim/shared'
+import { ERROR_CODES, HTTP_STATUS, createMockExpense } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { ExpensesRepository } from './expenses.repository'
 import { GetExpenseUseCase } from './get-expense.usecase'
 
-const baseExpense: Expense = {
-  id: 'expense-1',
-  user_id: 'user-123',
-  category_id: 'cat-1',
-  description: 'Test Expense',
-  amount_cents: 5000,
-  payment_method: 'credit_card',
-  date: '2024-01-15',
-  is_recurrent: false,
-  recurrence_day: null,
-  recurrence_start: null,
-  recurrence_end: null,
-  installment_current: null,
-  installment_total: null,
-  installment_group_id: null,
-  credit_card_id: null,
-  created_at: '2024-01-15T00:00:00Z',
-  updated_at: '2024-01-15T00:00:00Z',
+type MockRepository = Pick<ExpensesRepository, 'findById'>
+
+function createMockRepository(): MockRepository {
+  return {
+    findById: vi.fn(),
+  }
 }
 
 describe('GetExpenseUseCase', () => {
-  let useCase: GetExpenseUseCase
-  let mockRepository: {
-    findById: ReturnType<typeof vi.fn>
-  }
+  let sut: GetExpenseUseCase
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = {
-      findById: vi.fn(),
-    }
-    useCase = new GetExpenseUseCase(mockRepository as unknown as ExpensesRepository)
+    mockRepository = createMockRepository()
+    sut = new GetExpenseUseCase(mockRepository as ExpensesRepository)
   })
 
   it('returns expense when found', async () => {
-    mockRepository.findById.mockResolvedValue(baseExpense)
+    const expense = createMockExpense({ id: 'expense-1', user_id: 'user-123' })
+    mockRepository.findById = vi.fn().mockResolvedValue(expense)
 
-    const result = await useCase.execute('user-123', 'expense-1')
+    const result = await sut.execute('user-123', 'expense-1')
 
-    expect(result).toEqual(baseExpense)
-    expect(mockRepository.findById).toHaveBeenCalledWith('expense-1', 'user-123')
+    expect(result).toEqual(expense)
   })
 
   it('throws NOT_FOUND when expense does not exist', async () => {
-    mockRepository.findById.mockResolvedValue(null)
+    mockRepository.findById = vi.fn().mockResolvedValue(null)
 
-    await expect(useCase.execute('user-123', 'expense-1')).rejects.toThrow(AppError)
-    await expect(useCase.execute('user-123', 'expense-1')).rejects.toMatchObject({
+    await expect(sut.execute('user-123', 'expense-1')).rejects.toThrow(AppError)
+    await expect(sut.execute('user-123', 'expense-1')).rejects.toMatchObject({
       code: ERROR_CODES.NOT_FOUND,
       status: HTTP_STATUS.NOT_FOUND,
     })

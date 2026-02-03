@@ -774,5 +774,40 @@ describe('DashboardRepository', () => {
       // Assert
       expect(result).toEqual([])
     })
+
+    it('handles installments across year boundary', () => {
+      // Arrange
+      const installments = [
+        { amount_cents: 1000, date: '2024-11-15' },
+        { amount_cents: 1000, date: '2024-12-15' },
+        { amount_cents: 1000, date: '2025-01-15' },
+        { amount_cents: 1000, date: '2025-02-15' },
+      ]
+      const months = 4
+
+      // Act
+      const result = sut.calculateInstallmentForecast(installments, months)
+
+      // Assert
+      expect(result).toHaveLength(4)
+      expect(result.some((r) => r.month === '2024-11')).toBe(true)
+      expect(result.some((r) => r.month === '2025-01')).toBe(true)
+    })
+
+    it('handles installments in leap year February', () => {
+      // Arrange
+      const installments = [
+        { amount_cents: 1000, date: '2024-02-29' },
+        { amount_cents: 1000, date: '2024-03-29' },
+      ]
+      const months = 2
+
+      // Act
+      const result = sut.calculateInstallmentForecast(installments, months)
+
+      // Assert
+      expect(result).toHaveLength(2)
+      expect(result.some((r) => r.month === '2024-02')).toBe(true)
+    })
   })
 })

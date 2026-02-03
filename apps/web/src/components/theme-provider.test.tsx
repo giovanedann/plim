@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ThemeProvider, useTheme } from './theme-provider'
 
 // Test component that uses the theme hook
@@ -9,14 +9,14 @@ function TestComponent() {
 
   return (
     <div>
-      <div data-testid="current-theme">{theme}</div>
-      <button onClick={() => setTheme('light')} data-testid="set-light">
+      <div aria-label="Current theme">{theme}</div>
+      <button type="button" onClick={() => setTheme('light')}>
         Light
       </button>
-      <button onClick={() => setTheme('dark')} data-testid="set-dark">
+      <button type="button" onClick={() => setTheme('dark')}>
         Dark
       </button>
-      <button onClick={() => setTheme('system')} data-testid="set-system">
+      <button type="button" onClick={() => setTheme('system')}>
         System
       </button>
     </div>
@@ -30,6 +30,7 @@ describe('ThemeProvider', () => {
 
   beforeEach(() => {
     user = userEvent.setup()
+    vi.clearAllMocks()
     mockLocalStorage = {}
 
     // Mock localStorage
@@ -63,15 +64,19 @@ describe('ThemeProvider', () => {
     document.documentElement.classList.remove('light', 'dark')
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   describe('initialization', () => {
     it('renders children', () => {
       render(
         <ThemeProvider>
-          <div data-testid="child">Test content</div>
+          <div>Test content</div>
         </ThemeProvider>
       )
 
-      expect(screen.getByTestId('child')).toBeInTheDocument()
+      expect(screen.getByText('Test content')).toBeInTheDocument()
     })
 
     it('uses system theme by default', () => {
@@ -81,7 +86,7 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('system')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('system')
     })
 
     it('uses custom default theme when provided', () => {
@@ -91,11 +96,11 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('dark')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('dark')
     })
 
     it('loads theme from localStorage if available', () => {
-      mockLocalStorage['theme'] = 'dark'
+      mockLocalStorage.theme = 'dark'
 
       render(
         <ThemeProvider>
@@ -103,7 +108,7 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('dark')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('dark')
     })
 
     it('uses custom storage key when provided', () => {
@@ -115,7 +120,7 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('light')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('light')
     })
   })
 
@@ -127,9 +132,9 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      await user.click(screen.getByTestId('set-light'))
+      await user.click(screen.getByRole('button', { name: 'Light' }))
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('light')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('light')
     })
 
     it('switches to dark theme', async () => {
@@ -139,9 +144,9 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      await user.click(screen.getByTestId('set-dark'))
+      await user.click(screen.getByRole('button', { name: 'Dark' }))
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('dark')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('dark')
     })
 
     it('switches to system theme', async () => {
@@ -151,9 +156,9 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      await user.click(screen.getByTestId('set-system'))
+      await user.click(screen.getByRole('button', { name: 'System' }))
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('system')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('system')
     })
 
     it('persists theme to localStorage when changed', async () => {
@@ -163,7 +168,7 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      await user.click(screen.getByTestId('set-dark'))
+      await user.click(screen.getByRole('button', { name: 'Dark' }))
 
       expect(window.localStorage.setItem).toHaveBeenCalledWith('theme', 'dark')
     })
@@ -175,7 +180,7 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      await user.click(screen.getByTestId('set-light'))
+      await user.click(screen.getByRole('button', { name: 'Light' }))
 
       expect(window.localStorage.setItem).toHaveBeenCalledWith('custom-key', 'light')
     })
@@ -217,7 +222,7 @@ describe('ThemeProvider', () => {
         expect(document.documentElement.classList.contains('dark')).toBe(true)
       })
 
-      await user.click(screen.getByTestId('set-light'))
+      await user.click(screen.getByRole('button', { name: 'Light' }))
 
       await waitFor(() => {
         expect(document.documentElement.classList.contains('light')).toBe(true)
@@ -257,13 +262,11 @@ describe('ThemeProvider', () => {
   describe('useTheme hook', () => {
     it('throws error when used outside ThemeProvider', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.spyOn(console, 'error').mockImplementation(() => {})
 
       expect(() => {
         render(<TestComponent />)
       }).toThrow('useTheme must be used within a ThemeProvider')
-
-      consoleSpy.mockRestore()
     })
 
     it('provides theme and setTheme', () => {
@@ -273,10 +276,10 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      expect(screen.getByTestId('current-theme')).toBeInTheDocument()
-      expect(screen.getByTestId('set-light')).toBeInTheDocument()
-      expect(screen.getByTestId('set-dark')).toBeInTheDocument()
-      expect(screen.getByTestId('set-system')).toBeInTheDocument()
+      expect(screen.getByLabelText('Current theme')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Light' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Dark' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'System' })).toBeInTheDocument()
     })
   })
 
@@ -288,16 +291,16 @@ describe('ThemeProvider', () => {
         </ThemeProvider>
       )
 
-      await user.click(screen.getByTestId('set-light'))
-      await user.click(screen.getByTestId('set-dark'))
-      await user.click(screen.getByTestId('set-system'))
-      await user.click(screen.getByTestId('set-light'))
+      await user.click(screen.getByRole('button', { name: 'Light' }))
+      await user.click(screen.getByRole('button', { name: 'Dark' }))
+      await user.click(screen.getByRole('button', { name: 'System' }))
+      await user.click(screen.getByRole('button', { name: 'Light' }))
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('light')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('light')
     })
 
     it('handles invalid theme in localStorage gracefully', () => {
-      mockLocalStorage['theme'] = 'invalid-theme'
+      mockLocalStorage.theme = 'invalid-theme'
 
       render(
         <ThemeProvider>
@@ -306,7 +309,7 @@ describe('ThemeProvider', () => {
       )
 
       // Should fall back to default theme
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('invalid-theme')
+      expect(screen.getByLabelText('Current theme')).toHaveTextContent('invalid-theme')
     })
   })
 })

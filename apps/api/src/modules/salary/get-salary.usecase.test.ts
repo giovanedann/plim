@@ -1,38 +1,38 @@
-import type { SalaryHistory } from '@plim/shared'
+import { createMockSalaryHistory } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GetSalaryUseCase } from './get-salary.usecase'
 import type { SalaryRepository } from './salary.repository'
 
-const baseSalary: SalaryHistory = {
-  id: '11111111-1111-4111-8111-111111111111',
-  user_id: '22222222-2222-4222-8222-222222222222',
-  amount_cents: 500000,
-  effective_from: '2024-01-01',
-  created_at: '2024-01-01T00:00:00Z',
+type MockRepository = Pick<SalaryRepository, 'findActiveForMonth'>
+
+function createMockRepository(): MockRepository {
+  return {
+    findActiveForMonth: vi.fn(),
+  }
 }
 
 describe('GetSalaryUseCase', () => {
-  let useCase: GetSalaryUseCase
-  let mockRepository: { findActiveForMonth: ReturnType<typeof vi.fn> }
+  let sut: GetSalaryUseCase
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = { findActiveForMonth: vi.fn() }
-    useCase = new GetSalaryUseCase(mockRepository as unknown as SalaryRepository)
+    mockRepository = createMockRepository()
+    sut = new GetSalaryUseCase(mockRepository as SalaryRepository)
   })
 
   it('returns active salary for month', async () => {
-    mockRepository.findActiveForMonth.mockResolvedValue(baseSalary)
+    const salary = createMockSalaryHistory({ user_id: 'user-123', effective_from: '2024-03-01' })
+    mockRepository.findActiveForMonth = vi.fn().mockResolvedValue(salary)
 
-    const result = await useCase.execute('user-123', '2024-03')
+    const result = await sut.execute('user-123', '2024-03')
 
-    expect(result).toEqual(baseSalary)
-    expect(mockRepository.findActiveForMonth).toHaveBeenCalledWith('user-123', '2024-03')
+    expect(result).toEqual(salary)
   })
 
   it('returns null when no salary exists', async () => {
-    mockRepository.findActiveForMonth.mockResolvedValue(null)
+    mockRepository.findActiveForMonth = vi.fn().mockResolvedValue(null)
 
-    const result = await useCase.execute('user-123', '2024-01')
+    const result = await sut.execute('user-123', '2024-01')
 
     expect(result).toBeNull()
   })

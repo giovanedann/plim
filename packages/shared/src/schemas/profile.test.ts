@@ -20,7 +20,9 @@ describe('profileSchema', () => {
     const result = sut.safeParse(validProfile)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validProfile)
+    if (result.success) {
+      expect(result.data).toEqual(validProfile)
+    }
   })
 
   it('accepts profile with null name', () => {
@@ -29,7 +31,9 @@ describe('profileSchema', () => {
     const result = sut.safeParse(profile)
 
     expect(result.success).toBe(true)
-    expect(result.data?.name).toBeNull()
+    if (result.success) {
+      expect(result.data.name).toBeNull()
+    }
   })
 
   it('accepts profile with null avatar_url', () => {
@@ -38,7 +42,9 @@ describe('profileSchema', () => {
     const result = sut.safeParse(profile)
 
     expect(result.success).toBe(true)
-    expect(result.data?.avatar_url).toBeNull()
+    if (result.success) {
+      expect(result.data.avatar_url).toBeNull()
+    }
   })
 
   it('rejects profile with invalid email', () => {
@@ -47,7 +53,17 @@ describe('profileSchema', () => {
     const result = sut.safeParse(profile)
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Email inválido')
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Email inválido')
+    }
+  })
+
+  it('rejects profile with empty email', () => {
+    const profile = { ...validProfile, email: '' }
+
+    const result = sut.safeParse(profile)
+
+    expect(result.success).toBe(false)
   })
 
   it('rejects profile with invalid avatar_url', () => {
@@ -56,7 +72,9 @@ describe('profileSchema', () => {
     const result = sut.safeParse(profile)
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('URL inválida')
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('URL inválida')
+    }
   })
 
   it('rejects profile with invalid user_id', () => {
@@ -67,49 +85,59 @@ describe('profileSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('applies default currency when not provided', () => {
+  it('applies default currency (BRL) when not provided', () => {
     const { currency: _, ...profileWithoutCurrency } = validProfile
 
     const result = sut.safeParse(profileWithoutCurrency)
 
     expect(result.success).toBe(true)
-    expect(result.data?.currency).toBe('BRL')
+    if (result.success) {
+      expect(result.data.currency).toBe('BRL')
+    }
   })
 
-  it('applies default locale when not provided', () => {
+  it('applies default locale (pt-BR) when not provided', () => {
     const { locale: _, ...profileWithoutLocale } = validProfile
 
     const result = sut.safeParse(profileWithoutLocale)
 
     expect(result.success).toBe(true)
-    expect(result.data?.locale).toBe('pt-BR')
+    if (result.success) {
+      expect(result.data.locale).toBe('pt-BR')
+    }
   })
 
-  it('applies default is_onboarded when not provided', () => {
+  it('applies default is_onboarded (false) when not provided', () => {
     const { is_onboarded: _, ...profileWithoutIsOnboarded } = validProfile
 
     const result = sut.safeParse(profileWithoutIsOnboarded)
 
     expect(result.success).toBe(true)
-    expect(result.data?.is_onboarded).toBe(false)
+    if (result.success) {
+      expect(result.data.is_onboarded).toBe(false)
+    }
   })
 
-  it('accepts different currency values', () => {
+  it('accepts different currency values (USD)', () => {
     const profile = { ...validProfile, currency: 'USD' }
 
     const result = sut.safeParse(profile)
 
     expect(result.success).toBe(true)
-    expect(result.data?.currency).toBe('USD')
+    if (result.success) {
+      expect(result.data.currency).toBe('USD')
+    }
   })
 
-  it('accepts different locale values', () => {
+  it('accepts different locale values (en-US)', () => {
     const profile = { ...validProfile, locale: 'en-US' }
 
     const result = sut.safeParse(profile)
 
     expect(result.success).toBe(true)
-    expect(result.data?.locale).toBe('en-US')
+    if (result.success) {
+      expect(result.data.locale).toBe('en-US')
+    }
   })
 
   it('rejects profile with invalid datetime format', () => {
@@ -128,14 +156,18 @@ describe('updateProfileSchema', () => {
     const result = sut.safeParse({ name: 'Jane Doe' })
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ name: 'Jane Doe' })
+    if (result.success) {
+      expect(result.data).toEqual({ name: 'Jane Doe' })
+    }
   })
 
   it('accepts partial update with null name', () => {
     const result = sut.safeParse({ name: null })
 
     expect(result.success).toBe(true)
-    expect(result.data?.name).toBeNull()
+    if (result.success) {
+      expect(result.data.name).toBeNull()
+    }
   })
 
   it('accepts partial update with only avatar_url', () => {
@@ -148,35 +180,45 @@ describe('updateProfileSchema', () => {
     const result = sut.safeParse({ avatar_url: null })
 
     expect(result.success).toBe(true)
-    expect(result.data?.avatar_url).toBeNull()
+    if (result.success) {
+      expect(result.data.avatar_url).toBeNull()
+    }
   })
 
   it('accepts partial update with only currency', () => {
     const result = sut.safeParse({ currency: 'EUR' })
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ currency: 'EUR' })
+    if (result.success) {
+      expect(result.data).toEqual({ currency: 'EUR' })
+    }
   })
 
   it('accepts partial update with only locale', () => {
     const result = sut.safeParse({ locale: 'es-ES' })
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ locale: 'es-ES' })
+    if (result.success) {
+      expect(result.data).toEqual({ locale: 'es-ES' })
+    }
   })
 
   it('accepts partial update with only is_onboarded', () => {
     const result = sut.safeParse({ is_onboarded: true })
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ is_onboarded: true })
+    if (result.success) {
+      expect(result.data).toEqual({ is_onboarded: true })
+    }
   })
 
   it('accepts empty object (no updates)', () => {
     const result = sut.safeParse({})
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({})
+    if (result.success) {
+      expect(result.data).toEqual({})
+    }
   })
 
   it('accepts update with all fields', () => {
@@ -191,14 +233,18 @@ describe('updateProfileSchema', () => {
     const result = sut.safeParse(update)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(update)
+    if (result.success) {
+      expect(result.data).toEqual(update)
+    }
   })
 
   it('rejects update with invalid avatar_url', () => {
     const result = sut.safeParse({ avatar_url: 'not-a-valid-url' })
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('URL inválida')
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('URL inválida')
+    }
   })
 
   it('rejects update with invalid is_onboarded type', () => {
@@ -217,7 +263,9 @@ describe('avatarUploadResponseSchema', () => {
     const result = sut.safeParse(response)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(response)
+    if (result.success) {
+      expect(result.data).toEqual(response)
+    }
   })
 
   it('rejects response without avatar_url', () => {
@@ -234,6 +282,12 @@ describe('avatarUploadResponseSchema', () => {
 
   it('rejects response with null avatar_url', () => {
     const result = sut.safeParse({ avatar_url: null })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects response with empty string avatar_url', () => {
+    const result = sut.safeParse({ avatar_url: '' })
 
     expect(result.success).toBe(false)
   })

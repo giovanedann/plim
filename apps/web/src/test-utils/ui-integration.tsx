@@ -194,7 +194,7 @@ export function mockApiResponse(endpoint: string, response: unknown, status = 20
     const requestKey = `${requestMethod}:${url}`
 
     console.log(`[FETCH] ${requestMethod} ${url}`)
-    console.log(`[FETCH] Available mocks:`, Array.from(apiMockStore.keys()))
+    console.log('[FETCH] Available mocks:', Array.from(apiMockStore.keys()))
 
     const mock = apiMockStore.get(requestKey)
     if (mock) {

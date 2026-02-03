@@ -24,7 +24,9 @@ describe('paymentMethodSchema', () => {
     const result = sut.safeParse('bank_transfer')
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Selecione um método de pagamento válido')
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Selecione um método de pagamento válido')
+    }
   })
 })
 
@@ -44,7 +46,9 @@ describe('expenseTypeSchema', () => {
     const result = sut.safeParse('subscription')
 
     expect(result.success).toBe(false)
-    expect(result.error!.issues[0]!.message).toBe('Selecione um tipo de despesa válido')
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Selecione um tipo de despesa válido')
+    }
   })
 })
 
@@ -65,7 +69,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(validOneTimeExpense)
 
       expect(result.success).toBe(true)
-      expect(result.data).toEqual(validOneTimeExpense)
+      if (result.success) {
+        expect(result.data).toEqual(validOneTimeExpense)
+      }
     })
 
     it('accepts one_time expense with optional credit_card_id', () => {
@@ -80,13 +86,31 @@ describe('createExpenseSchema', () => {
       expect(result.success).toBe(true)
     })
 
+    it('accepts one_time expense with description at minimum length (1 character)', () => {
+      const expense = { ...validOneTimeExpense, description: 'a' }
+
+      const result = sut.safeParse(expense)
+
+      expect(result.success).toBe(true)
+    })
+
     it('rejects one_time expense with empty description', () => {
       const expense = { ...validOneTimeExpense, description: '' }
 
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Descrição é obrigatória')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Descrição é obrigatória')
+      }
+    })
+
+    it('accepts one_time expense with description at maximum length (255 characters)', () => {
+      const expense = { ...validOneTimeExpense, description: 'a'.repeat(255) }
+
+      const result = sut.safeParse(expense)
+
+      expect(result.success).toBe(true)
     })
 
     it('rejects one_time expense with description exceeding 255 characters', () => {
@@ -95,7 +119,17 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Descrição deve ter no máximo 255 caracteres')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Descrição deve ter no máximo 255 caracteres')
+      }
+    })
+
+    it('accepts one_time expense with amount at minimum value (1 cent)', () => {
+      const expense = { ...validOneTimeExpense, amount_cents: 1 }
+
+      const result = sut.safeParse(expense)
+
+      expect(result.success).toBe(true)
     })
 
     it('rejects one_time expense with zero amount', () => {
@@ -104,7 +138,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Valor deve ser maior que zero')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Valor deve ser maior que zero')
+      }
     })
 
     it('rejects one_time expense with negative amount', () => {
@@ -113,7 +149,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Valor deve ser maior que zero')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Valor deve ser maior que zero')
+      }
     })
 
     it('rejects one_time expense with invalid category_id', () => {
@@ -122,7 +160,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Selecione uma categoria')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Selecione uma categoria')
+      }
     })
 
     it('rejects one_time expense with invalid date format', () => {
@@ -131,7 +171,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Selecione uma data válida')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Selecione uma data válida')
+      }
     })
   })
 
@@ -150,7 +192,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(validRecurrentExpense)
 
       expect(result.success).toBe(true)
-      expect(result.data).toEqual(validRecurrentExpense)
+      if (result.success) {
+        expect(result.data).toEqual(validRecurrentExpense)
+      }
     })
 
     it('accepts recurrent expense with optional recurrence_end', () => {
@@ -170,7 +214,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Dia deve ser entre 1 e 31')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Dia deve ser entre 1 e 31')
+      }
     })
 
     it('rejects recurrent expense with recurrence_day above 31', () => {
@@ -179,7 +225,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Dia deve ser entre 1 e 31')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Dia deve ser entre 1 e 31')
+      }
     })
 
     it('rejects recurrent expense without recurrence_start', () => {
@@ -196,7 +244,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Selecione a data de início')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Selecione a data de início')
+      }
     })
   })
 
@@ -215,7 +265,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(validInstallmentExpense)
 
       expect(result.success).toBe(true)
-      expect(result.data).toEqual(validInstallmentExpense)
+      if (result.success) {
+        expect(result.data).toEqual(validInstallmentExpense)
+      }
     })
 
     it('accepts installment expense with minimum installments (2)', () => {
@@ -240,7 +292,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Número de parcelas deve ser entre 2 e 48')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Número de parcelas deve ser entre 2 e 48')
+      }
     })
 
     it('rejects installment expense with installment_total above 48', () => {
@@ -249,7 +303,9 @@ describe('createExpenseSchema', () => {
       const result = sut.safeParse(expense)
 
       expect(result.success).toBe(false)
-      expect(result.error!.issues[0]!.message).toBe('Número de parcelas deve ser entre 2 e 48')
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toBe('Número de parcelas deve ser entre 2 e 48')
+      }
     })
 
     it('rejects installment expense without installment_total', () => {
@@ -300,7 +356,9 @@ describe('updateExpenseSchema', () => {
     const result = sut.safeParse({ description: 'Updated description' })
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ description: 'Updated description' })
+    if (result.success) {
+      expect(result.data).toEqual({ description: 'Updated description' })
+    }
   })
 
   it('accepts partial update with multiple fields', () => {
@@ -313,14 +371,18 @@ describe('updateExpenseSchema', () => {
     const result = sut.safeParse(update)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(update)
+    if (result.success) {
+      expect(result.data).toEqual(update)
+    }
   })
 
   it('accepts empty object (no updates)', () => {
     const result = sut.safeParse({})
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({})
+    if (result.success) {
+      expect(result.data).toEqual({})
+    }
   })
 
   it('accepts update with category_id', () => {
@@ -377,7 +439,9 @@ describe('expenseFiltersSchema', () => {
     const result = sut.safeParse({})
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({})
+    if (result.success) {
+      expect(result.data).toEqual({})
+    }
   })
 
   it('accepts filters with start_date', () => {
@@ -401,7 +465,9 @@ describe('expenseFiltersSchema', () => {
     const result = sut.safeParse(filters)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(filters)
+    if (result.success) {
+      expect(result.data).toEqual(filters)
+    }
   })
 
   it('accepts filters with category_id', () => {
@@ -452,7 +518,9 @@ describe('expenseFiltersSchema', () => {
     const result = sut.safeParse(filters)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(filters)
+    if (result.success) {
+      expect(result.data).toEqual(filters)
+    }
   })
 
   it('rejects invalid date format', () => {
@@ -559,6 +627,8 @@ describe('paginatedExpenseFiltersSchema', () => {
     const result = sut.safeParse(filters)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(filters)
+    if (result.success) {
+      expect(result.data).toEqual(filters)
+    }
   })
 })

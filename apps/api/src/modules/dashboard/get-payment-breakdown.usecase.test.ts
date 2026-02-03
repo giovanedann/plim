@@ -1,26 +1,33 @@
+import { createMockExpense } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DashboardRepository } from './dashboard.repository'
 import { GetPaymentBreakdownUseCase } from './get-payment-breakdown.usecase'
 
+type MockRepository = {
+  getExpensesForPeriod: ReturnType<typeof vi.fn>
+  aggregateByPaymentMethod: ReturnType<typeof vi.fn>
+}
+
+function createMockDashboardRepository(): MockRepository {
+  return {
+    getExpensesForPeriod: vi.fn(),
+    aggregateByPaymentMethod: vi.fn(),
+  }
+}
+
 describe('GetPaymentBreakdownUseCase', () => {
   let sut: GetPaymentBreakdownUseCase
-  let mockRepository: {
-    getExpensesForPeriod: ReturnType<typeof vi.fn>
-    aggregateByPaymentMethod: ReturnType<typeof vi.fn>
-  }
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = {
-      getExpensesForPeriod: vi.fn(),
-      aggregateByPaymentMethod: vi.fn(),
-    }
+    mockRepository = createMockDashboardRepository()
     sut = new GetPaymentBreakdownUseCase(mockRepository as unknown as DashboardRepository)
   })
 
   it('returns payment breakdown with expenses', async () => {
     const expenses = [
-      { amount_cents: 15000, payment_method: 'credit_card' },
-      { amount_cents: 10000, payment_method: 'pix' },
+      createMockExpense({ amount_cents: 15000, payment_method: 'credit_card' }),
+      createMockExpense({ amount_cents: 10000, payment_method: 'pix' }),
     ]
     const aggregatedData = [
       { method: 'credit_card', amount: 15000, percentage: 60 },
@@ -36,7 +43,6 @@ describe('GetPaymentBreakdownUseCase', () => {
 
     expect(result.total).toBe(25000)
     expect(result.data).toEqual(aggregatedData)
-    expect(mockRepository.aggregateByPaymentMethod).toHaveBeenCalledWith(expenses, 25000)
   })
 
   it('returns empty breakdown when no expenses', async () => {

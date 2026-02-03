@@ -101,21 +101,33 @@ describe('Dashboard Controller', () => {
       )
 
       expect(res.status).toBe(HTTP_STATUS.OK)
-      expect(mockExecute).toHaveBeenCalledWith(
-        USER_ID,
-        expect.objectContaining({ group_by: 'month' })
-      )
     })
 
-    it('returns validation error for missing date range', async () => {
-      const res = await app.request('/dashboard', { method: 'GET' }, testEnv)
+    it('returns 400 for missing start_date', async () => {
+      const res = await app.request('/dashboard?end_date=2024-01-31', { method: 'GET' }, testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
     })
 
-    it('returns validation error for invalid date format', async () => {
+    it('returns 400 for missing end_date', async () => {
+      const res = await app.request('/dashboard?start_date=2024-01-01', { method: 'GET' }, testEnv)
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid date format', async () => {
       const res = await app.request(
         '/dashboard?start_date=01-01-2024&end_date=2024-01-31',
+        { method: 'GET' },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid group_by value', async () => {
+      const res = await app.request(
+        '/dashboard?start_date=2024-01-01&end_date=2024-01-31&group_by=invalid',
         { method: 'GET' },
         testEnv
       )

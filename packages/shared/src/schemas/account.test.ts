@@ -10,7 +10,9 @@ describe('deleteAccountSchema', () => {
     const result = sut.safeParse(input)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(input)
+    if (result.success) {
+      expect(result.data).toEqual(input)
+    }
   })
 
   it('accepts input with empty string password', () => {
@@ -19,7 +21,9 @@ describe('deleteAccountSchema', () => {
     const result = sut.safeParse(input)
 
     expect(result.success).toBe(true)
-    expect(result.data?.password).toBe('')
+    if (result.success) {
+      expect(result.data.password).toBe('')
+    }
   })
 
   it('accepts input without password field', () => {
@@ -28,7 +32,9 @@ describe('deleteAccountSchema', () => {
     const result = sut.safeParse(input)
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({})
+    if (result.success) {
+      expect(result.data).toEqual({})
+    }
   })
 
   it('accepts input with undefined password', () => {
@@ -37,7 +43,9 @@ describe('deleteAccountSchema', () => {
     const result = sut.safeParse(input)
 
     expect(result.success).toBe(true)
-    expect(result.data?.password).toBeUndefined()
+    if (result.success) {
+      expect(result.data.password).toBeUndefined()
+    }
   })
 
   it('rejects input with non-string password', () => {
@@ -82,7 +90,9 @@ describe('deleteAccountSchema', () => {
     const result = sut.safeParse(input)
 
     expect(result.success).toBe(true)
-    expect(result.data).not.toHaveProperty('extraField')
-    expect(result.data).not.toHaveProperty('userId')
+    if (result.success) {
+      expect(result.data).not.toHaveProperty('extraField')
+      expect(result.data).not.toHaveProperty('userId')
+    }
   })
 })

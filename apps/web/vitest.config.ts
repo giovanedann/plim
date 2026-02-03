@@ -15,5 +15,15 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./vitest.setup.ts'],
+    // Resource limits to prevent system overload with integration tests
+    maxWorkers: 2,
+    maxConcurrency: 5,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        maxForks: 2,
+        minForks: 1,
+      },
+    },
   },
 })

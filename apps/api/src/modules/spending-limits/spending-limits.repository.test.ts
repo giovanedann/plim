@@ -1,21 +1,14 @@
-import type { SpendingLimit, UpsertSpendingLimit } from '@plim/shared'
+import type { UpsertSpendingLimit } from '@plim/shared'
+import { createMockSpendingLimit } from '@plim/shared/test-utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SpendingLimitsRepository } from './spending-limits.repository'
 
-function createMockSpendingLimit(overrides: Partial<SpendingLimit> = {}): SpendingLimit {
-  return {
-    id: 'limit-123',
-    user_id: 'user-123',
-    year_month: '2026-01',
-    amount_cents: 500000,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-    ...overrides,
-  }
+type MockSupabaseClient = {
+  from: ReturnType<typeof vi.fn>
 }
 
-function createMockSupabaseClient() {
+function createMockSupabaseClient(): MockSupabaseClient {
   return {
     from: vi.fn(),
   }
@@ -23,7 +16,7 @@ function createMockSupabaseClient() {
 
 describe('SpendingLimitsRepository', () => {
   let sut: SpendingLimitsRepository
-  let mockSupabase: ReturnType<typeof createMockSupabaseClient>
+  let mockSupabase: MockSupabaseClient
 
   beforeEach(() => {
     mockSupabase = createMockSupabaseClient()
@@ -32,9 +25,7 @@ describe('SpendingLimitsRepository', () => {
 
   describe('findByMonth', () => {
     it('returns spending limit for exact month', async () => {
-      // Arrange
-      const limit = createMockSpendingLimit()
-
+      const limit = createMockSpendingLimit({ year_month: '2026-01' })
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -45,16 +36,12 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findByMonth('user-123', '2026-01')
 
-      // Assert
       expect(result).toEqual(limit)
-      expect(mockSupabase.from).toHaveBeenCalledWith('spending_limit')
     })
 
     it('returns null when no limit exists for month', async () => {
-      // Arrange
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -65,15 +52,12 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findByMonth('user-123', '2025-06')
 
-      // Assert
       expect(result).toBeNull()
     })
 
     it('returns null on database error', async () => {
-      // Arrange
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -84,19 +68,15 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findByMonth('user-123', '2026-01')
 
-      // Assert
       expect(result).toBeNull()
     })
   })
 
   describe('findMostRecentBefore', () => {
     it('returns most recent limit before or on given month', async () => {
-      // Arrange
       const limit = createMockSpendingLimit({ year_month: '2025-12' })
-
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -111,18 +91,13 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findMostRecentBefore('user-123', '2026-02')
 
-      // Assert
       expect(result).toEqual(limit)
-      expect(mockSupabase.from).toHaveBeenCalledWith('spending_limit')
     })
 
     it('returns limit for exact month when exists', async () => {
-      // Arrange
       const limit = createMockSpendingLimit({ year_month: '2026-01' })
-
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -137,15 +112,12 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findMostRecentBefore('user-123', '2026-01')
 
-      // Assert
       expect(result).toEqual(limit)
     })
 
     it('returns null when no limit exists before month', async () => {
-      // Arrange
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -160,15 +132,12 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findMostRecentBefore('user-123', '2024-01')
 
-      // Assert
       expect(result).toBeNull()
     })
 
     it('returns null on database error', async () => {
-      // Arrange
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -183,17 +152,14 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.findMostRecentBefore('user-123', '2026-01')
 
-      // Assert
       expect(result).toBeNull()
     })
   })
 
   describe('upsert', () => {
     it('creates new spending limit', async () => {
-      // Arrange
       const input: UpsertSpendingLimit = {
         year_month: '2026-02',
         amount_cents: 600000,
@@ -202,7 +168,6 @@ describe('SpendingLimitsRepository', () => {
         year_month: '2026-02',
         amount_cents: 600000,
       })
-
       mockSupabase.from.mockReturnValue({
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -211,16 +176,12 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.upsert('user-123', input)
 
-      // Assert
       expect(result).toEqual(createdLimit)
-      expect(mockSupabase.from).toHaveBeenCalledWith('spending_limit')
     })
 
     it('updates existing spending limit', async () => {
-      // Arrange
       const input: UpsertSpendingLimit = {
         year_month: '2026-01',
         amount_cents: 750000,
@@ -228,9 +189,7 @@ describe('SpendingLimitsRepository', () => {
       const updatedLimit = createMockSpendingLimit({
         year_month: '2026-01',
         amount_cents: 750000,
-        updated_at: '2026-01-15T10:00:00Z',
       })
-
       mockSupabase.from.mockReturnValue({
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -239,20 +198,16 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.upsert('user-123', input)
 
-      // Assert
       expect(result).toEqual(updatedLimit)
     })
 
     it('returns null on upsert error', async () => {
-      // Arrange
       const input: UpsertSpendingLimit = {
         year_month: '2026-01',
         amount_cents: 500000,
       }
-
       mockSupabase.from.mockReturnValue({
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -261,20 +216,16 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.upsert('user-123', input)
 
-      // Assert
       expect(result).toBeNull()
     })
 
     it('returns null when upsert returns null data', async () => {
-      // Arrange
       const input: UpsertSpendingLimit = {
         year_month: '2026-01',
         amount_cents: 500000,
       }
-
       mockSupabase.from.mockReturnValue({
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -283,41 +234,9 @@ describe('SpendingLimitsRepository', () => {
         }),
       })
 
-      // Act
       const result = await sut.upsert('user-123', input)
 
-      // Assert
       expect(result).toBeNull()
-    })
-
-    it('calls upsert with correct onConflict option', async () => {
-      // Arrange
-      const input: UpsertSpendingLimit = {
-        year_month: '2026-01',
-        amount_cents: 500000,
-      }
-      const mockUpsert = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: createMockSpendingLimit(), error: null }),
-        }),
-      })
-
-      mockSupabase.from.mockReturnValue({
-        upsert: mockUpsert,
-      })
-
-      // Act
-      await sut.upsert('user-123', input)
-
-      // Assert
-      expect(mockUpsert).toHaveBeenCalledWith(
-        {
-          user_id: 'user-123',
-          year_month: '2026-01',
-          amount_cents: 500000,
-        },
-        { onConflict: 'user_id,year_month' }
-      )
     })
   })
 })

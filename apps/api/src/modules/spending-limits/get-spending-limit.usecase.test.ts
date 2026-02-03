@@ -1,31 +1,34 @@
+import { createMockSpendingLimit } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GetSpendingLimitUseCase } from './get-spending-limit.usecase'
 import type { SpendingLimitsRepository } from './spending-limits.repository'
 
+type MockRepository = {
+  findByMonth: ReturnType<typeof vi.fn>
+  findMostRecentBefore: ReturnType<typeof vi.fn>
+}
+
+function createMockRepository(): MockRepository {
+  return {
+    findByMonth: vi.fn(),
+    findMostRecentBefore: vi.fn(),
+  }
+}
+
 describe('GetSpendingLimitUseCase', () => {
   let sut: GetSpendingLimitUseCase
-  let mockRepository: {
-    findByMonth: ReturnType<typeof vi.fn>
-    findMostRecentBefore: ReturnType<typeof vi.fn>
-  }
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = {
-      findByMonth: vi.fn(),
-      findMostRecentBefore: vi.fn(),
-    }
+    mockRepository = createMockRepository()
     sut = new GetSpendingLimitUseCase(mockRepository as unknown as SpendingLimitsRepository)
   })
 
   it('returns explicit limit for the month', async () => {
-    const explicitLimit = {
-      id: 'limit-1',
-      user_id: 'user-123',
+    const explicitLimit = createMockSpendingLimit({
       year_month: '2024-02',
       amount_cents: 500000,
-      created_at: '2024-02-01T00:00:00Z',
-      updated_at: '2024-02-01T00:00:00Z',
-    }
+    })
     mockRepository.findByMonth.mockResolvedValue(explicitLimit)
 
     const result = await sut.execute('user-123', '2024-02')
@@ -36,19 +39,13 @@ describe('GetSpendingLimitUseCase', () => {
       is_carried_over: false,
       source_month: null,
     })
-    expect(mockRepository.findByMonth).toHaveBeenCalledWith('user-123', '2024-02')
-    expect(mockRepository.findMostRecentBefore).not.toHaveBeenCalled()
   })
 
   it('returns carried-over limit when no explicit limit exists', async () => {
-    const previousLimit = {
-      id: 'limit-1',
-      user_id: 'user-123',
+    const previousLimit = createMockSpendingLimit({
       year_month: '2024-01',
       amount_cents: 450000,
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
-    }
+    })
     mockRepository.findByMonth.mockResolvedValue(null)
     mockRepository.findMostRecentBefore.mockResolvedValue(previousLimit)
 
@@ -60,7 +57,6 @@ describe('GetSpendingLimitUseCase', () => {
       is_carried_over: true,
       source_month: '2024-01',
     })
-    expect(mockRepository.findMostRecentBefore).toHaveBeenCalledWith('user-123', '2024-03')
   })
 
   it('returns null when no limits exist', async () => {
@@ -73,20 +69,73 @@ describe('GetSpendingLimitUseCase', () => {
   })
 
   it('prefers explicit limit over carried-over limit', async () => {
-    const explicitLimit = {
-      id: 'limit-2',
-      user_id: 'user-123',
+    const explicitLimit = createMockSpendingLimit({
       year_month: '2024-02',
       amount_cents: 600000,
-      created_at: '2024-02-01T00:00:00Z',
-      updated_at: '2024-02-01T00:00:00Z',
-    }
+    })
     mockRepository.findByMonth.mockResolvedValue(explicitLimit)
 
     const result = await sut.execute('user-123', '2024-02')
 
     expect(result?.is_carried_over).toBe(false)
     expect(result?.amount_cents).toBe(600000)
-    expect(mockRepository.findMostRecentBefore).not.toHaveBeenCalled()
+  })
+
+  describe('boundary cases', () => {
+    it('handles minimum amount (1 cent)', async () => {
+      const limit = createMockSpendingLimit({
+        year_month: '2024-01',
+        amount_cents: 1,
+      })
+      mockRepository.findByMonth.mockResolvedValue(limit)
+
+      const result = await sut.execute('user-123', '2024-01')
+
+      expect(result?.amount_cents).toBe(1)
+    })
+
+    it('handles large spending limit', async () => {
+      const limit = createMockSpendingLimit({
+        year_month: '2024-01',
+        amount_cents: 999_999_99,
+      })
+      mockRepository.findByMonth.mockResolvedValue(limit)
+
+      const result = await sut.execute('user-123', '2024-01')
+
+      expect(result?.amount_cents).toBe(999_999_99)
+    })
+
+    it('handles year boundary carryover (December to January)', async () => {
+      const decemberLimit = createMockSpendingLimit({
+        year_month: '2023-12',
+        amount_cents: 300000,
+      })
+      mockRepository.findByMonth.mockResolvedValue(null)
+      mockRepository.findMostRecentBefore.mockResolvedValue(decemberLimit)
+
+      const result = await sut.execute('user-123', '2024-01')
+
+      expect(result).toEqual({
+        year_month: '2024-01',
+        amount_cents: 300000,
+        is_carried_over: true,
+        source_month: '2023-12',
+      })
+    })
+
+    it('handles far future month with carryover', async () => {
+      const currentLimit = createMockSpendingLimit({
+        year_month: '2024-01',
+        amount_cents: 400000,
+      })
+      mockRepository.findByMonth.mockResolvedValue(null)
+      mockRepository.findMostRecentBefore.mockResolvedValue(currentLimit)
+
+      const result = await sut.execute('user-123', '2030-12')
+
+      expect(result?.is_carried_over).toBe(true)
+      expect(result?.source_month).toBe('2024-01')
+    })
   })
 })

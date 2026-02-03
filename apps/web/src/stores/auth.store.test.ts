@@ -305,7 +305,7 @@ describe('useAuthStore', () => {
       const sut = useAuthStore.getState()
 
       // Act & Assert
-      await expect(sut.signInWithEmail('test@example.com', 'password')).rejects.toBeDefined()
+      await expect(sut.signInWithEmail('test@example.com', 'password')).rejects.toThrow()
       expect(useAuthStore.getState().error).toBe('Erro ao entrar')
     })
   })
@@ -734,7 +734,6 @@ describe('useAuthStore', () => {
 
     it('onAuthStateChange callback updates session and user', async () => {
       // Arrange
-      // biome-ignore lint/suspicious/noExplicitAny: Test mock callback
       let authCallback: any = () => {}
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: null },

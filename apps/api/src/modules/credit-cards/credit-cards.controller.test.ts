@@ -1,4 +1,10 @@
-import { type ApiError, type CreditCard, ERROR_CODES, HTTP_STATUS } from '@plim/shared'
+import {
+  type ApiError,
+  type CreditCard,
+  ERROR_CODES,
+  HTTP_STATUS,
+  createMockCreditCard,
+} from '@plim/shared'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError, errorHandler } from '../../middleware/error-handler.middleware'
@@ -19,19 +25,6 @@ type ErrorResponse = { error: ApiError }
 
 const USER_ID = '33333333-3333-4333-8333-333333333333'
 const CARD_ID = '44444444-4444-4444-8444-444444444444'
-
-const baseCreditCard: CreditCard = {
-  id: CARD_ID,
-  user_id: USER_ID,
-  name: 'Nubank Ultravioleta',
-  color: 'black',
-  flag: 'mastercard',
-  bank: 'nubank',
-  last_4_digits: '1234',
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-}
 
 const testEnv = {
   SUPABASE_URL: 'http://test.supabase.co',
@@ -60,7 +53,8 @@ describe('Credit Cards Controller', () => {
 
   describe('GET /credit-cards', () => {
     it('returns list of credit cards', async () => {
-      const mockExecute = vi.fn().mockResolvedValue([baseCreditCard])
+      const card = createMockCreditCard({ id: CARD_ID, user_id: USER_ID })
+      const mockExecute = vi.fn().mockResolvedValue([card])
       vi.mocked(ListCreditCardsUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as ListCreditCardsUseCase
       )
@@ -70,7 +64,7 @@ describe('Credit Cards Controller', () => {
 
       expect(res.status).toBe(HTTP_STATUS.OK)
       expect(body.data).toHaveLength(1)
-      expect(body.data[0]!.name).toBe('Nubank Ultravioleta')
+      expect(body.data[0]!.user_id).toBe(USER_ID)
     })
 
     it('returns empty array when no cards', async () => {
@@ -89,7 +83,14 @@ describe('Credit Cards Controller', () => {
 
   describe('POST /credit-cards', () => {
     it('creates credit card with valid input', async () => {
-      const mockExecute = vi.fn().mockResolvedValue(baseCreditCard)
+      const card = createMockCreditCard({
+        user_id: USER_ID,
+        name: 'Nubank Ultravioleta',
+        color: 'black',
+        flag: 'mastercard',
+        bank: 'nubank',
+      })
+      const mockExecute = vi.fn().mockResolvedValue(card)
       vi.mocked(CreateCreditCardUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as CreateCreditCardUseCase
       )
@@ -114,13 +115,46 @@ describe('Credit Cards Controller', () => {
       expect(body.data.name).toBe('Nubank Ultravioleta')
     })
 
-    it('returns validation error for invalid input', async () => {
+    it('returns 400 for empty name', async () => {
       const res = await app.request(
         '/credit-cards',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: '' }),
+          body: JSON.stringify({ name: '', color: 'black', flag: 'visa', bank: 'nubank' }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for missing required fields', async () => {
+      const res = await app.request(
+        '/credit-cards',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Test Card' }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid flag', async () => {
+      const res = await app.request(
+        '/credit-cards',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Test Card',
+            color: 'black',
+            flag: 'invalid-flag',
+            bank: 'nubank',
+          }),
         },
         testEnv
       )
@@ -131,7 +165,7 @@ describe('Credit Cards Controller', () => {
 
   describe('PATCH /credit-cards/:id', () => {
     it('updates credit card', async () => {
-      const updatedCard = { ...baseCreditCard, name: 'Updated Name' }
+      const updatedCard = createMockCreditCard({ id: CARD_ID, name: 'Updated Name' })
       const mockExecute = vi.fn().mockResolvedValue(updatedCard)
       vi.mocked(UpdateCreditCardUseCase).mockImplementation(
         () => ({ execute: mockExecute }) as unknown as UpdateCreditCardUseCase
@@ -152,7 +186,7 @@ describe('Credit Cards Controller', () => {
       expect(body.data.name).toBe('Updated Name')
     })
 
-    it('returns NOT_FOUND for non-existent card', async () => {
+    it('returns 404 for non-existent card', async () => {
       const mockExecute = vi
         .fn()
         .mockRejectedValue(
@@ -176,6 +210,34 @@ describe('Credit Cards Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
       expect(body.error.code).toBe(ERROR_CODES.NOT_FOUND)
     })
+
+    it('returns 400 for empty name', async () => {
+      const res = await app.request(
+        `/credit-cards/${CARD_ID}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: '' }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
+
+    it('returns 400 for invalid color', async () => {
+      const res = await app.request(
+        `/credit-cards/${CARD_ID}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ color: 'invalid-color' }),
+        },
+        testEnv
+      )
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
+    })
   })
 
   describe('DELETE /credit-cards/:id', () => {
@@ -190,7 +252,7 @@ describe('Credit Cards Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.NO_CONTENT)
     })
 
-    it('returns NOT_FOUND for non-existent card', async () => {
+    it('returns 404 for non-existent card', async () => {
       const mockExecute = vi
         .fn()
         .mockRejectedValue(

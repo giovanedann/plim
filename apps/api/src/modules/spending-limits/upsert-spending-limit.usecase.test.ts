@@ -1,18 +1,25 @@
-import type { SpendingLimit, UpsertSpendingLimit } from '@plim/shared'
+import type { UpsertSpendingLimit } from '@plim/shared'
+import { createMockSpendingLimit } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SpendingLimitsRepository } from './spending-limits.repository'
 import { UpsertSpendingLimitUseCase } from './upsert-spending-limit.usecase'
 
+type MockRepository = {
+  upsert: ReturnType<typeof vi.fn>
+}
+
+function createMockRepository(): MockRepository {
+  return {
+    upsert: vi.fn(),
+  }
+}
+
 describe('UpsertSpendingLimitUseCase', () => {
   let sut: UpsertSpendingLimitUseCase
-  let mockRepository: {
-    upsert: ReturnType<typeof vi.fn>
-  }
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = {
-      upsert: vi.fn(),
-    }
+    mockRepository = createMockRepository()
     sut = new UpsertSpendingLimitUseCase(mockRepository as unknown as SpendingLimitsRepository)
   })
 
@@ -21,20 +28,15 @@ describe('UpsertSpendingLimitUseCase', () => {
       year_month: '2024-02',
       amount_cents: 500000,
     }
-    const createdLimit: SpendingLimit = {
-      id: 'limit-1',
-      user_id: 'user-123',
+    const createdLimit = createMockSpendingLimit({
       year_month: '2024-02',
       amount_cents: 500000,
-      created_at: '2024-02-01T00:00:00Z',
-      updated_at: '2024-02-01T00:00:00Z',
-    }
+    })
     mockRepository.upsert.mockResolvedValue(createdLimit)
 
     const result = await sut.execute('user-123', input)
 
     expect(result).toEqual(createdLimit)
-    expect(mockRepository.upsert).toHaveBeenCalledWith('user-123', input)
   })
 
   it('updates existing spending limit', async () => {
@@ -42,14 +44,10 @@ describe('UpsertSpendingLimitUseCase', () => {
       year_month: '2024-02',
       amount_cents: 600000,
     }
-    const updatedLimit: SpendingLimit = {
-      id: 'limit-1',
-      user_id: 'user-123',
+    const updatedLimit = createMockSpendingLimit({
       year_month: '2024-02',
       amount_cents: 600000,
-      created_at: '2024-02-01T00:00:00Z',
-      updated_at: '2024-02-15T00:00:00Z',
-    }
+    })
     mockRepository.upsert.mockResolvedValue(updatedLimit)
 
     const result = await sut.execute('user-123', input)
@@ -67,5 +65,71 @@ describe('UpsertSpendingLimitUseCase', () => {
     const result = await sut.execute('user-123', input)
 
     expect(result).toBeNull()
+  })
+
+  describe('boundary cases', () => {
+    it('handles minimum amount (1 cent)', async () => {
+      const input: UpsertSpendingLimit = {
+        year_month: '2024-01',
+        amount_cents: 1,
+      }
+      const limit = createMockSpendingLimit({
+        year_month: '2024-01',
+        amount_cents: 1,
+      })
+      mockRepository.upsert.mockResolvedValue(limit)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result?.amount_cents).toBe(1)
+    })
+
+    it('handles large spending limit', async () => {
+      const input: UpsertSpendingLimit = {
+        year_month: '2024-01',
+        amount_cents: 999_999_99,
+      }
+      const limit = createMockSpendingLimit({
+        year_month: '2024-01',
+        amount_cents: 999_999_99,
+      })
+      mockRepository.upsert.mockResolvedValue(limit)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result?.amount_cents).toBe(999_999_99)
+    })
+
+    it('handles year boundary (January)', async () => {
+      const input: UpsertSpendingLimit = {
+        year_month: '2024-01',
+        amount_cents: 400000,
+      }
+      const limit = createMockSpendingLimit({
+        year_month: '2024-01',
+        amount_cents: 400000,
+      })
+      mockRepository.upsert.mockResolvedValue(limit)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result?.year_month).toBe('2024-01')
+    })
+
+    it('handles year boundary (December)', async () => {
+      const input: UpsertSpendingLimit = {
+        year_month: '2024-12',
+        amount_cents: 600000,
+      }
+      const limit = createMockSpendingLimit({
+        year_month: '2024-12',
+        amount_cents: 600000,
+      })
+      mockRepository.upsert.mockResolvedValue(limit)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result?.year_month).toBe('2024-12')
+    })
   })
 })

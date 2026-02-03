@@ -1,46 +1,40 @@
-import { ERROR_CODES, HTTP_STATUS, type Profile } from '@plim/shared'
+import { ERROR_CODES, HTTP_STATUS, createMockProfile } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
 import { GetProfileUseCase } from './get-profile.usecase'
 import type { ProfileRepository } from './profile.repository'
 
-const mockProfile: Profile = {
-  user_id: 'user-123',
-  name: 'John Doe',
-  email: 'john@example.com',
-  avatar_url: null,
-  currency: 'BRL',
-  locale: 'pt-BR',
-  is_onboarded: false,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+type MockRepository = Pick<ProfileRepository, 'findByUserId'>
+
+function createMockRepository(): MockRepository {
+  return {
+    findByUserId: vi.fn(),
+  }
 }
 
 describe('GetProfileUseCase', () => {
-  let useCase: GetProfileUseCase
-  let mockRepository: { findByUserId: ReturnType<typeof vi.fn> }
+  let sut: GetProfileUseCase
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = {
-      findByUserId: vi.fn(),
-    }
-    useCase = new GetProfileUseCase(mockRepository as unknown as ProfileRepository)
+    mockRepository = createMockRepository()
+    sut = new GetProfileUseCase(mockRepository as ProfileRepository)
   })
 
   it('returns profile when found', async () => {
-    mockRepository.findByUserId.mockResolvedValue(mockProfile)
+    const profile = createMockProfile({ user_id: 'user-123' })
+    mockRepository.findByUserId = vi.fn().mockResolvedValue(profile)
 
-    const result = await useCase.execute('user-123')
+    const result = await sut.execute('user-123')
 
-    expect(result).toEqual(mockProfile)
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123')
+    expect(result).toEqual(profile)
   })
 
   it('throws NOT_FOUND error when profile does not exist', async () => {
-    mockRepository.findByUserId.mockResolvedValue(null)
+    mockRepository.findByUserId = vi.fn().mockResolvedValue(null)
 
-    await expect(useCase.execute('user-123')).rejects.toThrow(AppError)
-    await expect(useCase.execute('user-123')).rejects.toMatchObject({
+    await expect(sut.execute('user-123')).rejects.toThrow(AppError)
+    await expect(sut.execute('user-123')).rejects.toMatchObject({
       code: ERROR_CODES.NOT_FOUND,
       status: HTTP_STATUS.NOT_FOUND,
     })

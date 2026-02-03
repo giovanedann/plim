@@ -3,6 +3,16 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     projects: ['apps/*', 'packages/*'],
+    // Resource limits to prevent system overload
+    maxWorkers: 2,
+    maxConcurrency: 5,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        maxForks: 2,
+        minForks: 1,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

@@ -72,9 +72,22 @@ describe('Account Controller', () => {
       const res = await app.request('/account/export/expenses', { method: 'GET' }, testEnv)
 
       expect(res.status).toBe(HTTP_STATUS.OK)
+      expect(res.headers.get('Content-Type')).toContain('text/csv')
     })
 
-    it('returns error for invalid table', async () => {
+    it('exports categories data as CSV', async () => {
+      const csvData = 'id,name,icon\n1,Food,burger'
+      const mockExecute = vi.fn().mockResolvedValue(csvData)
+      vi.mocked(ExportDataUseCase).mockImplementation(
+        () => ({ execute: mockExecute }) as unknown as ExportDataUseCase
+      )
+
+      const res = await app.request('/account/export/categories', { method: 'GET' }, testEnv)
+
+      expect(res.status).toBe(HTTP_STATUS.OK)
+    })
+
+    it('returns 400 for invalid table', async () => {
       const res = await app.request('/account/export/invalid-table', { method: 'GET' }, testEnv)
       const body = (await res.json()) as ErrorResponse
 
@@ -82,7 +95,7 @@ describe('Account Controller', () => {
       expect(body.error.code).toBe(ERROR_CODES.INVALID_INPUT)
     })
 
-    it('returns RATE_LIMITED when exported recently', async () => {
+    it('returns 429 when exported recently', async () => {
       const mockExecute = vi
         .fn()
         .mockRejectedValue(
@@ -147,7 +160,7 @@ describe('Account Controller', () => {
       expect(res.status).toBe(HTTP_STATUS.NO_CONTENT)
     })
 
-    it('returns NOT_FOUND when profile not found', async () => {
+    it('returns 404 when profile not found', async () => {
       const mockGetUserEmail = vi.fn().mockResolvedValue(null)
       vi.mocked(AccountRepository).mockImplementation(
         () => ({ getUserEmail: mockGetUserEmail }) as unknown as AccountRepository
@@ -168,7 +181,7 @@ describe('Account Controller', () => {
       expect(body.error.code).toBe(ERROR_CODES.NOT_FOUND)
     })
 
-    it('returns UNAUTHORIZED when password is incorrect', async () => {
+    it('returns 401 when password is incorrect', async () => {
       const mockGetUserEmail = vi.fn().mockResolvedValue('test@example.com')
       vi.mocked(AccountRepository).mockImplementation(
         () => ({ getUserEmail: mockGetUserEmail }) as unknown as AccountRepository

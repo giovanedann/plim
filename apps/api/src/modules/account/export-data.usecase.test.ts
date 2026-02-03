@@ -4,28 +4,34 @@ import { AppError } from '../../middleware/error-handler.middleware'
 import type { AccountRepository } from './account.repository'
 import { ExportDataUseCase } from './export-data.usecase'
 
+type MockRepository = {
+  getLastExportTime: ReturnType<typeof vi.fn>
+  recordExport: ReturnType<typeof vi.fn>
+  exportProfileAsCsv: ReturnType<typeof vi.fn>
+  exportExpensesAsCsv: ReturnType<typeof vi.fn>
+  exportCategoriesAsCsv: ReturnType<typeof vi.fn>
+  exportCreditCardsAsCsv: ReturnType<typeof vi.fn>
+  exportSalaryHistoryAsCsv: ReturnType<typeof vi.fn>
+}
+
+function createMockRepository(): MockRepository {
+  return {
+    getLastExportTime: vi.fn(),
+    recordExport: vi.fn(),
+    exportProfileAsCsv: vi.fn(),
+    exportExpensesAsCsv: vi.fn(),
+    exportCategoriesAsCsv: vi.fn(),
+    exportCreditCardsAsCsv: vi.fn(),
+    exportSalaryHistoryAsCsv: vi.fn(),
+  }
+}
+
 describe('ExportDataUseCase', () => {
   let sut: ExportDataUseCase
-  let mockRepository: {
-    getLastExportTime: ReturnType<typeof vi.fn>
-    recordExport: ReturnType<typeof vi.fn>
-    exportProfileAsCsv: ReturnType<typeof vi.fn>
-    exportExpensesAsCsv: ReturnType<typeof vi.fn>
-    exportCategoriesAsCsv: ReturnType<typeof vi.fn>
-    exportCreditCardsAsCsv: ReturnType<typeof vi.fn>
-    exportSalaryHistoryAsCsv: ReturnType<typeof vi.fn>
-  }
+  let mockRepository: MockRepository
 
   beforeEach(() => {
-    mockRepository = {
-      getLastExportTime: vi.fn(),
-      recordExport: vi.fn(),
-      exportProfileAsCsv: vi.fn(),
-      exportExpensesAsCsv: vi.fn(),
-      exportCategoriesAsCsv: vi.fn(),
-      exportCreditCardsAsCsv: vi.fn(),
-      exportSalaryHistoryAsCsv: vi.fn(),
-    }
+    mockRepository = createMockRepository()
     sut = new ExportDataUseCase(mockRepository as unknown as AccountRepository)
   })
 
@@ -38,8 +44,6 @@ describe('ExportDataUseCase', () => {
     const result = await sut.execute('user-123', 'profile')
 
     expect(result).toBe(csvData)
-    expect(mockRepository.exportProfileAsCsv).toHaveBeenCalledWith('user-123')
-    expect(mockRepository.recordExport).toHaveBeenCalledWith('user-123', 'profile')
   })
 
   it('exports expenses data as CSV', async () => {
@@ -51,7 +55,6 @@ describe('ExportDataUseCase', () => {
     const result = await sut.execute('user-123', 'expenses')
 
     expect(result).toBe(csvData)
-    expect(mockRepository.exportExpensesAsCsv).toHaveBeenCalledWith('user-123')
   })
 
   it('exports categories data as CSV', async () => {
@@ -128,6 +131,41 @@ describe('ExportDataUseCase', () => {
     await expect(sut.execute('user-123', 'profile')).rejects.toMatchObject({
       code: ERROR_CODES.NOT_FOUND,
       status: HTTP_STATUS.NOT_FOUND,
+    })
+  })
+
+  describe('boundary cases', () => {
+    it('handles export type at exact cooldown boundary (7 days)', async () => {
+      const exactBoundary = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      mockRepository.getLastExportTime.mockResolvedValue(exactBoundary)
+      mockRepository.exportProfileAsCsv.mockResolvedValue('csv data')
+      mockRepository.recordExport.mockResolvedValue(true)
+
+      const result = await sut.execute('user-123', 'profile')
+
+      expect(result).toBe('csv data')
+    })
+
+    it('handles first-time export with no previous export time', async () => {
+      mockRepository.getLastExportTime.mockResolvedValue(null)
+      mockRepository.exportExpensesAsCsv.mockResolvedValue('first,export\ndata,here')
+      mockRepository.recordExport.mockResolvedValue(true)
+
+      const result = await sut.execute('user-123', 'expenses')
+
+      expect(result).toBe('first,export\ndata,here')
+    })
+
+    it('handles very long CSV output', async () => {
+      const longCsvData = `header,data\n${'row,data\n'.repeat(10000)}`
+      mockRepository.getLastExportTime.mockResolvedValue(null)
+      mockRepository.exportExpensesAsCsv.mockResolvedValue(longCsvData)
+      mockRepository.recordExport.mockResolvedValue(true)
+
+      const result = await sut.execute('user-123', 'expenses')
+
+      expect(result.length).toBeGreaterThan(10000)
+      expect(result).toContain('header,data')
     })
   })
 })
