@@ -21,7 +21,7 @@ import type {
   JsonSchema,
 } from './ai-client.types'
 
-const MODEL_NAME = 'gemini-2.0-flash'
+const DEFAULT_MODEL = 'gemini-1.5-flash'
 
 /**
  * Gemini implementation of AIClient
@@ -29,14 +29,16 @@ const MODEL_NAME = 'gemini-2.0-flash'
  */
 export class GeminiClient implements AIClient {
   private readonly genAI: GoogleGenerativeAI
+  private readonly modelName: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, modelName?: string) {
     this.genAI = new GoogleGenerativeAI(apiKey)
+    this.modelName = modelName ?? DEFAULT_MODEL
   }
 
   async chat(input: ChatInput): Promise<ChatOutput> {
     const model = this.genAI.getGenerativeModel({
-      model: MODEL_NAME,
+      model: this.modelName,
       systemInstruction: input.systemPrompt,
       tools: input.functions
         ? [{ functionDeclarations: this.convertFunctions(input.functions) }]
