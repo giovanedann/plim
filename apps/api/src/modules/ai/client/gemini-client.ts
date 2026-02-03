@@ -21,7 +21,7 @@ import type {
   JsonSchema,
 } from './ai-client.types'
 
-const DEFAULT_MODEL = 'gemini-2.0-flash'
+const DEFAULT_MODEL = 'gemini-2.5-flash-preview-05-20'
 
 /**
  * Gemini implementation of AIClient
