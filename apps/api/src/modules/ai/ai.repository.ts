@@ -32,44 +32,31 @@ export interface UsageInfo {
 export class AIRepository {
   constructor(private supabase: SupabaseClient) {}
 
-  async getSubscription(userId: string): Promise<Subscription | null> {
+  async getSubscription(userId: string): Promise<Subscription> {
     const { data, error } = await this.supabase
       .from('subscription')
       .select('*')
       .eq('user_id', userId)
       .single()
 
-    if (error || !data) return null
-
-    return data as Subscription
-  }
-
-  async createDefaultSubscription(userId: string): Promise<Subscription | null> {
-    const { data, error } = await this.supabase
-      .from('subscription')
-      .insert({
+    if (error || !data) {
+      // Subscription should be auto-created by database trigger on user signup
+      // Return a default free tier if somehow missing
+      return {
+        id: '',
         user_id: userId,
         tier: 'free',
         ai_requests_limit: 30,
-      })
-      .select('*')
-      .single()
-
-    if (error || !data) return null
-
-    return data as Subscription
-  }
-
-  async getOrCreateSubscription(userId: string): Promise<Subscription> {
-    const existing = await this.getSubscription(userId)
-    if (existing) return existing
-
-    const created = await this.createDefaultSubscription(userId)
-    if (!created) {
-      throw new Error('Failed to create subscription')
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
     }
 
-    return created
+    return data as Subscription
   }
 
   async getMonthlyUsageCount(userId: string): Promise<number> {
@@ -98,7 +85,7 @@ export class AIRepository {
   }
 
   async getUsageInfo(userId: string): Promise<UsageInfo> {
-    const subscription = await this.getOrCreateSubscription(userId)
+    const subscription = await this.getSubscription(userId)
     const used = await this.getMonthlyUsageCount(userId)
 
     return {

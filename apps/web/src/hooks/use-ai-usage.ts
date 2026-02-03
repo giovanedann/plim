@@ -12,12 +12,14 @@ export function useAIUsage(): void {
     queryFn: async () => {
       const response = await aiService.getUsage()
       if (isErrorResponse(response)) {
-        throw new Error(response.error.message)
+        console.warn('Failed to fetch AI usage:', response.error.message)
+        return null
       }
       return response.data
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    retry: false,
   })
 
   useEffect(() => {
