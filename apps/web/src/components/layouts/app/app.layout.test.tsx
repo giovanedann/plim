@@ -63,6 +63,17 @@ vi.mock('@/components/onboarding', () => ({
   OnboardingOverlay: () => <div data-testid="onboarding-overlay">Onboarding</div>,
 }))
 
+// Mock AI components
+vi.mock('@/components/ai', () => ({
+  AIChatButton: () => <div data-testid="ai-chat-button">AI Chat Button</div>,
+  AIChatDrawer: () => <div data-testid="ai-chat-drawer">AI Chat Drawer</div>,
+}))
+
+// Mock useAIUsage hook
+vi.mock('@/hooks/use-ai-usage', () => ({
+  useAIUsage: vi.fn(),
+}))
+
 describe('AppLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks()

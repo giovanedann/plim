@@ -3,6 +3,7 @@ import type { CreditCard } from '../schemas/credit-card'
 import type { Expense } from '../schemas/expense'
 import type { Profile } from '../schemas/profile'
 import type { SalaryHistory } from '../schemas/salary'
+import type { SpendingLimit } from '../schemas/spending-limit'
 
 let idCounter = 0
 
@@ -90,6 +91,18 @@ export function createMockSalaryHistory(overrides: Partial<SalaryHistory> = {}):
     amount_cents: 500000,
     effective_from: '2026-01-01',
     created_at: getTimestamp(),
+    ...overrides,
+  }
+}
+
+export function createMockSpendingLimit(overrides: Partial<SpendingLimit> = {}): SpendingLimit {
+  return {
+    id: generateId(),
+    user_id: 'user-00000000-0000-0000-0000-000000000001',
+    year_month: '2026-01',
+    amount_cents: 300000,
+    created_at: getTimestamp(),
+    updated_at: getTimestamp(),
     ...overrides,
   }
 }

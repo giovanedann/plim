@@ -4,6 +4,7 @@ export {
   createMockProfile,
   createMockCreditCard,
   createMockSalaryHistory,
+  createMockSpendingLimit,
   resetIdCounter,
 } from './factories'
 
