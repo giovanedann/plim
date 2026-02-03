@@ -163,6 +163,158 @@ describe('ExpenseForm', () => {
 
 **Avoid**: `container.querySelector`, snapshot tests for component behavior
 
+## UI Component Integration Tests
+
+For testing UI components (layouts, complex widgets, connected components), prefer **integration-style tests that render real components** instead of heavily mocking UI primitives.
+
+### When to Use This Approach
+
+- Testing layouts (sidebars, headers, navigation)
+- Testing complex component interactions (dropdowns, modals, forms with multiple fields)
+- Testing visual behavior users actually see (text visibility, button states, theme changes)
+
+### Mock Only the Service Layer
+
+**DO mock:** API services, data stores, authentication
+**DO NOT mock:** UI components (shadcn/ui primitives, custom components, providers)
+
+```typescript
+// CORRECT - Mock services and auth
+vi.mock('@/services/profile.service', () => ({
+  profileService: {
+    getProfile: vi.fn(),
+  },
+}))
+
+const mockSignOut = vi.fn()
+vi.mock('@/stores/auth.store', () => ({
+  useAuthStore: () => ({
+    user: { id: 'user-123', email: 'john@example.com' },
+    signOut: mockSignOut,
+    isInitialized: true,
+  }),
+}))
+
+// WRONG - Don't mock UI components
+vi.mock('@/components/ui/sidebar', () => ({
+  Sidebar: ({ children }: any) => <div>{children}</div>,  // ❌ Defeats the purpose
+}))
+```
+
+### TestLayout Wrapper Pattern
+
+Create a wrapper that sets up all real providers and renders actual components:
+
+```typescript
+function TestLayout({ children }: { children?: React.ReactNode }) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  })
+
+  return (
+    <ThemeProvider defaultTheme="light">
+      <QueryClientProvider client={queryClient}>
+        <SidebarProvider>
+          <AppSidebar />  {/* Real component */}
+          <SidebarInset>
+            <SiteHeader title="Test Page" />  {/* Real component */}
+            <div className="flex flex-1 flex-col gap-4 p-4">
+              {children || <h1>Test Content</h1>}
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  )
+}
+```
+
+### Test Actual Visual Behavior
+
+Focus on what users see and interact with, not implementation details:
+
+```typescript
+describe('Sidebar Integration', () => {
+  let user: ReturnType<typeof userEvent.setup>
+
+  beforeEach(() => {
+    user = userEvent.setup()
+    vi.clearAllMocks()
+
+    // Mock service returns
+    vi.mocked(profileService.getProfile).mockResolvedValue({
+      data: mockProfile,
+    })
+  })
+
+  it('renders all navigation links', async () => {
+    render(<TestLayout />)
+
+    expect(await screen.findByRole('link', { name: /dashboard/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /despesas/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /categorias/i })).toBeInTheDocument()
+  })
+
+  it('opens dropdown menu when clicked', async () => {
+    render(<TestLayout />)
+
+    const userButton = await screen.findByText('John Doe')
+    await user.click(userButton.closest('button')!)
+
+    expect(screen.getByText('Minha conta')).toBeInTheDocument()
+    expect(screen.getByText('Perfil')).toBeInTheDocument()
+    expect(screen.getByText('Sair')).toBeInTheDocument()
+  })
+
+  it('calls signOut when logout clicked', async () => {
+    render(<TestLayout />)
+
+    const userButton = await screen.findByText('John Doe')
+    await user.click(userButton.closest('button')!)
+
+    const logoutButton = screen.getByText('Sair')
+    await user.click(logoutButton)
+
+    expect(mockSignOut).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
+### Minimal Router Mocking
+
+For components using TanStack Router, mock only the essentials:
+
+```typescript
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, children, ...props }: any) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+  useLocation: () => ({ pathname: '/dashboard' }),
+}))
+```
+
+**Don't** try to set up full router context with `Outlet`, `createRouter`, etc. unless the test specifically needs routing behavior.
+
+### Why This Approach
+
+- **Tests what users actually experience** — real components, real interactions, real visual state
+- **Catches integration bugs** — component composition, provider conflicts, prop drilling issues
+- **More resilient to refactoring** — implementation changes don't break tests as long as behavior is the same
+- **Simpler test code** — less mocking boilerplate, more straightforward assertions
+
+### When NOT to Use
+
+- Simple presentational components with no complex state (use unit tests)
+- Testing component logic in isolation (use unit tests with minimal mocking)
+- Testing a single component's internal state machine (use unit tests)
+
 ## Error Testing (Two-Step)
 
 ```typescript
@@ -291,7 +443,7 @@ expect(result).toEqual(expectedOutput)  // This alone is sufficient
 
 ## Checklist
 
-- [ ] SUT named `sut`
+- [ ] SUT named `sut` (for unit tests)
 - [ ] AAA pattern followed
 - [ ] One Act per test
 - [ ] Mock factories typed
@@ -302,3 +454,5 @@ expect(result).toEqual(expectedOutput)  // This alone is sufficient
 - [ ] Assertions are precise (no `toBeTruthy` for values)
 - [ ] Boundary cases covered (empty, null, max values)
 - [ ] Component tests use accessible queries (`getByRole`)
+- [ ] UI integration tests render real components (mock services only, not UI)
+- [ ] TestLayout wrapper used for complex component hierarchies
