@@ -50,18 +50,18 @@ export function createAIRouter(): Hono<AIEnv> {
     const userId = c.get('userId')
     const body = c.req.valid('json')
 
-    const { allowed, usageInfo } = await deps.checkUsageLimit.execute(userId)
+    const requestType = detectRequestType(body.messages)
+    const { allowed, usageInfo } = await deps.checkUsageLimit.execute(userId, requestType)
 
     if (!allowed) {
+      const typeLabels = { text: 'texto', voice: 'voz', image: 'imagem' }
       throw new AppError(
         ERROR_CODES.FORBIDDEN,
-        'Limite de requisições AI atingido para este mês',
+        `Limite de requisições de ${typeLabels[requestType]} atingido para este mês`,
         HTTP_STATUS.FORBIDDEN,
-        { usageInfo }
+        { usageInfo, requestType }
       )
     }
-
-    const requestType = detectRequestType(body.messages)
 
     const result = await deps.chat.execute(userId, {
       messages: body.messages.map((m) => ({
@@ -114,18 +114,18 @@ export function createAIRouterWithDeps(deps: AIDependencies): Hono<AIEnv> {
     const userId = c.get('userId')
     const body = c.req.valid('json')
 
-    const { allowed, usageInfo } = await deps.checkUsageLimit.execute(userId)
+    const requestType = detectRequestType(body.messages)
+    const { allowed, usageInfo } = await deps.checkUsageLimit.execute(userId, requestType)
 
     if (!allowed) {
+      const typeLabels = { text: 'texto', voice: 'voz', image: 'imagem' }
       throw new AppError(
         ERROR_CODES.FORBIDDEN,
-        'Limite de requisições AI atingido para este mês',
+        `Limite de requisições de ${typeLabels[requestType]} atingido para este mês`,
         HTTP_STATUS.FORBIDDEN,
-        { usageInfo }
+        { usageInfo, requestType }
       )
     }
-
-    const requestType = detectRequestType(body.messages)
 
     const result = await deps.chat.execute(userId, {
       messages: body.messages.map((m) => ({

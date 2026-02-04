@@ -45,7 +45,10 @@ export class DashboardRepository {
   constructor(private supabase: SupabaseClient) {}
 
   async getExpensesForPeriod(userId: string, query: DashboardQuery): Promise<ExpenseRow[]> {
-    const { data, error } = await this.supabase
+    const results: ExpenseRow[] = []
+
+    // Get non-recurrent expenses within the date range (one-time + installments)
+    const { data: regularExpenses, error: regularError } = await this.supabase
       .from('expense')
       .select(`
         date,
@@ -59,32 +62,131 @@ export class DashboardRepository {
         description
       `)
       .eq('user_id', userId)
+      .eq('is_recurrent', false)
       .gte('date', query.start_date)
       .lte('date', query.end_date)
       .order('date', { ascending: true })
 
-    if (error || !data) return []
-
-    return data.map((row) => {
-      const category = row.category as unknown as {
-        name: string
-        color: string | null
-        icon: string | null
-      } | null
-      return {
-        date: row.date,
-        amount_cents: row.amount_cents,
-        payment_method: row.payment_method,
-        category_id: row.category_id,
-        category_name: category?.name ?? 'Sem categoria',
-        category_color: category?.color ?? null,
-        category_icon: category?.icon ?? null,
-        installment_group_id: row.installment_group_id,
-        installment_total: row.installment_total,
-        installment_current: row.installment_current,
-        description: row.description,
+    if (!regularError && regularExpenses) {
+      for (const row of regularExpenses) {
+        const category = row.category as unknown as {
+          name: string
+          color: string | null
+          icon: string | null
+        } | null
+        results.push({
+          date: row.date,
+          amount_cents: row.amount_cents,
+          payment_method: row.payment_method,
+          category_id: row.category_id,
+          category_name: category?.name ?? 'Sem categoria',
+          category_color: category?.color ?? null,
+          category_icon: category?.icon ?? null,
+          installment_group_id: row.installment_group_id,
+          installment_total: row.installment_total,
+          installment_current: row.installment_current,
+          description: row.description,
+        })
       }
-    })
+    }
+
+    // Get recurrent expenses and project them into the queried period
+    const { data: recurrentExpenses, error: recurrentError } = await this.supabase
+      .from('expense')
+      .select(`
+        amount_cents,
+        payment_method,
+        category_id,
+        category:category_id (name, color, icon),
+        description,
+        recurrence_day,
+        recurrence_start,
+        recurrence_end
+      `)
+      .eq('user_id', userId)
+      .eq('is_recurrent', true)
+
+    if (!recurrentError && recurrentExpenses) {
+      const mapped = recurrentExpenses.map((row) => {
+        const category = row.category as unknown as {
+          name: string
+          color: string | null
+          icon: string | null
+        } | null
+        return {
+          amount_cents: row.amount_cents as number,
+          payment_method: row.payment_method as string,
+          category_id: row.category_id as string,
+          category,
+          description: row.description as string,
+          recurrence_day: row.recurrence_day as number,
+          recurrence_start: row.recurrence_start as string,
+          recurrence_end: row.recurrence_end as string | null,
+        }
+      })
+      const projectedRecurrent = this.projectRecurrentExpensesForPeriod(
+        mapped,
+        query.start_date,
+        query.end_date
+      )
+      results.push(...projectedRecurrent)
+    }
+
+    return results.sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  private projectRecurrentExpensesForPeriod(
+    recurrentExpenses: Array<{
+      amount_cents: number
+      payment_method: string
+      category_id: string
+      category: { name: string; color: string | null; icon: string | null } | null
+      description: string
+      recurrence_day: number
+      recurrence_start: string
+      recurrence_end: string | null
+    }>,
+    startDate: string,
+    endDate: string
+  ): ExpenseRow[] {
+    const results: ExpenseRow[] = []
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+
+    for (const expense of recurrentExpenses) {
+      const recurrenceStart = new Date(expense.recurrence_start)
+      const recurrenceEnd = expense.recurrence_end ? new Date(expense.recurrence_end) : null
+
+      // Iterate through each month in the query period
+      const current = new Date(start.getFullYear(), start.getMonth(), expense.recurrence_day)
+
+      // If the recurrence day is before the start of the period, move to next month
+      if (current < start) {
+        current.setMonth(current.getMonth() + 1)
+      }
+
+      while (current <= end) {
+        // Check if this date is within the recurrence bounds
+        if (current >= recurrenceStart && (!recurrenceEnd || current <= recurrenceEnd)) {
+          results.push({
+            date: current.toISOString().slice(0, 10),
+            amount_cents: expense.amount_cents,
+            payment_method: expense.payment_method,
+            category_id: expense.category_id,
+            category_name: expense.category?.name ?? 'Sem categoria',
+            category_color: expense.category?.color ?? null,
+            category_icon: expense.category?.icon ?? null,
+            installment_group_id: null,
+            installment_total: null,
+            installment_current: null,
+            description: expense.description,
+          })
+        }
+        current.setMonth(current.getMonth() + 1)
+      }
+    }
+
+    return results
   }
 
   async getSalariesForPeriod(userId: string, query: DashboardQuery): Promise<SalaryRow[]> {

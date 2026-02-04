@@ -33,6 +33,25 @@ export class ChatUseCase {
   constructor(private deps: ChatUseCaseDependencies) {}
 
   async execute(userId: string, input: ChatUseCaseInput): Promise<ChatUseCaseOutput> {
+    // Extract text content for cache key
+    const messageText = this.extractMessageText(input.messages)
+    const cacheKey = this.deps.aiRepository.generateCacheKey(messageText)
+
+    // Check cache first (only for text requests to avoid caching audio/image responses)
+    if (input.requestType === 'text') {
+      const cached = await this.deps.aiRepository.getCachedResponse(userId, cacheKey)
+      if (cached) {
+        // Log usage with 0 tokens (cache hit)
+        await this.deps.aiRepository.logUsage(userId, input.requestType, 'cache_hit', 0)
+
+        return {
+          message: cached.response_message,
+          action: cached.response_action ?? undefined,
+          tokensUsed: 0,
+        }
+      }
+    }
+
     const context = await this.buildUserContext(userId)
     const systemPrompt = buildSystemPrompt(context)
 
@@ -57,15 +76,54 @@ export class ChatUseCase {
         response.tokensUsed
       )
 
-      return this.formatFunctionResult(result, response.tokensUsed)
+      const output = this.formatFunctionResult(result, response.tokensUsed)
+
+      // Cache the response (won't cache expense_created)
+      if (input.requestType === 'text') {
+        await this.deps.aiRepository.setCachedResponse(
+          userId,
+          cacheKey,
+          input.requestType,
+          output.message,
+          output.action ?? null,
+          response.tokensUsed
+        )
+      }
+
+      return output
     }
 
     await this.deps.aiRepository.logUsage(userId, input.requestType, 'chat', response.tokensUsed)
 
-    return {
+    const output: ChatUseCaseOutput = {
       message: response.text ?? 'Desculpe, não consegui processar sua mensagem.',
       tokensUsed: response.tokensUsed,
     }
+
+    // Cache text responses
+    if (input.requestType === 'text') {
+      await this.deps.aiRepository.setCachedResponse(
+        userId,
+        cacheKey,
+        input.requestType,
+        output.message,
+        null,
+        response.tokensUsed
+      )
+    }
+
+    return output
+  }
+
+  private extractMessageText(messages: ChatMessage[]): string {
+    const lastMessage = messages[messages.length - 1]
+    if (!lastMessage) return ''
+
+    const textParts = lastMessage.content
+      .filter((part) => part.type === 'text')
+      .map((part) => (part.type === 'text' ? part.text : ''))
+
+    return textParts.join(' ')
   }
 
   private async buildUserContext(userId: string): Promise<{

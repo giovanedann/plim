@@ -244,37 +244,53 @@ async function executeForecastSpending(
   const forecasts: Array<{
     month: string
     total: number
-    breakdown: { recurrent: number; installments: number }
+    breakdown: { oneTime: number; recurrent: number; installments: number }
   }> = []
 
-  for (let i = 1; i <= monthsAhead; i++) {
+  // Fetch recurrent expenses once (templates)
+  const recurrentTemplates =
+    params.include_recurrent !== false ? await getRecurrentExpenseTemplates(context) : []
+
+  // Loop starts at 0 to include current month
+  for (let i = 0; i < monthsAhead; i++) {
     const targetDate = new Date(now.getFullYear(), now.getMonth() + i, 1)
     const monthStr = targetDate.toISOString().slice(0, 7)
+    const startDate = `${monthStr}-01`
+    const lastDay = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate()
+    const endDate = `${monthStr}-${String(lastDay).padStart(2, '0')}`
 
+    let oneTimeTotal = 0
     let recurrentTotal = 0
     let installmentsTotal = 0
 
-    if (params.include_recurrent !== false) {
-      const recurrentExpenses = await context.expensesRepository.findByUserId(context.userId, {})
-      const recurrent = recurrentExpenses.filter((e) => e.is_recurrent)
-      recurrentTotal = recurrent.reduce((sum, e) => sum + e.amount_cents, 0)
-    }
+    // Get all non-recurrent expenses for this month (one-time + installments)
+    const expenses = await context.expensesRepository.findByUserId(context.userId, {
+      start_date: startDate,
+      end_date: endDate,
+    })
 
+    // Sum one-time expenses (non-recurrent, no installments)
+    const oneTimeExpenses = expenses.filter(
+      (e) => !e.is_recurrent && (!e.installment_total || e.installment_total <= 1)
+    )
+    oneTimeTotal = oneTimeExpenses.reduce((sum, e) => sum + e.amount_cents, 0)
+
+    // Sum installment expenses
     if (params.include_installments !== false) {
-      const startDate = `${monthStr}-01`
-      const endDate = `${monthStr}-31`
-      const expenses = await context.expensesRepository.findByUserId(context.userId, {
-        start_date: startDate,
-        end_date: endDate,
-      })
       const installments = expenses.filter((e) => e.installment_total && e.installment_total > 1)
       installmentsTotal = installments.reduce((sum, e) => sum + e.amount_cents, 0)
     }
 
+    // Project recurrent expenses for this month
+    if (params.include_recurrent !== false) {
+      recurrentTotal = projectRecurrentExpensesForMonth(recurrentTemplates, monthStr)
+    }
+
     forecasts.push({
       month: monthStr,
-      total: recurrentTotal + installmentsTotal,
+      total: oneTimeTotal + recurrentTotal + installmentsTotal,
       breakdown: {
+        oneTime: oneTimeTotal,
         recurrent: recurrentTotal,
         installments: installmentsTotal,
       },
@@ -298,7 +314,8 @@ async function executeForecastSpending(
     'novembro',
     'dezembro',
   ]
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() + monthsAhead, 1)
+  // Use monthsAhead - 1 since we now start from current month (i=0)
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() + monthsAhead - 1, 1)
   const lastMonthName = monthNames[lastMonth.getMonth()]
 
   const message = `Previsão de gastos até ${lastMonthName}: ${formattedTotal}`
@@ -312,6 +329,51 @@ async function executeForecastSpending(
     },
     actionType: 'forecast_result',
   }
+}
+
+interface RecurrentTemplate {
+  amount_cents: number
+  recurrence_day: number
+  recurrence_start: string
+  recurrence_end: string | null
+}
+
+async function getRecurrentExpenseTemplates(
+  context: FunctionExecutionContext
+): Promise<RecurrentTemplate[]> {
+  const { data, error } = await context.supabase
+    .from('expense')
+    .select('amount_cents, recurrence_day, recurrence_start, recurrence_end')
+    .eq('user_id', context.userId)
+    .eq('is_recurrent', true)
+
+  if (error || !data) return []
+
+  return data as RecurrentTemplate[]
+}
+
+function projectRecurrentExpensesForMonth(
+  templates: RecurrentTemplate[],
+  monthStr: string
+): number {
+  let total = 0
+  const year = Number.parseInt(monthStr.slice(0, 4), 10)
+  const month = Number.parseInt(monthStr.slice(5, 7), 10) - 1 // 0-indexed
+
+  for (const template of templates) {
+    const recurrenceStart = new Date(template.recurrence_start)
+    const recurrenceEnd = template.recurrence_end ? new Date(template.recurrence_end) : null
+
+    // Create date for this recurrence in the target month
+    const occurrenceDate = new Date(year, month, template.recurrence_day)
+
+    // Check if this occurrence is within the recurrence bounds
+    if (occurrenceDate >= recurrenceStart && (!recurrenceEnd || occurrenceDate <= recurrenceEnd)) {
+      total += template.amount_cents
+    }
+  }
+
+  return total
 }
 
 async function findCategoryByName(

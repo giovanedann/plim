@@ -185,7 +185,7 @@ export class GeminiClient implements AIClient {
     const response = result.response
     const candidate = response.candidates?.[0]
 
-    if (!candidate) {
+    if (!candidate?.content?.parts) {
       return {
         text: null,
         functionCall: null,
@@ -193,8 +193,9 @@ export class GeminiClient implements AIClient {
       }
     }
 
-    const functionCallPart = candidate.content.parts.find((part) => 'functionCall' in part)
-    const textPart = candidate.content.parts.find((part) => 'text' in part)
+    const parts = candidate.content.parts
+    const functionCallPart = parts.find((part) => 'functionCall' in part)
+    const textPart = parts.find((part) => 'text' in part)
 
     let functionCall: FunctionCall | null = null
     if (functionCallPart && 'functionCall' in functionCallPart && functionCallPart.functionCall) {
