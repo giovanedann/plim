@@ -87,6 +87,7 @@ export const queryExpensesFunctionParamsSchema = z.object({
   end_date: z.string().optional(),
   category_name: z.string().optional(),
   payment_method: z.enum(['credit_card', 'debit_card', 'pix', 'cash']).optional(),
+  credit_card_name: z.string().optional(),
   group_by: z.enum(['category', 'payment_method', 'day', 'month']).optional(),
 })
 
