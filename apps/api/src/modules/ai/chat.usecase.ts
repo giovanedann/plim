@@ -3,9 +3,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../expenses/expenses.repository'
 import type { AIRepository } from './ai.repository'
-import type { AIClient, ChatMessage } from './client'
+import type { AIClient, ChatMessage, ChatOutput } from './client'
 import { type FunctionExecutionResult, aiFunctionDefinitions, executeFunction } from './functions'
 import { buildSystemPrompt } from './system-prompt'
+
+interface UserContext {
+  categories: Category[]
+  creditCards: CreditCard[]
+  currency: string
+  locale: string
+  currentDate: string
+}
 
 export interface ChatUseCaseInput {
   messages: ChatMessage[]
@@ -69,14 +77,34 @@ export class ChatUseCase {
         expensesRepository: this.deps.expensesRepository,
       })
 
+      // If query result with data, use AI to format the response
+      let formattedMessage = result.message
+      let formatTokens = 0
+
+      if (result.success && result.data && result.actionType === 'query_result') {
+        const formatResult = await this.formatResultWithAI(
+          messageText,
+          response.functionCall.name,
+          result.data,
+          context
+        )
+        formattedMessage = formatResult.text ?? result.message
+        formatTokens = formatResult.tokensUsed
+      }
+
+      // Single logUsage call with combined tokens
+      const totalTokens = response.tokensUsed + formatTokens
       await this.deps.aiRepository.logUsage(
         userId,
         input.requestType,
         response.functionCall.name,
-        response.tokensUsed
+        totalTokens
       )
 
-      const output = this.formatFunctionResult(result, response.tokensUsed)
+      const output = this.formatFunctionResult(
+        { ...result, message: formattedMessage },
+        totalTokens
+      )
 
       // Cache the response (won't cache expense_created)
       if (input.requestType === 'text') {
@@ -86,7 +114,7 @@ export class ChatUseCase {
           input.requestType,
           output.message,
           output.action ?? null,
-          response.tokensUsed
+          totalTokens
         )
       }
 
@@ -126,13 +154,37 @@ export class ChatUseCase {
     return textParts.join(' ')
   }
 
-  private async buildUserContext(userId: string): Promise<{
-    categories: Category[]
-    creditCards: CreditCard[]
-    currency: string
-    locale: string
-    currentDate: string
-  }> {
+  private async formatResultWithAI(
+    userQuestion: string,
+    functionName: string,
+    rawData: unknown,
+    _context: UserContext
+  ): Promise<ChatOutput> {
+    const formatPrompt = `You are formatting query results for a Brazilian finance app user.
+
+User asked: "${userQuestion}"
+Function executed: ${functionName}
+Raw data: ${JSON.stringify(rawData)}
+
+Rules:
+- Respond in Brazilian Portuguese
+- Format currency as R$ with Brazilian format (R$ 1.234,56)
+- Convert cents to reais (divide by 100)
+- Be concise - use short sentences
+- NO markdown formatting (no **bold**, no *italic*, no headers with #)
+- Use line breaks to separate items for readability
+- Use simple bullets with • for lists
+
+Format this data as a natural response to the user's question.`
+
+    return this.deps.aiClient.chat({
+      messages: [{ role: 'user', content: [{ type: 'text', text: formatPrompt }] }],
+      systemPrompt: '',
+      functions: [],
+    })
+  }
+
+  private async buildUserContext(userId: string): Promise<UserContext> {
     const [categoriesResult, creditCardsResult, profileResult] = await Promise.all([
       this.deps.supabase
         .from('category')
