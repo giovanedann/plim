@@ -428,7 +428,7 @@ describe('AIChatDrawer', () => {
 
       render(<AIChatDrawer />)
 
-      expect(screen.getByText('20/30 texto esta semana')).toBeInTheDocument()
+      expect(screen.getByText('20 de 30 texto restantes')).toBeInTheDocument()
     })
 
     it('shows voice usage for voice mode', async () => {
@@ -443,7 +443,7 @@ describe('AIChatDrawer', () => {
       const voiceButton = screen.getByRole('button', { name: /Voz/ })
       await user.click(voiceButton)
 
-      expect(screen.getByText('3/5 voz esta semana')).toBeInTheDocument()
+      expect(screen.getByText('3 de 5 voz restantes')).toBeInTheDocument()
     })
 
     it('shows image usage for image mode', async () => {
@@ -458,7 +458,18 @@ describe('AIChatDrawer', () => {
       const imageButton = screen.getByRole('button', { name: /Foto/ })
       await user.click(imageButton)
 
-      expect(screen.getByText('4/5 imagem esta semana')).toBeInTheDocument()
+      expect(screen.getByText('4 de 5 imagem restantes')).toBeInTheDocument()
+    })
+
+    it('shows limit reached message when remaining is 0', () => {
+      mockStore.usage = createMockAIUsageResponse({
+        text: { used: 15, limit: 15, remaining: 0 },
+      })
+      vi.mocked(useAIStore).mockReturnValue(mockStore)
+
+      render(<AIChatDrawer />)
+
+      expect(screen.getByText('Limite de texto atingido (15/15 usados)')).toBeInTheDocument()
     })
 
     it('shows default message when no usage data', () => {

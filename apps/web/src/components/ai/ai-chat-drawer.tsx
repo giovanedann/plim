@@ -276,9 +276,9 @@ function ClearChatButton(): React.ReactElement {
 
 function getUsageDisplay(
   usage: {
-    text: { remaining: number; limit: number }
-    voice: { remaining: number; limit: number }
-    image: { remaining: number; limit: number }
+    text: { remaining: number; limit: number; used: number }
+    voice: { remaining: number; limit: number; used: number }
+    image: { remaining: number; limit: number; used: number }
   } | null,
   mode: InputMode
 ): string {
@@ -288,7 +288,12 @@ function getUsageDisplay(
   if (!typeUsage) return 'Seu assistente financeiro inteligente'
 
   const modeLabels = { text: 'texto', voice: 'voz', image: 'imagem' }
-  return `${typeUsage.remaining}/${typeUsage.limit} ${modeLabels[mode]} esta semana`
+
+  if (typeUsage.remaining === 0) {
+    return `Limite de ${modeLabels[mode]} atingido (${typeUsage.used}/${typeUsage.limit} usados)`
+  }
+
+  return `${typeUsage.remaining} de ${typeUsage.limit} ${modeLabels[mode]} restantes`
 }
 
 export function AIChatDrawer(): React.ReactElement {

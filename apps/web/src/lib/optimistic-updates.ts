@@ -563,6 +563,41 @@ export function applyOptimisticExpenseGroupRemove(
   return previousExpenses
 }
 
+export function applyOptimisticRecurrentGroupRemove(
+  queryClient: QueryClient,
+  groupId: string
+): Map<readonly unknown[], ExpensesCacheData | undefined> {
+  const previousExpenses = new Map<readonly unknown[], ExpensesCacheData | undefined>()
+  const queryCache = queryClient.getQueryCache()
+
+  const expensesQueries = queryCache.findAll({
+    queryKey: queryKeys.expenses(),
+  })
+
+  for (const query of expensesQueries) {
+    const queryKey = query.queryKey
+    const previousData = queryClient.getQueryData<ExpensesCacheData>(queryKey)
+    if (!previousData) continue
+
+    const expenses = getExpensesArray(previousData)
+    const hasGroupExpenses = expenses.some((e) => e.recurrent_group_id === groupId)
+    if (!hasGroupExpenses) continue
+
+    previousExpenses.set(queryKey, previousData)
+
+    queryClient.setQueryData<ExpensesCacheData>(queryKey, (old) => {
+      if (!old) return old
+      const currentExpenses = getExpensesArray(old)
+      return wrapExpensesArray(
+        currentExpenses.filter((e) => e.recurrent_group_id !== groupId),
+        old
+      )
+    })
+  }
+
+  return previousExpenses
+}
+
 export function rollbackExpensesUpdate(
   queryClient: QueryClient,
   previousExpenses: Map<readonly unknown[], ExpensesCacheData | undefined>

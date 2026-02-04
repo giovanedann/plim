@@ -37,10 +37,24 @@ function dateToMonth(date: Date): string {
 }
 
 const DEBOUNCE_MS = 300
+const YEARS_RANGE = 2
+
+function getDateBounds(): { minDate: Date; maxDate: Date } {
+  const today = new Date()
+  const minDate = new Date(today.getFullYear() - YEARS_RANGE, today.getMonth(), 1)
+  const maxDate = new Date(today.getFullYear() + YEARS_RANGE, today.getMonth(), 1)
+  return { minDate, maxDate }
+}
+
+function isMonthInRange(month: string, minDate: Date, maxDate: Date): boolean {
+  const date = monthToDate(month)
+  return date >= minDate && date <= maxDate
+}
 
 export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorProps) {
   const [open, setOpen] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { minDate, maxDate } = getDateBounds()
 
   const debouncedMonthChange = useCallback(
     (month: string) => {
@@ -54,8 +68,21 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
     [onMonthChange]
   )
 
-  const handlePrevious = () => debouncedMonthChange(addMonths(selectedMonth, -1))
-  const handleNext = () => debouncedMonthChange(addMonths(selectedMonth, 1))
+  const prevMonth = addMonths(selectedMonth, -1)
+  const nextMonth = addMonths(selectedMonth, 1)
+  const canGoPrevious = isMonthInRange(prevMonth, minDate, maxDate)
+  const canGoNext = isMonthInRange(nextMonth, minDate, maxDate)
+
+  const handlePrevious = () => {
+    if (canGoPrevious) {
+      debouncedMonthChange(prevMonth)
+    }
+  }
+  const handleNext = () => {
+    if (canGoNext) {
+      debouncedMonthChange(nextMonth)
+    }
+  }
 
   const handleMonthSelect = (date: Date) => {
     onMonthChange(dateToMonth(date))
@@ -70,6 +97,7 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
         className="shrink-0"
         onClick={handlePrevious}
         aria-label="Mês anterior"
+        disabled={!canGoPrevious}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -84,7 +112,12 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">
-          <MonthPicker value={monthToDate(selectedMonth)} onChange={handleMonthSelect} />
+          <MonthPicker
+            value={monthToDate(selectedMonth)}
+            onChange={handleMonthSelect}
+            minDate={minDate}
+            maxDate={maxDate}
+          />
         </PopoverContent>
       </Popover>
       <Button
@@ -93,6 +126,7 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
         className="shrink-0"
         onClick={handleNext}
         aria-label="Próximo mês"
+        disabled={!canGoNext}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
