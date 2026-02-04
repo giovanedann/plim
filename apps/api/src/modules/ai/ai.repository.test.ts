@@ -86,10 +86,10 @@ describe('AIRepository', () => {
       const result = await sut.getSubscription(userId)
 
       expect(result.tier).toBe('free')
-      expect(result.ai_requests_limit).toBe(40)
-      expect(result.ai_text_limit).toBe(30)
-      expect(result.ai_voice_limit).toBe(5)
-      expect(result.ai_image_limit).toBe(5)
+      expect(result.ai_requests_limit).toBe(20)
+      expect(result.ai_text_limit).toBe(15)
+      expect(result.ai_voice_limit).toBe(2)
+      expect(result.ai_image_limit).toBe(3)
     })
   })
 
@@ -181,10 +181,10 @@ describe('AIRepository', () => {
         id: 'sub-1',
         user_id: userId,
         tier: 'free',
-        ai_requests_limit: 40,
-        ai_text_limit: 30,
-        ai_voice_limit: 5,
-        ai_image_limit: 5,
+        ai_requests_limit: 20,
+        ai_text_limit: 15,
+        ai_voice_limit: 2,
+        ai_image_limit: 3,
         stripe_customer_id: null,
         stripe_subscription_id: null,
         current_period_start: null,
@@ -226,11 +226,11 @@ describe('AIRepository', () => {
       const result = await sut.getUsageInfo(userId)
 
       expect(result.tier).toBe('free')
-      expect(result.text).toEqual({ used: 2, limit: 30, remaining: 28 })
-      expect(result.voice).toEqual({ used: 1, limit: 5, remaining: 4 })
-      expect(result.image).toEqual({ used: 0, limit: 5, remaining: 5 })
+      expect(result.text).toEqual({ used: 2, limit: 15, remaining: 13 })
+      expect(result.voice).toEqual({ used: 1, limit: 2, remaining: 1 })
+      expect(result.image).toEqual({ used: 0, limit: 3, remaining: 3 })
       expect(result.used).toBe(3)
-      expect(result.remainingRequests).toBe(37)
+      expect(result.remainingRequests).toBe(17)
     })
   })
 
@@ -427,12 +427,39 @@ describe('AIRepository', () => {
   describe('clearUserCache', () => {
     it('deletes all cache entries for user', async () => {
       mockQuery.delete.mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
+        eq: vi.fn().mockResolvedValue({ error: null, count: 0 }),
       })
 
       await sut.clearUserCache(userId)
 
       expect(mockSupabase.from).toHaveBeenCalledWith('ai_response_cache')
+    })
+
+    it('logs when cache entries are cleared', async () => {
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+      mockQuery.delete.mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null, count: 5 }),
+      })
+
+      await sut.clearUserCache(userId)
+
+      expect(consoleSpy).toHaveBeenCalledWith('[AI Cache] Invalidated cache for user', {
+        userId,
+        entriesCleared: 5,
+      })
+      consoleSpy.mockRestore()
+    })
+
+    it('does not log when no entries are cleared', async () => {
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+      mockQuery.delete.mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null, count: 0 }),
+      })
+
+      await sut.clearUserCache(userId)
+
+      expect(consoleSpy).not.toHaveBeenCalled()
+      consoleSpy.mockRestore()
     })
   })
 })

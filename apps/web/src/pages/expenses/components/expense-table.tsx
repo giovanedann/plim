@@ -1,7 +1,6 @@
 import { CategoryIcon } from '@/components/icons'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -25,12 +24,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { isErrorResponse } from '@/lib/api-client'
 import {
   type ExpenseChange,
   applyOptimisticDashboardUpdate,
   applyOptimisticExpenseGroupRemove,
   applyOptimisticExpenseRemove,
+  applyOptimisticRecurrentGroupRemove,
   rollbackDashboardUpdate,
   rollbackExpensesUpdate,
 } from '@/lib/optimistic-updates'
@@ -68,15 +67,6 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
-function getPreviousMonthEnd(currentDate: string): string {
-  const date = new Date(`${currentDate}T00:00:00`)
-  date.setDate(0)
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 export function ExpenseTable({
   expenses,
   categories,
@@ -89,11 +79,10 @@ export function ExpenseTable({
   const hideValues = useUIStore((state) => state.hideValues)
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
-  const [projectedExpenseInfo, setProjectedExpenseInfo] = useState<Expense | null>(null)
   const [installmentExpense, setInstallmentExpense] = useState<Expense | null>(null)
   const queryClient = useQueryClient()
 
-  const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.is_projected
+  const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.recurrent_group_id
   const isInstallmentExpense =
     expenseToDelete?.installment_total && expenseToDelete.installment_total > 1
 
@@ -212,22 +201,47 @@ export function ExpenseTable({
     },
   })
 
+  const deleteRecurrentGroupMutation = useMutation({
+    mutationFn: (groupId: string) => expenseService.deleteRecurrentGroup(groupId),
+    onMutate: async (groupId) => {
+      if (!expenseToDelete) return {}
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.cancelQueries({ queryKey: queryKeys.expenses() })
+
+      const change = getExpenseChange(expenseToDelete)
+      const previousDashboards = applyOptimisticDashboardUpdate(queryClient, change)
+      const previousExpenses = applyOptimisticRecurrentGroupRemove(queryClient, groupId)
+
+      return { previousDashboards, previousExpenses }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recurrent-group'] })
+      toast.success('Despesa recorrente excluída com sucesso!')
+      setExpenseToDelete(null)
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previousDashboards) {
+        rollbackDashboardUpdate(queryClient, context.previousDashboards)
+      }
+      if (context?.previousExpenses) {
+        rollbackExpensesUpdate(queryClient, context.previousExpenses)
+      }
+      toast.error(error.message || 'Erro ao excluir despesa recorrente')
+    },
+  })
+
   const handleDeleteAll = () => {
     if (!expenseToDelete) return
 
     if (expenseToDelete.installment_group_id) {
       deleteInstallmentGroupMutation.mutate(expenseToDelete.installment_group_id)
+    } else if (expenseToDelete.recurrent_group_id) {
+      deleteRecurrentGroupMutation.mutate(expenseToDelete.recurrent_group_id)
     } else {
       const idToDelete = expenseToDelete.source_expense_id || expenseToDelete.id
       deleteMutation.mutate(idToDelete)
     }
-  }
-
-  const handleCancelFromThisMonth = () => {
-    if (!expenseToDelete) return
-    const sourceId = expenseToDelete.source_expense_id || expenseToDelete.id
-    const endDate = getPreviousMonthEnd(expenseToDelete.date)
-    cancelRecurrenceMutation.mutate({ id: sourceId, endDate })
   }
 
   const handleDeleteSingle = () => {
@@ -238,7 +252,8 @@ export function ExpenseTable({
   const isPending =
     deleteMutation.isPending ||
     cancelRecurrenceMutation.isPending ||
-    deleteInstallmentGroupMutation.isPending
+    deleteInstallmentGroupMutation.isPending ||
+    deleteRecurrentGroupMutation.isPending
 
   const getCategory = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)
@@ -367,15 +382,7 @@ export function ExpenseTable({
                             Ver parcelas
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (expense.is_projected) {
-                              setProjectedExpenseInfo(expense)
-                            } else {
-                              setExpenseToEdit(expense)
-                            }
-                          }}
-                        >
+                        <DropdownMenuItem onClick={() => setExpenseToEdit(expense)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
@@ -448,13 +455,13 @@ export function ExpenseTable({
             <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
             {isRecurrentExpense ? (
               <>
-                <Button variant="outline" onClick={handleCancelFromThisMonth} disabled={isPending}>
-                  {cancelRecurrenceMutation.isPending
-                    ? 'Cancelando...'
-                    : 'Cancelar a partir deste mês'}
+                <Button variant="outline" onClick={handleDeleteSingle} disabled={isPending}>
+                  {deleteMutation.isPending ? 'Excluindo...' : 'Excluir apenas este mês'}
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteAll} disabled={isPending}>
-                  {deleteMutation.isPending ? 'Excluindo...' : 'Excluir todas as ocorrências'}
+                  {deleteRecurrentGroupMutation.isPending
+                    ? 'Excluindo...'
+                    : 'Excluir todas as ocorrências'}
                 </Button>
               </>
             ) : isInstallmentExpense ? (
@@ -471,53 +478,6 @@ export function ExpenseTable({
                 {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
               </Button>
             )}
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={projectedExpenseInfo !== null}
-        onOpenChange={(open) => !open && setProjectedExpenseInfo(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Despesa recorrente projetada</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Esta é uma projeção da despesa recorrente &quot;{projectedExpenseInfo?.description}
-                &quot;.
-              </p>
-              <p>
-                Despesas recorrentes são mostradas automaticamente em cada mês. Para alterar o
-                valor, descrição ou forma de pagamento, você precisa editar a despesa original.
-              </p>
-              <p className="font-medium">
-                Ao editar a original, as mudanças serão refletidas em todas as projeções futuras.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (!projectedExpenseInfo?.source_expense_id) {
-                  toast.error('ID da despesa original não encontrado')
-                  setProjectedExpenseInfo(null)
-                  return
-                }
-                const result = await expenseService.getExpense(
-                  projectedExpenseInfo.source_expense_id
-                )
-                if (!isErrorResponse(result) && 'data' in result && !('meta' in result)) {
-                  setExpenseToEdit(result.data)
-                } else {
-                  toast.error('Erro ao carregar despesa original')
-                }
-                setProjectedExpenseInfo(null)
-              }}
-            >
-              Editar despesa original
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

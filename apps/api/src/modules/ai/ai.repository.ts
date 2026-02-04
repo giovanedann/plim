@@ -94,10 +94,10 @@ export class AIRepository {
         id: '',
         user_id: userId,
         tier: 'free',
-        ai_requests_limit: 40,
-        ai_text_limit: 30,
-        ai_voice_limit: 5,
-        ai_image_limit: 5,
+        ai_requests_limit: 20,
+        ai_text_limit: 15,
+        ai_voice_limit: 2,
+        ai_image_limit: 3,
         stripe_customer_id: null,
         stripe_subscription_id: null,
         current_period_start: null,
@@ -271,6 +271,13 @@ export class AIRepository {
   }
 
   async clearUserCache(userId: string): Promise<void> {
-    await this.supabase.from('ai_response_cache').delete().eq('user_id', userId)
+    const { count } = await this.supabase
+      .from('ai_response_cache')
+      .delete({ count: 'exact' })
+      .eq('user_id', userId)
+
+    if (count && count > 0) {
+      console.info('[AI Cache] Invalidated cache for user', { userId, entriesCleared: count })
+    }
   }
 }

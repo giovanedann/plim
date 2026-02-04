@@ -57,7 +57,7 @@ export function createAIRouter(): Hono<AIEnv> {
       const typeLabels = { text: 'texto', voice: 'voz', image: 'imagem' }
       throw new AppError(
         ERROR_CODES.FORBIDDEN,
-        `Limite de requisições de ${typeLabels[requestType]} atingido para este mês`,
+        `Limite de requisições de ${typeLabels[requestType]} atingido para esta semana`,
         HTTP_STATUS.FORBIDDEN,
         { usageInfo, requestType }
       )
@@ -121,7 +121,7 @@ export function createAIRouterWithDeps(deps: AIDependencies): Hono<AIEnv> {
       const typeLabels = { text: 'texto', voice: 'voz', image: 'imagem' }
       throw new AppError(
         ERROR_CODES.FORBIDDEN,
-        `Limite de requisições de ${typeLabels[requestType]} atingido para este mês`,
+        `Limite de requisições de ${typeLabels[requestType]} atingido para esta semana`,
         HTTP_STATUS.FORBIDDEN,
         { usageInfo, requestType }
       )

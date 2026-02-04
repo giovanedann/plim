@@ -1,6 +1,8 @@
 import type { Expense, ExpenseFilters, UpdateExpense } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+export type CacheInvalidationFn = (userId: string) => Promise<void>
+
 const EXPENSE_COLUMNS = `
   id,
   user_id,
@@ -16,6 +18,7 @@ const EXPENSE_COLUMNS = `
   installment_current,
   installment_total,
   installment_group_id,
+  recurrent_group_id,
   credit_card_id,
   created_at,
   updated_at
@@ -34,11 +37,21 @@ export interface CreateExpenseData {
   installment_current?: number | null
   installment_total?: number | null
   installment_group_id?: string | null
+  recurrent_group_id?: string | null
   credit_card_id?: string | null
 }
 
 export class ExpensesRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(
+    private supabase: SupabaseClient,
+    private onCacheInvalidate?: CacheInvalidationFn
+  ) {}
+
+  private async invalidateCache(userId: string): Promise<void> {
+    if (this.onCacheInvalidate) {
+      await this.onCacheInvalidate(userId)
+    }
+  }
 
   async findByUserId(userId: string, filters?: ExpenseFilters): Promise<Expense[]> {
     let query = this.supabase.from('expense').select(EXPENSE_COLUMNS).eq('user_id', userId)
@@ -191,6 +204,7 @@ export class ExpensesRepository {
         installment_current: input.installment_current ?? null,
         installment_total: input.installment_total ?? null,
         installment_group_id: input.installment_group_id ?? null,
+        recurrent_group_id: input.recurrent_group_id ?? null,
         credit_card_id: input.credit_card_id ?? null,
       })
       .select(EXPENSE_COLUMNS)
@@ -198,6 +212,7 @@ export class ExpensesRepository {
 
     if (error || !data) return null
 
+    await this.invalidateCache(userId)
     return data as Expense
   }
 
@@ -216,6 +231,7 @@ export class ExpensesRepository {
       installment_current: input.installment_current ?? null,
       installment_total: input.installment_total ?? null,
       installment_group_id: input.installment_group_id ?? null,
+      recurrent_group_id: input.recurrent_group_id ?? null,
       credit_card_id: input.credit_card_id ?? null,
     }))
 
@@ -226,6 +242,7 @@ export class ExpensesRepository {
 
     if (error || !data) return []
 
+    await this.invalidateCache(userId)
     return data as Expense[]
   }
 
@@ -243,6 +260,7 @@ export class ExpensesRepository {
 
     if (error || !data) return null
 
+    await this.invalidateCache(userId)
     return data as Expense
   }
 
@@ -253,7 +271,11 @@ export class ExpensesRepository {
       .eq('id', id)
       .eq('user_id', userId)
 
-    return !error && (count ?? 0) > 0
+    const success = !error && (count ?? 0) > 0
+    if (success) {
+      await this.invalidateCache(userId)
+    }
+    return success
   }
 
   async deleteByGroupId(groupId: string, userId: string): Promise<boolean> {
@@ -263,7 +285,11 @@ export class ExpensesRepository {
       .eq('installment_group_id', groupId)
       .eq('user_id', userId)
 
-    return !error && (count ?? 0) > 0
+    const success = !error && (count ?? 0) > 0
+    if (success) {
+      await this.invalidateCache(userId)
+    }
+    return success
   }
 
   async findByGroupId(groupId: string, userId: string): Promise<Expense[]> {
@@ -277,5 +303,76 @@ export class ExpensesRepository {
     if (error) return []
 
     return data as Expense[]
+  }
+
+  async updateByGroupId(
+    groupId: string,
+    userId: string,
+    input: Partial<UpdateExpense>
+  ): Promise<number> {
+    const { error, count } = await this.supabase
+      .from('expense')
+      .update({
+        ...input,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('installment_group_id', groupId)
+      .eq('user_id', userId)
+
+    if (error) return 0
+
+    if (count && count > 0) {
+      await this.invalidateCache(userId)
+    }
+    return count ?? 0
+  }
+
+  async findByRecurrentGroupId(groupId: string, userId: string): Promise<Expense[]> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .select(EXPENSE_COLUMNS)
+      .eq('recurrent_group_id', groupId)
+      .eq('user_id', userId)
+      .order('date', { ascending: true })
+
+    if (error) return []
+
+    return data as Expense[]
+  }
+
+  async deleteByRecurrentGroupId(groupId: string, userId: string): Promise<boolean> {
+    const { error, count } = await this.supabase
+      .from('expense')
+      .delete({ count: 'exact' })
+      .eq('recurrent_group_id', groupId)
+      .eq('user_id', userId)
+
+    const success = !error && (count ?? 0) > 0
+    if (success) {
+      await this.invalidateCache(userId)
+    }
+    return success
+  }
+
+  async updateByRecurrentGroupId(
+    groupId: string,
+    userId: string,
+    input: Partial<UpdateExpense>
+  ): Promise<number> {
+    const { error, count } = await this.supabase
+      .from('expense')
+      .update({
+        ...input,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('recurrent_group_id', groupId)
+      .eq('user_id', userId)
+
+    if (error) return 0
+
+    if (count && count > 0) {
+      await this.invalidateCache(userId)
+    }
+    return count ?? 0
   }
 }

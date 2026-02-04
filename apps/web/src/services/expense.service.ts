@@ -62,4 +62,12 @@ export const expenseService = {
   async deleteInstallmentGroup(groupId: string): Promise<ApiResponse<void>> {
     return api.delete<void>(`/expenses/installments/${groupId}`)
   },
+
+  async getRecurrentGroup(groupId: string): Promise<ApiResponse<Expense[]>> {
+    return api.get<Expense[]>(`/expenses/recurrent/${groupId}`)
+  },
+
+  async deleteRecurrentGroup(groupId: string): Promise<ApiResponse<void>> {
+    return api.delete<void>(`/expenses/recurrent/${groupId}`)
+  },
 }

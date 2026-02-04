@@ -12,8 +12,10 @@ const EXAMPLE_PROMPTS = [
 ]
 
 export function AIChatButton(): React.ReactElement {
-  const { toggleDrawer, isPulsing } = useAIStore()
+  const { toggleDrawer, isPulsing, usage } = useAIStore()
   const [promptIndex, setPromptIndex] = useState(0)
+
+  const usageDisplay = usage ? `${usage.used}/${usage.limit}` : null
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -63,9 +65,16 @@ export function AIChatButton(): React.ReactElement {
 
           {/* Text content */}
           <div className="flex flex-col items-start gap-0.5 flex-1 min-w-0">
-            <span className="text-sm font-medium text-amber-50/90 whitespace-nowrap">
-              Pedir ajuda pra IA
-            </span>
+            <div className="flex items-center gap-2 w-full">
+              <span className="text-sm font-medium text-amber-50/90 whitespace-nowrap">
+                Pedir ajuda pra IA
+              </span>
+              {usageDisplay && (
+                <span className="text-[10px] font-medium text-amber-400/70 bg-amber-400/10 px-1.5 py-0.5 rounded">
+                  {usageDisplay}
+                </span>
+              )}
+            </div>
             <div className="h-4 overflow-hidden w-full">
               <AnimatePresence mode="wait">
                 <motion.span

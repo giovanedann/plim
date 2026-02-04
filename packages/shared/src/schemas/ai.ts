@@ -98,6 +98,12 @@ export const forecastSpendingFunctionParamsSchema = z.object({
   include_installments: z.boolean().default(true),
 })
 
+// Execute query function parameters (raw SQL execution)
+export const executeQueryFunctionParamsSchema = z.object({
+  sql: z.string().min(1),
+  description: z.string().min(1),
+})
+
 // Type exports
 export type TextContentPart = z.infer<typeof textContentPartSchema>
 export type ImageContentPart = z.infer<typeof imageContentPartSchema>
@@ -111,3 +117,4 @@ export type AIUsageResponse = z.infer<typeof aiUsageResponseSchema>
 export type CreateExpenseFunctionParams = z.infer<typeof createExpenseFunctionParamsSchema>
 export type QueryExpensesFunctionParams = z.infer<typeof queryExpensesFunctionParamsSchema>
 export type ForecastSpendingFunctionParams = z.infer<typeof forecastSpendingFunctionParamsSchema>
+export type ExecuteQueryFunctionParams = z.infer<typeof executeQueryFunctionParamsSchema>

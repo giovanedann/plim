@@ -1,74 +1,65 @@
 import type { FunctionDefinition, JsonSchema } from '../client'
 
-/**
- * JSON Schema for create_expense function parameters
- */
 const createExpenseParameters: JsonSchema = {
   type: 'object',
-  description: 'Parameters for creating a new expense',
+  description: 'Create a new expense record',
   properties: {
     description: {
       type: 'string',
-      description:
-        'Description of the expense (e.g., "Almoço no restaurante", "Uber para o trabalho")',
+      description: 'What was purchased',
     },
     amount_cents: {
       type: 'integer',
-      description: 'Amount in centavos (e.g., 2990 for R$29.90)',
+      description: 'Value in cents (R$29.90 = 2990)',
     },
     category_name: {
       type: 'string',
-      description:
-        'Category name in Portuguese (e.g., "Alimentação", "Transporte", "Lazer", "Saúde", "Educação", "Moradia")',
+      description: 'Category name from available categories',
     },
     payment_method: {
       type: 'string',
-      description: 'Payment method used',
+      description: 'How it was paid',
       enum: ['credit_card', 'debit_card', 'pix', 'cash'],
     },
     date: {
       type: 'string',
-      description: 'Date of the expense in YYYY-MM-DD format',
+      description: 'Transaction date (YYYY-MM-DD)',
     },
     credit_card_name: {
       type: 'string',
-      description:
-        'Name of the credit card if payment_method is credit_card (e.g., "Nubank", "Itaú")',
+      description: 'Card name when payment_method is credit_card',
     },
     installment_total: {
       type: 'integer',
-      description: 'Number of installments if this is a parcelado purchase (2-48)',
+      description: 'Number of installments (2-48)',
     },
     is_recurrent: {
       type: 'boolean',
-      description: 'Whether this expense repeats every month',
+      description: 'Monthly recurring expense',
     },
     recurrence_day: {
       type: 'integer',
-      description: 'Day of month for recurrent expenses (1-31)',
+      description: 'Day of month for recurrents (1-31)',
     },
   },
   required: ['description', 'amount_cents', 'category_name', 'payment_method', 'date'],
 }
 
-/**
- * JSON Schema for query_expenses function parameters
- */
 const queryExpensesParameters: JsonSchema = {
   type: 'object',
-  description: 'Parameters for querying expenses',
+  description: 'Query expenses with filters and simple totals',
   properties: {
     start_date: {
       type: 'string',
-      description: 'Start date for the query in YYYY-MM-DD format',
+      description: 'Start date (YYYY-MM-DD)',
     },
     end_date: {
       type: 'string',
-      description: 'End date for the query in YYYY-MM-DD format',
+      description: 'End date (YYYY-MM-DD)',
     },
     category_name: {
       type: 'string',
-      description: 'Filter by category name (e.g., "Alimentação", "Pets", "Transporte")',
+      description: 'Filter by category',
     },
     payment_method: {
       type: 'string',
@@ -77,79 +68,77 @@ const queryExpensesParameters: JsonSchema = {
     },
     credit_card_name: {
       type: 'string',
-      description: 'Filter by credit card name (e.g., "Nubank", "Nubank Ultravioleta", "Itaú")',
+      description: 'Filter by credit card',
     },
     group_by: {
       type: 'string',
-      description: 'How to group the results',
+      description: 'Group results',
       enum: ['category', 'payment_method', 'day', 'month'],
     },
   },
 }
 
-/**
- * JSON Schema for forecast_spending function parameters
- */
 const forecastSpendingParameters: JsonSchema = {
   type: 'object',
-  description: 'Parameters for forecasting future spending',
+  description: 'Project future spending',
   properties: {
     months_ahead: {
       type: 'integer',
-      description: 'Number of months to forecast (1-12, default 3)',
+      description: 'Months to forecast (1-12)',
     },
     include_recurrent: {
       type: 'boolean',
-      description: 'Include recurrent expenses in forecast (default true)',
+      description: 'Include recurrent expenses',
     },
     include_installments: {
       type: 'boolean',
-      description: 'Include future installments in forecast (default true)',
+      description: 'Include future installments',
     },
   },
 }
 
-/**
- * Function definitions for AI function calling
- */
+const executeQueryParameters: JsonSchema = {
+  type: 'object',
+  description: 'Execute SQL for complex queries (GROUP BY, aggregations, JOINs)',
+  properties: {
+    sql: {
+      type: 'string',
+      description: 'PostgreSQL SELECT query with {userId} placeholder',
+    },
+    description: {
+      type: 'string',
+      description: 'Brief label for this query',
+    },
+  },
+  required: ['sql', 'description'],
+}
+
 export const aiFunctionDefinitions: FunctionDefinition[] = [
   {
     name: 'create_expense',
-    description: `Create a new expense entry. Use this when the user mentions a purchase, payment, or spending.
-Examples:
-- "Comprei um tênis de R$299" → create expense
-- "Paguei R$50 de Uber" → create expense
-- "Almocei no restaurante por R$35" → create expense
-- "Assinatura da Netflix de R$55.90 todo mês" → create recurrent expense
-- "Comprei um celular de R$2000 em 12x no Nubank" → create installment expense`,
+    description: 'Create expense record',
     parameters: createExpenseParameters,
   },
   {
     name: 'query_expenses',
-    description: `Query and summarize expenses. Use this when the user asks about their spending history or wants to know totals.
-Examples:
-- "Quanto gastei em janeiro?" → query with date range (first day to last day of January)
-- "Quanto gastei esse mês?" → query current month with start_date: first day of current month, end_date: LAST day of current month (NOT today)
-- "Quanto gastei com alimentação?" → query by category_name
-- "Quanto gastei com meus pets?" → query by category_name (user's custom category)
-- "Quais foram meus gastos no cartão de crédito?" → query by payment_method: credit_card
-- "Quanto gastei no pix?" → query by payment_method: pix
-- "Quanto gastei no cartão Nubank?" → query by credit_card_name
-- "Quanto gastei no Nubank Ultravioleta esse mês?" → query by credit_card_name with date range
-- "Me mostra um resumo do mês" → query current month grouped by category
-
-IMPORTANT: For monthly queries ("esse mês", "mês passado"), always use the FULL month (first day to last day), NOT just up to today's date.`,
+    description: 'Query expenses with filters (auto-projects recurrents)',
     parameters: queryExpensesParameters,
   },
   {
     name: 'forecast_spending',
-    description: `Forecast future spending based on recurrent expenses and installments. Use this when the user asks about future costs.
-Examples:
-- "Quanto vou gastar até março?" → forecast next months
-- "Quais são minhas despesas fixas?" → forecast with recurrent only
-- "Quanto ainda tenho de parcelas?" → forecast with installments only`,
+    description: 'Project future spending',
     parameters: forecastSpendingParameters,
+  },
+  {
+    name: 'execute_query',
+    description: 'SQL for GROUP BY, aggregations, JOINs',
+    parameters: executeQueryParameters,
   },
 ]
 
-export { createExpenseParameters, queryExpensesParameters, forecastSpendingParameters }
+export {
+  createExpenseParameters,
+  queryExpensesParameters,
+  forecastSpendingParameters,
+  executeQueryParameters,
+}

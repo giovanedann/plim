@@ -13,8 +13,10 @@ import type { AuthVariables } from '../../middleware/auth.middleware'
 import { createExpenseController } from './controllers/create-expense.controller'
 import { deleteExpenseController } from './controllers/delete-expense.controller'
 import { deleteInstallmentGroupController } from './controllers/delete-installment-group.controller'
+import { deleteRecurrentGroupController } from './controllers/delete-recurrent-group.controller'
 import { getExpenseController } from './controllers/get-expense.controller'
 import { getInstallmentGroupController } from './controllers/get-installment-group.controller'
+import { getRecurrentGroupController } from './controllers/get-recurrent-group.controller'
 import { listExpensesPaginatedController } from './controllers/list-expenses-paginated.controller'
 import { listExpensesController } from './controllers/list-expenses.controller'
 import { updateExpenseController } from './controllers/update-expense.controller'
@@ -69,6 +71,16 @@ export function createExpensesRouter(): Hono<ExpensesEnv> {
     return success(c, result, HTTP_STATUS.OK)
   })
 
+  router.get('/recurrent/:groupId', async (c) => {
+    const deps = c.get('expensesDeps')
+    const result = await getRecurrentGroupController(
+      c.get('userId'),
+      c.req.param('groupId'),
+      deps.getRecurrentGroup
+    )
+    return success(c, result, HTTP_STATUS.OK)
+  })
+
   router.get('/:id', async (c) => {
     const deps = c.get('expensesDeps')
     const result = await getExpenseController(c.get('userId'), c.req.param('id'), deps.getExpense)
@@ -102,6 +114,16 @@ export function createExpensesRouter(): Hono<ExpensesEnv> {
       c.get('userId'),
       c.req.param('groupId'),
       deps.deleteInstallmentGroup
+    )
+    return c.body(null, HTTP_STATUS.NO_CONTENT)
+  })
+
+  router.delete('/recurrent/:groupId', async (c) => {
+    const deps = c.get('expensesDeps')
+    await deleteRecurrentGroupController(
+      c.get('userId'),
+      c.req.param('groupId'),
+      deps.deleteRecurrentGroup
     )
     return c.body(null, HTTP_STATUS.NO_CONTENT)
   })
@@ -146,6 +168,15 @@ export function createExpensesRouterWithDeps(deps: ExpensesDependencies): Hono<E
     return success(c, result, HTTP_STATUS.OK)
   })
 
+  router.get('/recurrent/:groupId', async (c) => {
+    const result = await getRecurrentGroupController(
+      c.get('userId'),
+      c.req.param('groupId'),
+      deps.getRecurrentGroup
+    )
+    return success(c, result, HTTP_STATUS.OK)
+  })
+
   router.get('/:id', async (c) => {
     const result = await getExpenseController(c.get('userId'), c.req.param('id'), deps.getExpense)
     return success(c, result, HTTP_STATUS.OK)
@@ -175,6 +206,15 @@ export function createExpensesRouterWithDeps(deps: ExpensesDependencies): Hono<E
       c.get('userId'),
       c.req.param('groupId'),
       deps.deleteInstallmentGroup
+    )
+    return c.body(null, HTTP_STATUS.NO_CONTENT)
+  })
+
+  router.delete('/recurrent/:groupId', async (c) => {
+    await deleteRecurrentGroupController(
+      c.get('userId'),
+      c.req.param('groupId'),
+      deps.deleteRecurrentGroup
     )
     return c.body(null, HTTP_STATUS.NO_CONTENT)
   })

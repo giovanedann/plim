@@ -53,31 +53,67 @@ export class CreateExpenseUseCase {
   private async createRecurrent(
     userId: string,
     input: Extract<CreateExpense, { type: 'recurrent' }>
-  ): Promise<Expense> {
-    const data: CreateExpenseData = {
-      category_id: input.category_id,
-      description: input.description,
-      amount_cents: input.amount_cents,
-      payment_method: input.payment_method,
-      date: input.recurrence_start,
-      is_recurrent: true,
-      recurrence_day: input.recurrence_day,
-      recurrence_start: input.recurrence_start,
-      recurrence_end: input.recurrence_end ?? null,
-      credit_card_id: input.credit_card_id ?? null,
+  ): Promise<Expense[]> {
+    const groupId = crypto.randomUUID()
+    const records: CreateExpenseData[] = []
+
+    const today = new Date()
+    const twoYearsAgo = new Date(today.getFullYear() - 2, today.getMonth(), today.getDate())
+    const twoYearsAhead = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate())
+
+    const recurrenceStart = new Date(input.recurrence_start)
+    const recurrenceEnd = input.recurrence_end ? new Date(input.recurrence_end) : null
+
+    const startDate = recurrenceStart > twoYearsAgo ? recurrenceStart : twoYearsAgo
+    const endDate = recurrenceEnd && recurrenceEnd < twoYearsAhead ? recurrenceEnd : twoYearsAhead
+
+    const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+
+    while (currentDate <= endDate) {
+      const targetDay = Math.min(
+        input.recurrence_day,
+        new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+      )
+      const expenseDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), targetDay)
+
+      if (expenseDate >= startDate && expenseDate <= endDate) {
+        records.push({
+          category_id: input.category_id,
+          description: input.description,
+          amount_cents: input.amount_cents,
+          payment_method: input.payment_method,
+          date: expenseDate.toISOString().slice(0, 10),
+          is_recurrent: true,
+          recurrence_day: input.recurrence_day,
+          recurrence_start: input.recurrence_start,
+          recurrence_end: input.recurrence_end ?? null,
+          recurrent_group_id: groupId,
+          credit_card_id: input.credit_card_id ?? null,
+        })
+      }
+
+      currentDate.setMonth(currentDate.getMonth() + 1)
     }
 
-    const expense = await this.expensesRepository.create(userId, data)
+    if (records.length === 0) {
+      throw new AppError(
+        ERROR_CODES.VALIDATION_ERROR,
+        'No recurrent expenses to create in the valid date range',
+        HTTP_STATUS.BAD_REQUEST
+      )
+    }
 
-    if (!expense) {
+    const expenses = await this.expensesRepository.createMany(userId, records)
+
+    if (expenses.length === 0) {
       throw new AppError(
         ERROR_CODES.INTERNAL_ERROR,
-        'Failed to create recurrent expense',
+        'Failed to create recurrent expenses',
         HTTP_STATUS.INTERNAL_SERVER_ERROR
       )
     }
 
-    return expense
+    return expenses
   }
 
   private async createInstallments(

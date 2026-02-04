@@ -275,13 +275,13 @@ describe('ChatUseCase', () => {
       expect(mockAIRepository.logUsage).toHaveBeenCalledWith(userId, 'text', 'create_expense', 150)
     })
 
-    it('executes query_expenses function', async () => {
+    it('executes query_expenses function with AI formatting', async () => {
       mockAIRepository.getCachedResponse.mockResolvedValue(null)
       mockExpensesRepository.findByUserId.mockResolvedValue([
         { id: 'exp-1', amount_cents: 5000, description: 'Test' },
       ])
 
-      const aiResponse: ChatOutput = createMockChatOutput({
+      const initialAIResponse: ChatOutput = createMockChatOutput({
         text: null,
         functionCall: {
           name: 'query_expenses',
@@ -292,7 +292,13 @@ describe('ChatUseCase', () => {
         },
         tokensUsed: 100,
       })
-      mockAIClient.chat.mockResolvedValue(aiResponse)
+      const formatAIResponse: ChatOutput = createMockChatOutput({
+        text: 'Você gastou R$ 50,00 em janeiro.',
+        tokensUsed: 50,
+      })
+      mockAIClient.chat
+        .mockResolvedValueOnce(initialAIResponse)
+        .mockResolvedValueOnce(formatAIResponse)
 
       const input: ChatUseCaseInput = {
         messages: [{ role: 'user', content: [{ type: 'text', text: 'Quanto gastei esse mês?' }] }],
@@ -302,7 +308,11 @@ describe('ChatUseCase', () => {
       const result = await sut.execute(userId, input)
 
       expect(result.action?.type).toBe('query_result')
-      expect(mockAIRepository.logUsage).toHaveBeenCalledWith(userId, 'text', 'query_expenses', 100)
+      expect(result.message).toBe('Você gastou R$ 50,00 em janeiro.')
+      // Combined tokens: 100 (initial) + 50 (format)
+      expect(mockAIRepository.logUsage).toHaveBeenCalledWith(userId, 'text', 'query_expenses', 150)
+      // AI called twice: once for function call, once for formatting
+      expect(mockAIClient.chat).toHaveBeenCalledTimes(2)
     })
 
     it('executes forecast_spending function', async () => {
@@ -464,6 +474,171 @@ describe('ChatUseCase', () => {
       await sut.execute(userId, input)
 
       expect(mockAIRepository.logUsage).toHaveBeenCalledWith(userId, 'text', 'cache_hit', 0)
+    })
+  })
+
+  describe('AI formatting for query results', () => {
+    it('uses AI to format query results and combines tokens', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockExpensesRepository.findByUserId.mockResolvedValue([
+        { id: 'exp-1', amount_cents: 5000, description: 'Almoço' },
+        { id: 'exp-2', amount_cents: 3000, description: 'Café' },
+      ])
+
+      const initialResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'query_expenses',
+          args: { start_date: '2026-01-01', end_date: '2026-01-31' },
+        },
+        tokensUsed: 80,
+      })
+      const formatResponse: ChatOutput = createMockChatOutput({
+        text: 'Em janeiro você teve 2 despesas totalizando R$ 80,00:\n- Almoço: R$ 50,00\n- Café: R$ 30,00',
+        tokensUsed: 120,
+      })
+      mockAIClient.chat.mockResolvedValueOnce(initialResponse).mockResolvedValueOnce(formatResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Gastos de janeiro' }] }],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      expect(result.message).toContain('R$ 80,00')
+      expect(result.tokensUsed).toBe(200) // 80 + 120 combined
+      expect(mockAIRepository.logUsage).toHaveBeenCalledWith(userId, 'text', 'query_expenses', 200)
+      expect(mockAIRepository.logUsage).toHaveBeenCalledTimes(1) // Only one usage log per user message
+    })
+
+    it('does not use AI formatting for failed function results', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+
+      // create_expense has required fields, so missing them causes parse failure
+      const initialResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'create_expense',
+          args: {}, // Missing required fields - will fail parsing
+        },
+        tokensUsed: 50,
+      })
+      mockAIClient.chat.mockResolvedValue(initialResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'test' }] }],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      // Should not call AI formatting for errors (success: false)
+      expect(mockAIClient.chat).toHaveBeenCalledTimes(1)
+      // When success is false, no action is returned
+      expect(result.action).toBeUndefined()
+      expect(result.message).toContain('Não consegui entender')
+    })
+
+    it('does not use AI formatting for expense_created actions', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+
+      const category = createMockCategory({ id: 'cat-1', name: 'Alimentação' })
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'category') {
+          return {
+            select: vi.fn().mockReturnValue({
+              or: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  ilike: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockReturnValue({
+                      single: vi.fn().mockResolvedValue({ data: category, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'profile') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: null, error: null }),
+              }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
+        }
+      })
+      mockCreateExpenseUseCase.execute.mockResolvedValue({ id: 'exp-1' })
+
+      const aiResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'create_expense',
+          args: {
+            description: 'Almoço',
+            amount_cents: 3500,
+            category_name: 'Alimentação',
+            payment_method: 'pix',
+            date: '2026-01-15',
+          },
+        },
+        tokensUsed: 100,
+      })
+      mockAIClient.chat.mockResolvedValue(aiResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Almoço R$35' }] }],
+        requestType: 'text',
+      }
+
+      await sut.execute(userId, input)
+
+      // Only initial AI call, no format call for expense_created
+      expect(mockAIClient.chat).toHaveBeenCalledTimes(1)
+    })
+
+    it('falls back to original message when AI formatting returns null', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockExpensesRepository.findByUserId.mockResolvedValue([
+        { id: 'exp-1', amount_cents: 5000, description: 'Test' },
+      ])
+
+      const initialResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'query_expenses',
+          args: { start_date: '2026-01-01', end_date: '2026-01-31' },
+        },
+        tokensUsed: 100,
+      })
+      const formatResponse: ChatOutput = createMockChatOutput({
+        text: null, // AI returned null
+        tokensUsed: 20,
+      })
+      mockAIClient.chat.mockResolvedValueOnce(initialResponse).mockResolvedValueOnce(formatResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'test' }] }],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      // Falls back to original message from executeFunction
+      expect(result.action?.type).toBe('query_result')
+      expect(mockAIRepository.logUsage).toHaveBeenCalledWith(userId, 'text', 'query_expenses', 120)
     })
   })
 

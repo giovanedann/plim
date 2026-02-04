@@ -93,7 +93,10 @@ describe('CreateExpenseUseCase', () => {
   })
 
   describe('recurrent expense', () => {
-    it('creates and returns recurrent expense', async () => {
+    it('creates and returns materialized recurrent expenses', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-15T12:00:00.000Z'))
+
       const input: CreateExpense = {
         type: 'recurrent',
         category_id: 'cat-1',
@@ -103,20 +106,32 @@ describe('CreateExpenseUseCase', () => {
         recurrence_day: 15,
         recurrence_start: '2024-01-15',
       }
-      const expense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 15,
-        recurrence_start: '2024-01-15',
-        recurrence_end: null,
-      })
-      mockRepository.create.mockResolvedValue(expense)
+      const recurrentExpenses = Array.from({ length: 24 }, (_, i) =>
+        createMockExpense({
+          id: `rec-${i}`,
+          is_recurrent: true,
+          recurrence_day: 15,
+          recurrence_start: '2024-01-15',
+          recurrence_end: null,
+          recurrent_group_id: 'group-1',
+          date: `2024-0${Math.floor(i / 12) + 1}-15`,
+        })
+      )
+      mockRepository.createMany.mockResolvedValue(recurrentExpenses)
 
-      const result = await sut.execute('user-123', input)
+      const result = (await sut.execute('user-123', input)) as Expense[]
 
-      expect(result).toEqual(expense)
+      expect(result.length).toBeGreaterThan(0)
+      expect(result[0]!.is_recurrent).toBe(true)
+      expect(result[0]!.recurrent_group_id).toBe('group-1')
+
+      vi.useRealTimers()
     })
 
     it('includes recurrence_end when provided', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-15T12:00:00.000Z'))
+
       const input: CreateExpense = {
         type: 'recurrent',
         category_id: 'cat-1',
@@ -127,16 +142,47 @@ describe('CreateExpenseUseCase', () => {
         recurrence_start: '2024-01-15',
         recurrence_end: '2024-12-15',
       }
-      const expense = createMockExpense({
-        is_recurrent: true,
+      const recurrentExpenses = Array.from({ length: 12 }, (_, i) =>
+        createMockExpense({
+          id: `rec-${i}`,
+          is_recurrent: true,
+          recurrence_day: 15,
+          recurrence_end: '2024-12-15',
+          recurrent_group_id: 'group-1',
+        })
+      )
+      mockRepository.createMany.mockResolvedValue(recurrentExpenses)
+
+      const result = (await sut.execute('user-123', input)) as Expense[]
+
+      expect(result.length).toBeGreaterThan(0)
+      expect(result[0]!.recurrence_end).toBe('2024-12-15')
+
+      vi.useRealTimers()
+    })
+
+    it('throws INTERNAL_ERROR when creation fails', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-15T12:00:00.000Z'))
+
+      const input: CreateExpense = {
+        type: 'recurrent',
+        category_id: 'cat-1',
+        description: 'Test Expense',
+        amount_cents: 5000,
+        payment_method: 'credit_card',
         recurrence_day: 15,
-        recurrence_end: '2024-12-15',
+        recurrence_start: '2024-01-15',
+      }
+      mockRepository.createMany.mockResolvedValue([])
+
+      await expect(sut.execute('user-123', input)).rejects.toThrow(AppError)
+      await expect(sut.execute('user-123', input)).rejects.toMatchObject({
+        code: ERROR_CODES.INTERNAL_ERROR,
+        status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
       })
-      mockRepository.create.mockResolvedValue(expense)
 
-      const result = (await sut.execute('user-123', input)) as Expense
-
-      expect(result.recurrence_end).toBe('2024-12-15')
+      vi.useRealTimers()
     })
   })
 
@@ -176,6 +222,9 @@ describe('CreateExpenseUseCase', () => {
     })
 
     it('handles recurrent expense on day 31', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-15T12:00:00.000Z'))
+
       const input: CreateExpense = {
         type: 'recurrent',
         category_id: 'cat-1',
@@ -185,16 +234,23 @@ describe('CreateExpenseUseCase', () => {
         recurrence_day: 31,
         recurrence_start: '2024-01-31',
       }
-      const expense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 31,
-        recurrence_start: '2024-01-31',
-      })
-      mockRepository.create.mockResolvedValue(expense)
+      const recurrentExpenses = Array.from({ length: 24 }, (_, i) =>
+        createMockExpense({
+          id: `rec-${i}`,
+          is_recurrent: true,
+          recurrence_day: 31,
+          recurrence_start: '2024-01-31',
+          recurrent_group_id: 'group-1',
+        })
+      )
+      mockRepository.createMany.mockResolvedValue(recurrentExpenses)
 
-      const result = (await sut.execute('user-123', input)) as Expense
+      const result = (await sut.execute('user-123', input)) as Expense[]
 
-      expect(result.recurrence_day).toBe(31)
+      expect(result.length).toBeGreaterThan(0)
+      expect(result[0]!.recurrence_day).toBe(31)
+
+      vi.useRealTimers()
     })
   })
 

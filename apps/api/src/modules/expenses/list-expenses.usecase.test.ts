@@ -1,4 +1,4 @@
-import type { ExpenseFilters } from '@plim/shared'
+import type { ExpenseFilters, PaginatedExpenseFilters } from '@plim/shared'
 import { createMockExpense } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ExpensesRepository } from './expenses.repository'
@@ -6,13 +6,13 @@ import { ListExpensesUseCase } from './list-expenses.usecase'
 
 type MockRepository = {
   findByUserId: ReturnType<typeof vi.fn>
-  findRecurrentByUserId: ReturnType<typeof vi.fn>
+  findByUserIdPaginated: ReturnType<typeof vi.fn>
 }
 
 function createMockRepository(): MockRepository {
   return {
     findByUserId: vi.fn(),
-    findRecurrentByUserId: vi.fn(),
+    findByUserIdPaginated: vi.fn(),
   }
 }
 
@@ -25,348 +25,161 @@ describe('ListExpensesUseCase', () => {
     sut = new ListExpensesUseCase(mockRepository as unknown as ExpensesRepository)
   })
 
-  it('returns expenses without filters', async () => {
-    const oneTimeExpense = createMockExpense({
-      description: 'One Time Expense',
-      payment_method: 'credit_card',
-      date: '2024-01-15',
-    })
-    mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
+  describe('execute', () => {
+    it('returns expenses without filters', async () => {
+      const expenses = [
+        createMockExpense({ description: 'Expense 1', date: '2024-01-15' }),
+        createMockExpense({ description: 'Expense 2', date: '2024-01-10' }),
+      ]
+      mockRepository.findByUserId.mockResolvedValue(expenses)
 
-    const result = await sut.execute('user-123')
-
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      ...oneTimeExpense,
-      is_projected: false,
-    })
-  })
-
-  it('returns expenses with filters', async () => {
-    const oneTimeExpense = createMockExpense({ date: '2024-01-15' })
-    const filters: ExpenseFilters = {
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
-      category_id: 'cat-1',
-    }
-    mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
-    mockRepository.findRecurrentByUserId.mockResolvedValue([])
-
-    const result = await sut.execute('user-123', filters)
-
-    expect(result).toHaveLength(1)
-  })
-
-  describe('recurrent expense projection', () => {
-    it('projects recurrent expenses when date range provided', async () => {
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        payment_method: 'debit_card',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result.length).toBeGreaterThan(0)
-      expect(result.every((e) => e.is_projected)).toBe(true)
-      expect(result.every((e) => e.source_expense_id === recurrentExpense.id)).toBe(true)
-    })
-
-    it('projects monthly occurrences correctly', async () => {
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result).toHaveLength(3)
-      expect(result.map((e) => e.date)).toEqual(
-        expect.arrayContaining(['2024-01-10', '2024-02-10', '2024-03-10'])
-      )
-    })
-
-    it('respects recurrence_end when projecting', async () => {
-      const expenseWithEnd = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        recurrence_end: '2024-02-15',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([expenseWithEnd])
-
-      const result = await sut.execute('user-123', filters)
+      const result = await sut.execute('user-123')
 
       expect(result).toHaveLength(2)
-      expect(result.map((e) => e.date)).toEqual(
-        expect.arrayContaining(['2024-01-10', '2024-02-10'])
-      )
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', undefined)
     })
 
-    it('filters projected expenses by category', async () => {
-      const recurrentExpense = createMockExpense({
-        category_id: 'cat-1',
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        category_id: 'different-cat',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result).toHaveLength(0)
-    })
-
-    it('filters projected expenses by payment_method', async () => {
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        payment_method: 'debit_card',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        payment_method: 'credit_card',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result).toHaveLength(0)
-    })
-
-    it('includes projected expenses matching payment_method filter', async () => {
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        payment_method: 'debit_card',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        payment_method: 'debit_card',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result.length).toBeGreaterThan(0)
-    })
-
-    it('filters projected expenses by credit_card_id none', async () => {
-      const recurrentWithCard = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        credit_card_id: 'card-123',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        credit_card_id: 'none',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentWithCard])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result).toHaveLength(0)
-    })
-
-    it('includes projected expenses with null credit_card_id when filtering by none', async () => {
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        credit_card_id: null,
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        credit_card_id: 'none',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result.length).toBeGreaterThan(0)
-    })
-
-    it('filters projected expenses by specific credit_card_id', async () => {
-      const recurrentWithCard = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        credit_card_id: 'card-123',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        credit_card_id: 'different-card',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentWithCard])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result).toHaveLength(0)
-    })
-
-    it('includes projected expenses matching specific credit_card_id', async () => {
-      const recurrentWithCard = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-        credit_card_id: 'card-123',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        credit_card_id: 'card-123',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentWithCard])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result.length).toBeGreaterThan(0)
-    })
-
-    it('combines regular and projected expenses sorted by date descending', async () => {
-      const oneTimeExpense = createMockExpense({ date: '2024-01-15' })
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-      })
+    it('returns expenses with filters', async () => {
+      const expenses = [createMockExpense({ date: '2024-01-15' })]
       const filters: ExpenseFilters = {
         start_date: '2024-01-01',
         end_date: '2024-01-31',
+        category_id: 'cat-1',
       }
-      mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
+      mockRepository.findByUserId.mockResolvedValue(expenses)
 
       const result = await sut.execute('user-123', filters)
 
-      expect(result.length).toBeGreaterThan(1)
-      const dates = result.map((e) => new Date(e.date).getTime())
-      expect(dates).toEqual([...dates].sort((a, b) => b - a))
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', filters)
     })
-  })
 
-  describe('boundary and edge cases', () => {
     it('returns empty array when no expenses exist', async () => {
       mockRepository.findByUserId.mockResolvedValue([])
 
       const result = await sut.execute('user-123')
 
       expect(result).toEqual([])
-      expect(result).toHaveLength(0)
     })
 
-    it('handles single-day date range', async () => {
-      const oneTimeExpense = createMockExpense({ date: '2024-01-15' })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-15',
-        end_date: '2024-01-15',
-      }
+    it('returns one-time expenses', async () => {
+      const oneTimeExpense = createMockExpense({
+        description: 'One Time Expense',
+        is_recurrent: false,
+        installment_total: null,
+      })
       mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([])
 
-      const result = await sut.execute('user-123', filters)
+      const result = await sut.execute('user-123')
 
       expect(result).toHaveLength(1)
+      expect(result[0]?.is_recurrent).toBe(false)
     })
 
-    it('handles recurrent expense adjusting for shorter months', async () => {
-      const lastDayExpense = createMockExpense({
+    it('returns recurrent expenses (now materialized)', async () => {
+      const recurrentExpense = createMockExpense({
+        description: 'Recurring Expense',
         is_recurrent: true,
-        recurrence_day: 31,
-        recurrence_start: '2024-01-31',
+        recurrence_day: 10,
+        recurrent_group_id: 'group-1',
+        date: '2024-01-10',
       })
-      const filters: ExpenseFilters = {
+      mockRepository.findByUserId.mockResolvedValue([recurrentExpense])
+
+      const result = await sut.execute('user-123', {
         start_date: '2024-01-01',
-        end_date: '2024-03-31',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([lastDayExpense])
+        end_date: '2024-01-31',
+      })
 
-      const result = await sut.execute('user-123', filters)
-
-      expect(result.length).toBeGreaterThan(0)
-      // Feb 2024 has 29 days (leap year), so day 31 → day 29
-      const februaryExpense = result.find((e) => e.date.startsWith('2024-02'))
-      expect(februaryExpense?.date).toBe('2024-02-29')
+      expect(result).toHaveLength(1)
+      expect(result[0]?.is_recurrent).toBe(true)
+      expect(result[0]?.recurrent_group_id).toBe('group-1')
     })
 
-    it('projects recurrent expenses across year boundary', async () => {
+    it('returns installment expenses', async () => {
+      const installmentExpense = createMockExpense({
+        description: 'Installment Expense',
+        installment_current: 1,
+        installment_total: 3,
+        installment_group_id: 'group-1',
+      })
+      mockRepository.findByUserId.mockResolvedValue([installmentExpense])
+
+      const result = await sut.execute('user-123')
+
+      expect(result).toHaveLength(1)
+      expect(result[0]?.installment_total).toBe(3)
+    })
+
+    it('filters by payment_method', async () => {
+      const creditCardExpense = createMockExpense({ payment_method: 'credit_card' })
+      mockRepository.findByUserId.mockResolvedValue([creditCardExpense])
+
+      const result = await sut.execute('user-123', { payment_method: 'credit_card' })
+
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', {
+        payment_method: 'credit_card',
+      })
+    })
+
+    it('filters by credit_card_id', async () => {
+      const expense = createMockExpense({ credit_card_id: 'card-1' })
+      mockRepository.findByUserId.mockResolvedValue([expense])
+
+      const result = await sut.execute('user-123', { credit_card_id: 'card-1' })
+
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', {
+        credit_card_id: 'card-1',
+      })
+    })
+
+    it('filters by expense_type one_time', async () => {
+      const oneTimeExpense = createMockExpense({
+        is_recurrent: false,
+        installment_total: null,
+      })
+      mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
+
+      const result = await sut.execute('user-123', { expense_type: 'one_time' })
+
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', {
+        expense_type: 'one_time',
+      })
+    })
+
+    it('filters by expense_type recurrent', async () => {
       const recurrentExpense = createMockExpense({
         is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
+        recurrence_day: 15,
+        recurrent_group_id: 'group-1',
       })
-      const filters: ExpenseFilters = {
-        start_date: '2024-12-01',
-        end_date: '2025-01-31',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
+      mockRepository.findByUserId.mockResolvedValue([recurrentExpense])
 
-      const result = await sut.execute('user-123', filters)
+      const result = await sut.execute('user-123', { expense_type: 'recurrent' })
 
-      expect(result).toHaveLength(2)
-      expect(result.map((e) => e.date)).toEqual(
-        expect.arrayContaining(['2024-12-10', '2025-01-10'])
-      )
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', {
+        expense_type: 'recurrent',
+      })
     })
 
-    it('handles recurrent expense starting after filter start date', async () => {
-      const lateStartExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-02-15',
+    it('filters by expense_type installment', async () => {
+      const installmentExpense = createMockExpense({
+        installment_current: 1,
+        installment_total: 3,
+        installment_group_id: 'group-1',
       })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-      }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([lateStartExpense])
+      mockRepository.findByUserId.mockResolvedValue([installmentExpense])
 
-      const result = await sut.execute('user-123', filters)
+      const result = await sut.execute('user-123', { expense_type: 'installment' })
 
-      expect(result.length).toBeGreaterThan(0)
-      expect(result.every((e) => e.date >= '2024-02-15')).toBe(true)
+      expect(result).toHaveLength(1)
+      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123', {
+        expense_type: 'installment',
+      })
     })
 
     it('handles large list of expenses', async () => {
@@ -381,78 +194,60 @@ describe('ListExpensesUseCase', () => {
     })
   })
 
-  describe('expense_type filtering', () => {
-    it('returns only one-time expenses when filtering by one_time', async () => {
-      const oneTimeExpense = createMockExpense({ date: '2024-01-15' })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
-        expense_type: 'one_time',
-      }
-      mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
+  describe('executePaginated', () => {
+    it('returns paginated expenses', async () => {
+      const expenses = [
+        createMockExpense({ description: 'Expense 1' }),
+        createMockExpense({ description: 'Expense 2' }),
+      ]
+      mockRepository.findByUserIdPaginated.mockResolvedValue({ data: expenses, total: 10 })
 
-      const result = await sut.execute('user-123', filters)
+      const filters: PaginatedExpenseFilters = { page: 1, limit: 2 }
+      const result = await sut.executePaginated('user-123', filters)
 
-      expect(result).toHaveLength(1)
-      expect(result[0]).toMatchObject({ ...oneTimeExpense, is_projected: false })
-      expect(mockRepository.findRecurrentByUserId).not.toHaveBeenCalled()
-    })
-
-    it('returns only installment expenses when filtering by installment', async () => {
-      const installmentExpense = createMockExpense({
-        date: '2024-01-20',
-        installment_current: 1,
-        installment_total: 3,
-        installment_group_id: 'group-1',
+      expect(result.data).toHaveLength(2)
+      expect(result.meta).toEqual({
+        page: 1,
+        limit: 2,
+        total: 10,
+        totalPages: 5,
       })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
-        expense_type: 'installment',
-      }
-      mockRepository.findByUserId.mockResolvedValue([installmentExpense])
-
-      const result = await sut.execute('user-123', filters)
-
-      expect(result).toHaveLength(1)
-      expect(result[0]).toMatchObject({ ...installmentExpense, is_projected: false })
-      expect(mockRepository.findRecurrentByUserId).not.toHaveBeenCalled()
     })
 
-    it('projects recurrent expenses when filtering by recurrent', async () => {
-      const recurrentExpense = createMockExpense({
-        is_recurrent: true,
-        recurrence_day: 10,
-        recurrence_start: '2024-01-01',
-      })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        expense_type: 'recurrent',
+    it('passes filters to repository', async () => {
+      mockRepository.findByUserIdPaginated.mockResolvedValue({ data: [], total: 0 })
+
+      const filters: PaginatedExpenseFilters = {
+        page: 2,
+        limit: 10,
+        category_id: 'cat-1',
+        payment_method: 'credit_card',
       }
-      mockRepository.findByUserId.mockResolvedValue([])
-      mockRepository.findRecurrentByUserId.mockResolvedValue([recurrentExpense])
+      await sut.executePaginated('user-123', filters)
 
-      const result = await sut.execute('user-123', filters)
-
-      expect(result.length).toBeGreaterThan(0)
-      expect(result.every((e) => e.is_projected)).toBe(true)
-      expect(mockRepository.findRecurrentByUserId).toHaveBeenCalled()
+      expect(mockRepository.findByUserIdPaginated).toHaveBeenCalledWith(
+        'user-123',
+        { category_id: 'cat-1', payment_method: 'credit_card' },
+        2,
+        10
+      )
     })
 
-    it('skips recurrent projection when filtering by one_time even with date range', async () => {
-      const oneTimeExpense = createMockExpense({ date: '2024-01-15' })
-      const filters: ExpenseFilters = {
-        start_date: '2024-01-01',
-        end_date: '2024-03-31',
-        expense_type: 'one_time',
-      }
-      mockRepository.findByUserId.mockResolvedValue([oneTimeExpense])
+    it('calculates totalPages correctly', async () => {
+      mockRepository.findByUserIdPaginated.mockResolvedValue({ data: [], total: 25 })
 
-      const result = await sut.execute('user-123', filters)
+      const result = await sut.executePaginated('user-123', { page: 1, limit: 10 })
 
-      expect(result).toHaveLength(1)
-      expect(mockRepository.findRecurrentByUserId).not.toHaveBeenCalled()
+      expect(result.meta.totalPages).toBe(3) // Math.ceil(25/10) = 3
+    })
+
+    it('handles empty results', async () => {
+      mockRepository.findByUserIdPaginated.mockResolvedValue({ data: [], total: 0 })
+
+      const result = await sut.executePaginated('user-123', { page: 1, limit: 10 })
+
+      expect(result.data).toEqual([])
+      expect(result.meta.totalPages).toBe(0)
     })
   })
 })

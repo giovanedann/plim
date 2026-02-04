@@ -5,6 +5,7 @@ vi.mock('../../lib/env', () => ({
   createSupabaseClientWithAuth: vi.fn(() => ({ mock: 'supabase-client' })),
 }))
 
+vi.mock('../ai/ai.repository')
 vi.mock('./expenses.repository')
 vi.mock('./list-expenses.usecase')
 vi.mock('./get-expense.usecase')
@@ -53,10 +54,13 @@ describe('createExpensesDependencies', () => {
     expect(createSupabaseClientWithAuth).toHaveBeenCalledWith(mockEnv, mockAccessToken)
   })
 
-  it('creates repository with Supabase client', () => {
+  it('creates repository with Supabase client and cache invalidation callback', () => {
     createExpensesDependencies({ env: mockEnv, accessToken: mockAccessToken })
 
-    expect(ExpensesRepository).toHaveBeenCalledWith({ mock: 'supabase-client' })
+    expect(ExpensesRepository).toHaveBeenCalledWith(
+      { mock: 'supabase-client' },
+      expect.any(Function)
+    )
   })
 
   it('returns repository instance', () => {

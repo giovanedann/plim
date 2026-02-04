@@ -22,6 +22,7 @@ export const expenseSchema = z.object({
   installment_current: z.number().int().min(1).nullable(),
   installment_total: z.number().int().min(1).nullable(),
   installment_group_id: z.uuid().nullable(),
+  recurrent_group_id: z.uuid().nullable(),
   credit_card_id: z.uuid().nullable(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),

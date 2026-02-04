@@ -49,7 +49,7 @@ import type {
   UpdateExpense,
 } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Plus } from 'lucide-react'
+import { AlertTriangle, Info, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -674,6 +674,13 @@ export function ExpenseModal({
           {expenseType === 'recurrent' && !isEditing && (
             <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Recorrência</h4>
+              <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-400">
+                <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>
+                  Despesas recorrentes são criadas para os próximos 2 anos e renovadas
+                  automaticamente.
+                </span>
+              </div>
               <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="recurrence_day">Dia do mês</Label>
