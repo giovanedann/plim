@@ -186,28 +186,112 @@ async function executeQueryExpenses(
     }
   }
 
-  const expenses = await context.expensesRepository.findByUserId(context.userId, {
+  let creditCardId: string | undefined
+  if (params.credit_card_name) {
+    const creditCard = await findCreditCardByName(
+      context.supabase,
+      context.userId,
+      params.credit_card_name
+    )
+    if (creditCard) {
+      creditCardId = creditCard.id
+    }
+  }
+
+  // Query non-recurrent expenses (one-time and installments) for the date range
+  const nonRecurrentExpenses = await context.expensesRepository.findByUserId(context.userId, {
     start_date: params.start_date,
     end_date: params.end_date,
     category_id: categoryId,
     payment_method: params.payment_method,
+    credit_card_id: creditCardId,
+    expense_type: 'one_time',
   })
 
-  const total = expenses.reduce((sum, e) => sum + e.amount_cents, 0)
-  const formattedTotal = formatCurrency(total)
+  // Query installment expenses separately
+  const installmentExpenses = await context.expensesRepository.findByUserId(context.userId, {
+    start_date: params.start_date,
+    end_date: params.end_date,
+    category_id: categoryId,
+    payment_method: params.payment_method,
+    credit_card_id: creditCardId,
+    expense_type: 'installment',
+  })
 
-  let message: string
-  if (params.category_name) {
-    message = `Seus gastos com ${params.category_name}: ${formattedTotal} (${expenses.length} despesas)`
+  // Combine non-recurrent expenses
+  const actualExpenses = [...nonRecurrentExpenses, ...installmentExpenses]
+
+  // Project recurrent expenses for the queried period if we have a date range
+  let projectedRecurrentTotal = 0
+  let projectedRecurrentCount = 0
+
+  if (params.start_date && params.end_date) {
+    const recurrentTemplates = await getRecurrentExpenseTemplatesFiltered(
+      context,
+      categoryId,
+      params.payment_method,
+      creditCardId
+    )
+
+    // Calculate all months in the date range
+    const startDate = new Date(params.start_date)
+    const endDate = new Date(params.end_date)
+
+    const currentMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+    const lastMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
+
+    while (currentMonth <= lastMonth) {
+      const monthStr = currentMonth.toISOString().slice(0, 7)
+      const { total, count } = projectRecurrentExpensesForMonthDetailed(
+        recurrentTemplates,
+        monthStr,
+        params.start_date,
+        params.end_date
+      )
+      projectedRecurrentTotal += total
+      projectedRecurrentCount += count
+      currentMonth.setMonth(currentMonth.getMonth() + 1)
+    }
+  }
+
+  const totalExpenseCount = actualExpenses.length + projectedRecurrentCount
+  const actualTotal = actualExpenses.reduce((sum, e) => sum + e.amount_cents, 0)
+  const total = actualTotal + projectedRecurrentTotal
+  const formattedTotal = formatCurrency(total)
+  const formattedActualTotal = formatCurrency(actualTotal)
+  const formattedRecurrentTotal = formatCurrency(projectedRecurrentTotal)
+
+  // Build base message
+  let baseMessage: string
+  if (params.credit_card_name) {
+    baseMessage = `Seus gastos no cartão ${params.credit_card_name}`
+  } else if (params.category_name) {
+    baseMessage = `Seus gastos com ${params.category_name}`
+  } else if (params.payment_method) {
+    const methodNames: Record<string, string> = {
+      credit_card: 'cartão de crédito',
+      debit_card: 'cartão de débito',
+      pix: 'Pix',
+      cash: 'dinheiro',
+    }
+    baseMessage = `Seus gastos com ${methodNames[params.payment_method] || params.payment_method}`
   } else if (params.start_date && params.end_date) {
-    message = `Total de gastos no período: ${formattedTotal} (${expenses.length} despesas)`
+    baseMessage = 'Total de gastos no período'
   } else {
-    message = `Total de gastos: ${formattedTotal} (${expenses.length} despesas)`
+    baseMessage = 'Total de gastos'
+  }
+
+  // Format message with breakdown if there are projected recurrent expenses
+  let message: string
+  if (projectedRecurrentCount > 0) {
+    message = `${baseMessage}: ${formattedTotal} (${totalExpenseCount} despesas) — sendo ${formattedActualTotal} já realizados (${actualExpenses.length}) e ${formattedRecurrentTotal} de recorrentes previstas (${projectedRecurrentCount})`
+  } else {
+    message = `${baseMessage}: ${formattedTotal} (${totalExpenseCount} despesas)`
   }
 
   let groupedData: Record<string, { total: number; count: number }> | undefined
-  if (params.group_by && expenses.length > 0) {
-    groupedData = groupExpenses(expenses, params.group_by, context.supabase, context.userId)
+  if (params.group_by && actualExpenses.length > 0) {
+    groupedData = groupExpenses(actualExpenses, params.group_by, context.supabase, context.userId)
   }
 
   return {
@@ -215,9 +299,13 @@ async function executeQueryExpenses(
     message,
     data: {
       total,
-      count: expenses.length,
-      expenses: expenses.slice(0, 10),
+      count: totalExpenseCount,
+      expenses: actualExpenses.slice(0, 10),
       grouped: groupedData,
+      recurrent: {
+        total: projectedRecurrentTotal,
+        count: projectedRecurrentCount,
+      },
     },
     actionType: 'query_result',
   }
@@ -336,6 +424,9 @@ interface RecurrentTemplate {
   recurrence_day: number
   recurrence_start: string
   recurrence_end: string | null
+  category_id?: string
+  payment_method?: string
+  credit_card_id?: string | null
 }
 
 async function getRecurrentExpenseTemplates(
@@ -346,6 +437,39 @@ async function getRecurrentExpenseTemplates(
     .select('amount_cents, recurrence_day, recurrence_start, recurrence_end')
     .eq('user_id', context.userId)
     .eq('is_recurrent', true)
+
+  if (error || !data) return []
+
+  return data as RecurrentTemplate[]
+}
+
+async function getRecurrentExpenseTemplatesFiltered(
+  context: FunctionExecutionContext,
+  categoryId?: string,
+  paymentMethod?: string,
+  creditCardId?: string
+): Promise<RecurrentTemplate[]> {
+  let query = context.supabase
+    .from('expense')
+    .select(
+      'amount_cents, recurrence_day, recurrence_start, recurrence_end, category_id, payment_method, credit_card_id'
+    )
+    .eq('user_id', context.userId)
+    .eq('is_recurrent', true)
+
+  if (categoryId) {
+    query = query.eq('category_id', categoryId)
+  }
+
+  if (paymentMethod) {
+    query = query.eq('payment_method', paymentMethod)
+  }
+
+  if (creditCardId) {
+    query = query.eq('credit_card_id', creditCardId)
+  }
+
+  const { data, error } = await query
 
   if (error || !data) return []
 
@@ -374,6 +498,41 @@ function projectRecurrentExpensesForMonth(
   }
 
   return total
+}
+
+function projectRecurrentExpensesForMonthDetailed(
+  templates: RecurrentTemplate[],
+  monthStr: string,
+  startDate: string,
+  endDate: string
+): { total: number; count: number } {
+  let total = 0
+  let count = 0
+  const year = Number.parseInt(monthStr.slice(0, 4), 10)
+  const month = Number.parseInt(monthStr.slice(5, 7), 10) - 1 // 0-indexed
+  const queryStart = new Date(startDate)
+  const queryEnd = new Date(endDate)
+
+  for (const template of templates) {
+    const recurrenceStart = new Date(template.recurrence_start)
+    const recurrenceEnd = template.recurrence_end ? new Date(template.recurrence_end) : null
+
+    // Create date for this recurrence in the target month
+    const occurrenceDate = new Date(year, month, template.recurrence_day)
+
+    // Check if this occurrence is within the recurrence bounds AND query date range
+    if (
+      occurrenceDate >= recurrenceStart &&
+      (!recurrenceEnd || occurrenceDate <= recurrenceEnd) &&
+      occurrenceDate >= queryStart &&
+      occurrenceDate <= queryEnd
+    ) {
+      total += template.amount_cents
+      count += 1
+    }
+  }
+
+  return { total, count }
 }
 
 async function findCategoryByName(
