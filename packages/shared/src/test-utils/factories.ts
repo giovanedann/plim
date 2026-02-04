@@ -33,6 +33,7 @@ export function createMockExpense(overrides: Partial<Expense> = {}): Expense {
     installment_current: null,
     installment_total: null,
     installment_group_id: null,
+    recurrent_group_id: null,
     credit_card_id: null,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),
@@ -117,12 +118,12 @@ export function createMockAIUsageResponse(
 ): AIUsageResponse {
   return {
     tier: 'free',
-    text: { used: 5, limit: 30, remaining: 25 },
-    voice: { used: 1, limit: 5, remaining: 4 },
-    image: { used: 0, limit: 5, remaining: 5 },
+    text: { used: 5, limit: 15, remaining: 10 },
+    voice: { used: 1, limit: 2, remaining: 1 },
+    image: { used: 0, limit: 3, remaining: 3 },
     used: 6,
-    limit: 40,
-    remainingRequests: 34,
+    limit: 20,
+    remainingRequests: 14,
     ...overrides,
   }
 }
