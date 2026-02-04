@@ -1,7 +1,7 @@
 import type { Expense, ExpenseFilters, UpdateExpense } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CreateExpenseData } from './expenses.repository'
+import type { CacheInvalidationFn, CreateExpenseData } from './expenses.repository'
 import { ExpensesRepository } from './expenses.repository'
 
 function createMockSupabaseClient() {
@@ -768,6 +768,254 @@ describe('ExpensesRepository', () => {
 
       // Assert
       expect(result).toEqual([])
+    })
+  })
+
+  describe('updateByGroupId', () => {
+    it('updates all expenses in a group and returns count', async () => {
+      // Arrange
+      const groupId = 'group-1'
+      const userId = 'user-123'
+      const input = { credit_card_id: 'card-1' }
+      const mockSecondEq = vi.fn().mockResolvedValue({ error: null, count: 12 })
+      mocks.mockEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      const result = await sut.updateByGroupId(groupId, userId, input)
+
+      // Assert
+      expect(result).toBe(12)
+      expect(mocks.mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          credit_card_id: 'card-1',
+          updated_at: expect.any(String),
+        })
+      )
+      expect(mocks.mockEq).toHaveBeenCalledWith('installment_group_id', groupId)
+      expect(mockSecondEq).toHaveBeenCalledWith('user_id', userId)
+    })
+
+    it('returns 0 on error', async () => {
+      // Arrange
+      const groupId = 'group-1'
+      const userId = 'user-123'
+      const input = { credit_card_id: 'card-1' }
+      const mockSecondEq = vi
+        .fn()
+        .mockResolvedValue({ error: new Error('Update failed'), count: 0 })
+      mocks.mockEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      const result = await sut.updateByGroupId(groupId, userId, input)
+
+      // Assert
+      expect(result).toBe(0)
+    })
+
+    it('returns 0 when no expenses found in group', async () => {
+      // Arrange
+      const groupId = 'nonexistent'
+      const userId = 'user-123'
+      const input = { credit_card_id: 'card-1' }
+      const mockSecondEq = vi.fn().mockResolvedValue({ error: null, count: 0 })
+      mocks.mockEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      const result = await sut.updateByGroupId(groupId, userId, input)
+
+      // Assert
+      expect(result).toBe(0)
+    })
+  })
+
+  describe('cache invalidation', () => {
+    let mockCacheInvalidate: CacheInvalidationFn
+    let sutWithCache: ExpensesRepository
+
+    beforeEach(() => {
+      mockCacheInvalidate = vi.fn().mockResolvedValue(undefined)
+      sutWithCache = new ExpensesRepository(mocks.supabase, mockCacheInvalidate)
+    })
+
+    it('calls cache invalidation after successful create', async () => {
+      // Arrange
+      const userId = 'user-123'
+      const input: CreateExpenseData = {
+        category_id: 'cat-1',
+        description: 'New Expense',
+        amount_cents: 10000,
+        payment_method: 'pix',
+        date: '2024-02-01',
+      }
+      mocks.mockSingle.mockResolvedValue({ data: createMockExpense(input), error: null })
+
+      // Act
+      await sutWithCache.create(userId, input)
+
+      // Assert
+      expect(mockCacheInvalidate).toHaveBeenCalledWith(userId)
+    })
+
+    it('does not call cache invalidation on failed create', async () => {
+      // Arrange
+      const userId = 'user-123'
+      const input: CreateExpenseData = {
+        category_id: 'cat-1',
+        description: 'New Expense',
+        amount_cents: 10000,
+        payment_method: 'pix',
+        date: '2024-02-01',
+      }
+      mocks.mockSingle.mockResolvedValue({ data: null, error: new Error('Insert failed') })
+
+      // Act
+      await sutWithCache.create(userId, input)
+
+      // Assert
+      expect(mockCacheInvalidate).not.toHaveBeenCalled()
+    })
+
+    it('calls cache invalidation after successful createMany', async () => {
+      // Arrange
+      const userId = 'user-123'
+      const inputs: CreateExpenseData[] = [
+        {
+          category_id: 'cat-1',
+          description: 'Test',
+          amount_cents: 1000,
+          payment_method: 'pix',
+          date: '2024-01-01',
+        },
+      ]
+      mocks.mockSelect.mockResolvedValue({ data: [createMockExpense()], error: null })
+
+      // Act
+      await sutWithCache.createMany(userId, inputs)
+
+      // Assert
+      expect(mockCacheInvalidate).toHaveBeenCalledWith(userId)
+    })
+
+    it('does not call cache invalidation on failed createMany', async () => {
+      // Arrange
+      const userId = 'user-123'
+      const inputs: CreateExpenseData[] = [
+        {
+          category_id: 'cat-1',
+          description: 'Test',
+          amount_cents: 1000,
+          payment_method: 'pix',
+          date: '2024-01-01',
+        },
+      ]
+      mocks.mockSelect.mockResolvedValue({ data: null, error: new Error('Insert failed') })
+
+      // Act
+      await sutWithCache.createMany(userId, inputs)
+
+      // Assert
+      expect(mockCacheInvalidate).not.toHaveBeenCalled()
+    })
+
+    it('calls cache invalidation after successful update', async () => {
+      // Arrange
+      const expenseId = 'expense-1'
+      const userId = 'user-123'
+      const input: UpdateExpense = { description: 'Updated' }
+      mocks.mockSingle.mockResolvedValue({ data: createMockExpense(input), error: null })
+
+      // Act
+      await sutWithCache.update(expenseId, userId, input)
+
+      // Assert
+      expect(mockCacheInvalidate).toHaveBeenCalledWith(userId)
+    })
+
+    it('does not call cache invalidation on failed update', async () => {
+      // Arrange
+      const expenseId = 'expense-1'
+      const userId = 'user-123'
+      const input: UpdateExpense = { description: 'Updated' }
+      mocks.mockSingle.mockResolvedValue({ data: null, error: new Error('Update failed') })
+
+      // Act
+      await sutWithCache.update(expenseId, userId, input)
+
+      // Assert
+      expect(mockCacheInvalidate).not.toHaveBeenCalled()
+    })
+
+    it('calls cache invalidation after successful delete', async () => {
+      // Arrange
+      const expenseId = 'expense-1'
+      const userId = 'user-123'
+      const mockSecondEq = vi.fn().mockResolvedValue({ error: null, count: 1 })
+      mocks.mockDeleteEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      await sutWithCache.delete(expenseId, userId)
+
+      // Assert
+      expect(mockCacheInvalidate).toHaveBeenCalledWith(userId)
+    })
+
+    it('does not call cache invalidation on failed delete', async () => {
+      // Arrange
+      const expenseId = 'expense-1'
+      const userId = 'user-123'
+      const mockSecondEq = vi.fn().mockResolvedValue({ error: null, count: 0 })
+      mocks.mockDeleteEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      await sutWithCache.delete(expenseId, userId)
+
+      // Assert
+      expect(mockCacheInvalidate).not.toHaveBeenCalled()
+    })
+
+    it('calls cache invalidation after successful deleteByGroupId', async () => {
+      // Arrange
+      const groupId = 'group-1'
+      const userId = 'user-123'
+      const mockSecondEq = vi.fn().mockResolvedValue({ error: null, count: 3 })
+      mocks.mockDeleteEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      await sutWithCache.deleteByGroupId(groupId, userId)
+
+      // Assert
+      expect(mockCacheInvalidate).toHaveBeenCalledWith(userId)
+    })
+
+    it('does not call cache invalidation on failed deleteByGroupId', async () => {
+      // Arrange
+      const groupId = 'group-1'
+      const userId = 'user-123'
+      const mockSecondEq = vi.fn().mockResolvedValue({ error: null, count: 0 })
+      mocks.mockDeleteEq.mockReturnValue({ eq: mockSecondEq })
+
+      // Act
+      await sutWithCache.deleteByGroupId(groupId, userId)
+
+      // Assert
+      expect(mockCacheInvalidate).not.toHaveBeenCalled()
+    })
+
+    it('works without cache invalidation callback', async () => {
+      // Arrange - using sut without cache callback
+      const userId = 'user-123'
+      const input: CreateExpenseData = {
+        category_id: 'cat-1',
+        description: 'New Expense',
+        amount_cents: 10000,
+        payment_method: 'pix',
+        date: '2024-02-01',
+      }
+      mocks.mockSingle.mockResolvedValue({ data: createMockExpense(input), error: null })
+
+      // Act & Assert - should not throw
+      const result = await sut.create(userId, input)
+      expect(result).not.toBeNull()
     })
   })
 })
