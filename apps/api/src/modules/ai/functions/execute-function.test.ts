@@ -460,11 +460,28 @@ describe('executeFunction', () => {
 
   describe('query_expenses', () => {
     it('queries expenses with filters', async () => {
-      const expenses = [
+      const oneTimeExpenses = [
         createMockExpense({ id: 'exp-1', amount_cents: 5000 }),
         createMockExpense({ id: 'exp-2', amount_cents: 3000 }),
       ]
-      mockExpensesRepository.findByUserId.mockResolvedValue(expenses)
+      // First call returns one_time expenses, second call (installments) returns empty
+      mockExpensesRepository.findByUserId
+        .mockResolvedValueOnce(oneTimeExpenses)
+        .mockResolvedValueOnce([])
+
+      // Mock supabase for recurrent expense templates query
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'expense') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }
+        }
+        return { select: vi.fn() }
+      })
 
       const result = await executeFunction(
         {
@@ -503,11 +520,22 @@ describe('executeFunction', () => {
             }),
           }
         }
+        if (table === 'expense') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }
+        }
         return { select: vi.fn() }
       })
 
       const expenses = [createMockExpense({ category_id: 'cat-1', amount_cents: 5000 })]
-      mockExpensesRepository.findByUserId.mockResolvedValue(expenses)
+      mockExpensesRepository.findByUserId.mockResolvedValueOnce(expenses).mockResolvedValueOnce([])
 
       const result = await executeFunction(
         {
@@ -533,7 +561,21 @@ describe('executeFunction', () => {
       const expenses = Array.from({ length: 15 }, (_, i) =>
         createMockExpense({ id: `exp-${i}`, amount_cents: 1000 })
       )
-      mockExpensesRepository.findByUserId.mockResolvedValue(expenses)
+      mockExpensesRepository.findByUserId.mockResolvedValueOnce(expenses).mockResolvedValueOnce([])
+
+      // Mock supabase for recurrent expense templates query (no date range = no recurrent projection)
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'expense') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }
+        }
+        return { select: vi.fn() }
+      })
 
       const result = await executeFunction(
         {
@@ -548,7 +590,21 @@ describe('executeFunction', () => {
     })
 
     it('handles empty results', async () => {
-      mockExpensesRepository.findByUserId.mockResolvedValue([])
+      mockExpensesRepository.findByUserId.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+
+      // Mock supabase for recurrent expense templates query
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'expense') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }
+        }
+        return { select: vi.fn() }
+      })
 
       const result = await executeFunction(
         {
@@ -565,6 +621,118 @@ describe('executeFunction', () => {
       expect(result.data).toMatchObject({
         total: 0,
         count: 0,
+      })
+    })
+
+    it('queries expenses by credit card name', async () => {
+      const creditCard = createMockCreditCard({ id: 'card-1', name: 'Nubank Ultravioleta' })
+      const expenses = [
+        createMockExpense({ id: 'exp-1', amount_cents: 5000, credit_card_id: 'card-1' }),
+      ]
+      mockExpensesRepository.findByUserId.mockResolvedValueOnce(expenses).mockResolvedValueOnce([])
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'credit_card') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  ilike: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockReturnValue({
+                      single: vi.fn().mockResolvedValue({ data: creditCard, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'expense') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockReturnValue({
+                    eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      const result = await executeFunction(
+        {
+          name: 'query_expenses',
+          args: {
+            credit_card_name: 'Nubank Ultravioleta',
+            start_date: '2026-01-01',
+            end_date: '2026-01-31',
+          },
+        },
+        context
+      )
+
+      expect(result.success).toBe(true)
+      expect(result.message).toContain('Nubank Ultravioleta')
+      expect(mockExpensesRepository.findByUserId).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          credit_card_id: 'card-1',
+        })
+      )
+    })
+
+    it('includes projected recurrent expenses in total', async () => {
+      const oneTimeExpenses = [createMockExpense({ id: 'exp-1', amount_cents: 5000 })]
+      mockExpensesRepository.findByUserId
+        .mockResolvedValueOnce(oneTimeExpenses)
+        .mockResolvedValueOnce([])
+
+      const recurrentTemplates = [
+        {
+          amount_cents: 3000,
+          recurrence_day: 15,
+          recurrence_start: '2025-01-01',
+          recurrence_end: null,
+        },
+      ]
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'expense') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: recurrentTemplates, error: null }),
+              }),
+            }),
+          }
+        }
+        return { select: vi.fn() }
+      })
+
+      const result = await executeFunction(
+        {
+          name: 'query_expenses',
+          args: {
+            start_date: '2026-01-01',
+            end_date: '2026-01-31',
+          },
+        },
+        context
+      )
+
+      expect(result.success).toBe(true)
+      // Should include one-time (5000) + projected recurrent (3000)
+      expect(result.data).toMatchObject({
+        total: 8000,
+        count: 2,
+        recurrent: {
+          total: 3000,
+          count: 1,
+        },
       })
     })
   })
