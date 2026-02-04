@@ -1,3 +1,15 @@
+import { PlimIcon } from '@/components/icons'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -7,11 +19,14 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { useAIChat } from '@/hooks/use-ai-chat'
+import { useProfile } from '@/hooks/use-profile'
 import { cn } from '@/lib/utils'
 import { type StoredChatMessage, useAIStore } from '@/stores/ai.store'
+import { useAuthStore } from '@/stores/auth.store'
 import type { ContentPart } from '@plim/shared'
-import { Bot, Camera, Mic, Send, Sparkles, User } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Camera, ImageIcon, Info, Mic, Send, Sparkles, Volume2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ImageUploader } from './image-uploader'
 import { VoiceRecorder } from './voice-recorder'
 
@@ -22,38 +37,258 @@ function getMessageText(content: ContentPart[]): string {
   return textPart && textPart.type === 'text' ? textPart.text : ''
 }
 
-function MessageBubble({ message }: { message: StoredChatMessage }): React.ReactElement {
+function UserAvatar({ className }: { className?: string }): React.ReactElement {
+  const { user } = useAuthStore()
+  const { profile } = useProfile()
+
+  const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url
+  const displayName = profile?.name ?? user?.email?.split('@')[0] ?? 'U'
+
+  if (avatarUrl) {
+    return (
+      <img src={avatarUrl} alt="Avatar" className={cn('rounded-full object-cover', className)} />
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-semibold text-primary-foreground',
+        className
+      )}
+    >
+      {displayName.charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
+function BotAvatar({ className }: { className?: string }): React.ReactElement {
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20 shadow-sm',
+        className
+      )}
+    >
+      <PlimIcon className="h-5 w-5" />
+    </div>
+  )
+}
+
+function MessageBubble({
+  message,
+}: {
+  message: StoredChatMessage
+}): React.ReactElement {
   const isUser = message.role === 'user'
   const text = getMessageText(message.content)
   const hasImage = message.content.some((part) => part.type === 'image')
   const hasAudio = message.content.some((part) => part.type === 'audio')
 
   return (
-    <div className={cn('flex gap-3', isUser ? 'justify-end' : 'justify-start')}>
-      {!isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
-          <Bot className="h-4 w-4 text-white" />
-        </div>
-      )}
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        type: 'spring',
+        stiffness: 500,
+        damping: 30,
+        mass: 1,
+      }}
+      className={cn('flex gap-3', isUser ? 'justify-end' : 'justify-start')}
+    >
+      {!isUser && <BotAvatar className="h-9 w-9 shrink-0" />}
 
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 }}
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-2',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+          'max-w-[80%] rounded-2xl px-4 py-3 shadow-sm',
+          isUser
+            ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground'
+            : 'bg-card text-card-foreground border border-border/50'
         )}
       >
-        {hasImage && <div className="mb-2 text-xs text-muted-foreground">[Imagem enviada]</div>}
-        {hasAudio && <div className="mb-2 text-xs text-muted-foreground">[Audio enviado]</div>}
-        <p className="whitespace-pre-wrap text-sm">{text}</p>
-      </div>
+        {hasImage && (
+          <div className="mb-2 flex items-center gap-1.5 text-xs opacity-70">
+            <ImageIcon className="h-3 w-3" />
+            <span>Imagem enviada</span>
+          </div>
+        )}
+        {hasAudio && (
+          <div className="mb-2 flex items-center gap-1.5 text-xs opacity-70">
+            <Volume2 className="h-3 w-3" />
+            <span>Áudio enviado</span>
+          </div>
+        )}
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">{text}</p>
+      </motion.div>
 
-      {isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
-          <User className="h-4 w-4 text-primary-foreground" />
-        </div>
-      )}
-    </div>
+      {isUser && <UserAvatar className="h-9 w-9 shrink-0" />}
+    </motion.div>
   )
+}
+
+function TypingIndicator(): React.ReactElement {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="flex gap-3"
+    >
+      <BotAvatar className="h-9 w-9 shrink-0" />
+      <div className="rounded-2xl bg-card border border-border/50 px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <motion.span
+            className="h-2 w-2 rounded-full bg-muted-foreground/60"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY, delay: 0 }}
+          />
+          <motion.span
+            className="h-2 w-2 rounded-full bg-muted-foreground/60"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY, delay: 0.15 }}
+          />
+          <motion.span
+            className="h-2 w-2 rounded-full bg-muted-foreground/60"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY, delay: 0.3 }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function EmptyState(): React.ReactElement {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex h-full flex-col items-center justify-center text-center px-4"
+    >
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+        className="mb-6 relative"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-orange-400/20 rounded-full blur-xl" />
+        <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg">
+          <PlimIcon className="h-12 w-12" />
+        </div>
+      </motion.div>
+
+      <motion.h3
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="mb-2 text-xl font-semibold text-foreground"
+      >
+        Olá! Sou seu assistente.
+      </motion.h3>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="max-w-[300px] text-sm text-muted-foreground mb-6"
+      >
+        Posso ajudar a registrar despesas, consultar gastos e fazer previsões financeiras.
+      </motion.p>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="space-y-2"
+      >
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-3">
+          Experimente dizer
+        </p>
+        {[
+          '"Comprei um almoço de R$35 no cartão"',
+          '"Quanto gastei esse mês?"',
+          '"Quanto vou gastar até março?"',
+        ].map((example, index) => (
+          <motion.p
+            key={example}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 + index * 0.1 }}
+            className="text-sm text-muted-foreground/80 italic"
+          >
+            {example}
+          </motion.p>
+        ))}
+      </motion.div>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground/60"
+      >
+        <Info className="h-3 w-3" />A IA pode cometer erros. Verifique informações importantes.
+      </motion.p>
+    </motion.div>
+  )
+}
+
+function ClearChatButton(): React.ReactElement {
+  const { clearMessages, messages } = useAIStore()
+
+  if (messages.length === 0) return <></>
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <button
+          type="button"
+          className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
+        >
+          Limpar histórico
+        </button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Limpar conversa?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Isso irá apagar todo o histórico da conversa. Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={clearMessages}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Limpar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+function getUsageDisplay(
+  usage: {
+    text: { remaining: number; limit: number }
+    voice: { remaining: number; limit: number }
+    image: { remaining: number; limit: number }
+  } | null,
+  mode: InputMode
+): string {
+  if (!usage) return 'Seu assistente financeiro inteligente'
+
+  const typeUsage = usage[mode]
+  if (!typeUsage) return 'Seu assistente financeiro inteligente'
+
+  const modeLabels = { text: 'texto', voice: 'voz', image: 'imagem' }
+  return `${typeUsage.remaining}/${typeUsage.limit} ${modeLabels[mode]} esta semana`
 }
 
 export function AIChatDrawer(): React.ReactElement {
@@ -62,10 +297,23 @@ export function AIChatDrawer(): React.ReactElement {
   const [inputMode, setInputMode] = useState<InputMode>('text')
   const [textInput, setTextInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom()
+    }
+  }, [messages.length, scrollToBottom])
+
+  useEffect(() => {
+    if (isDrawerOpen && inputMode === 'text') {
+      setTimeout(() => textareaRef.current?.focus(), 100)
+    }
+  }, [isDrawerOpen, inputMode])
 
   const handleSendText = useCallback(async () => {
     if (!textInput.trim() || isLoading) return
@@ -73,16 +321,14 @@ export function AIChatDrawer(): React.ReactElement {
     const text = textInput.trim()
     setTextInput('')
     await sendMessage([{ type: 'text', text }])
-    scrollToBottom()
-  }, [textInput, isLoading, sendMessage, scrollToBottom])
+  }, [textInput, isLoading, sendMessage])
 
   const handleSendAudio = useCallback(
     async (audioData: string, mimeType: 'audio/wav' | 'audio/mp3' | 'audio/webm' | 'audio/ogg') => {
       await sendMessage([{ type: 'audio', data: audioData, mimeType }])
       setInputMode('text')
-      scrollToBottom()
     },
-    [sendMessage, scrollToBottom]
+    [sendMessage]
   )
 
   const handleSendImage = useCallback(
@@ -92,9 +338,8 @@ export function AIChatDrawer(): React.ReactElement {
     ) => {
       await sendMessage([{ type: 'image', data: imageData, mimeType }])
       setInputMode('text')
-      scrollToBottom()
     },
-    [sendMessage, scrollToBottom]
+    [sendMessage]
   )
 
   const handleKeyDown = useCallback(
@@ -109,108 +354,92 @@ export function AIChatDrawer(): React.ReactElement {
 
   return (
     <Sheet open={isDrawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
-      <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
-        <SheetHeader className="border-b px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-violet-500" />
-            <SheetTitle>Assistente Plim</SheetTitle>
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col p-0 max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl"
+      >
+        {/* Header */}
+        <SheetHeader className="border-b bg-gradient-to-r from-background to-muted/30 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3 pr-8">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 shadow-sm shrink-0">
+              <PlimIcon className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <SheetTitle className="flex items-center gap-2">
+                Assistente Plim
+                <Sparkles className="h-4 w-4 text-amber-500" />
+              </SheetTitle>
+              <SheetDescription className="text-xs">
+                {getUsageDisplay(usage, inputMode)}
+              </SheetDescription>
+            </div>
           </div>
-          <SheetDescription>
-            {usage
-              ? `${usage.remainingRequests} de ${usage.limit} consultas restantes`
-              : 'Seu assistente para gerenciar despesas'}
-          </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-b from-background to-muted/10">
           {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20">
-                <Sparkles className="h-8 w-8 text-violet-500" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">
-                Ola! Sou seu assistente.
-              </h3>
-              <p className="max-w-[280px] text-sm text-muted-foreground">
-                Posso ajudar a registrar despesas, consultar gastos e fazer previsoes. Experimente
-                dizer:
-              </p>
-              <div className="mt-4 space-y-2">
-                <p className="text-sm text-muted-foreground italic">
-                  "Comprei um almoco de R$35 no cartao"
-                </p>
-                <p className="text-sm text-muted-foreground italic">"Quanto gastei esse mes?"</p>
-                <p className="text-sm text-muted-foreground italic">
-                  "Quanto vou gastar ate marco?"
-                </p>
-              </div>
-            </div>
+            <EmptyState />
           ) : (
             <div className="space-y-4">
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
-              {isLoading && (
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
-                    <Bot className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="rounded-2xl bg-muted px-4 py-2">
-                    <div className="flex gap-1">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
-                    </div>
-                  </div>
-                </div>
-              )}
+              <AnimatePresence mode="popLayout">
+                {messages.map((message) => (
+                  <MessageBubble key={message.id} message={message} />
+                ))}
+              </AnimatePresence>
+
+              <AnimatePresence>{isLoading && <TypingIndicator />}</AnimatePresence>
+
               <div ref={messagesEndRef} />
             </div>
           )}
         </div>
 
-        <div className="border-t p-4">
-          <div className="mb-3 flex justify-center gap-2">
-            <Button
-              variant={inputMode === 'text' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setInputMode('text')}
-              className="gap-1"
-            >
-              <Send className="h-3 w-3" />
-              Texto
-            </Button>
-            <Button
-              variant={inputMode === 'voice' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setInputMode('voice')}
-              className="gap-1"
-            >
-              <Mic className="h-3 w-3" />
-              Voz
-            </Button>
-            <Button
-              variant={inputMode === 'image' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setInputMode('image')}
-              className="gap-1"
-            >
-              <Camera className="h-3 w-3" />
-              Foto
-            </Button>
+        {/* Input Area */}
+        <div className="border-t bg-background p-4">
+          {/* Clear History */}
+          <div className="mb-2 flex justify-center">
+            <ClearChatButton />
           </div>
 
+          {/* Mode Selector */}
+          <div className="mb-3 flex justify-center gap-1">
+            {[
+              { mode: 'text' as const, icon: Send, label: 'Texto' },
+              { mode: 'voice' as const, icon: Mic, label: 'Voz' },
+              { mode: 'image' as const, icon: Camera, label: 'Foto' },
+            ].map(({ mode, icon: Icon, label }) => (
+              <Button
+                key={mode}
+                variant={inputMode === mode ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setInputMode(mode)}
+                className={cn('gap-1.5 transition-all', inputMode === mode && 'shadow-sm')}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Text Input */}
           {inputMode === 'text' && (
-            <div className="flex gap-2">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex gap-3"
+            >
               <textarea
+                ref={textareaRef}
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Digite sua mensagem..."
                 className={cn(
-                  'flex-1 resize-none rounded-lg border bg-background px-3 py-2',
+                  'flex-1 resize-none rounded-xl border bg-muted/50 px-4 py-3',
                   'text-sm placeholder:text-muted-foreground',
-                  'focus:outline-none focus:ring-2 focus:ring-ring'
+                  'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50',
+                  'transition-all duration-200'
                 )}
                 rows={2}
                 disabled={isLoading}
@@ -218,20 +447,25 @@ export function AIChatDrawer(): React.ReactElement {
               <Button
                 onClick={handleSendText}
                 disabled={!textInput.trim() || isLoading}
-                size="icon"
-                className="h-auto"
+                className="h-auto min-w-[56px] rounded-xl px-5 shadow-sm sm:min-w-[64px] sm:px-6"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               </Button>
-            </div>
+            </motion.div>
           )}
 
+          {/* Voice Input */}
           {inputMode === 'voice' && (
-            <VoiceRecorder onRecordingComplete={handleSendAudio} disabled={isLoading} />
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <VoiceRecorder onRecordingComplete={handleSendAudio} disabled={isLoading} />
+            </motion.div>
           )}
 
+          {/* Image Input */}
           {inputMode === 'image' && (
-            <ImageUploader onImageCapture={handleSendImage} disabled={isLoading} />
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <ImageUploader onImageCapture={handleSendImage} disabled={isLoading} />
+            </motion.div>
           )}
         </div>
       </SheetContent>

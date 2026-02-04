@@ -1,42 +1,88 @@
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAIStore } from '@/stores'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+const EXAMPLE_PROMPTS = [
+  'Gastei 50 reais no almoço',
+  'Quanto gastei esse mês?',
+  'Paguei 200 de luz',
+  'Comprei um café de 12 reais',
+]
 
 export function AIChatButton(): React.ReactElement {
-  const { toggleDrawer, isPulsing, usage } = useAIStore()
+  const { toggleDrawer, isPulsing } = useAIStore()
+  const [promptIndex, setPromptIndex] = useState(0)
 
-  const remainingRequests = usage?.remainingRequests ?? null
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPromptIndex((prev) => (prev + 1) % EXAMPLE_PROMPTS.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
-      <Button
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.5 }}
+      className="fixed bottom-6 right-6 z-50"
+    >
+      <button
+        type="button"
         onClick={toggleDrawer}
-        size="icon"
-        className={cn(
-          'h-14 w-14 rounded-full shadow-lg',
-          'bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700',
-          'transition-all duration-300 ease-in-out',
-          isPulsing && 'animate-pulse'
-        )}
+        className="group relative cursor-pointer"
         aria-label="Abrir assistente de IA"
       >
-        <Sparkles className="h-6 w-6 text-white" />
-      </Button>
-
-      {remainingRequests !== null && (
-        <Badge
-          variant="secondary"
+        {/* Subtle animated border glow */}
+        <div
           className={cn(
-            'absolute -top-2 -right-2 min-w-[28px] justify-center',
-            'bg-background text-foreground border border-border',
-            'text-xs font-medium shadow-sm'
+            'absolute -inset-[1px] rounded-2xl',
+            'bg-gradient-to-r from-amber-500/40 via-amber-400/60 to-amber-500/40',
+            'opacity-60 group-hover:opacity-90',
+            'transition-opacity duration-500',
+            'animate-[pulse_3s_ease-in-out_infinite]'
+          )}
+        />
+
+        {/* Main pill button - fixed width to prevent size changes */}
+        <div
+          className={cn(
+            'relative flex items-center gap-3 px-4 py-3 rounded-2xl w-[220px]',
+            'bg-neutral-950',
+            'transition-all duration-300',
+            'group-hover:bg-neutral-900',
+            isPulsing && 'animate-pulse'
           )}
         >
-          {remainingRequests}
-        </Badge>
-      )}
-    </div>
+          {/* Icon */}
+          <Sparkles
+            className={cn('h-5 w-5 text-amber-400 shrink-0', 'transition-all duration-300')}
+          />
+
+          {/* Text content */}
+          <div className="flex flex-col items-start gap-0.5 flex-1 min-w-0">
+            <span className="text-sm font-medium text-amber-50/90 whitespace-nowrap">
+              Pedir ajuda pra IA
+            </span>
+            <div className="h-4 overflow-hidden w-full">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={promptIndex}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3 }}
+                  className="block text-xs text-amber-50/50 truncate"
+                >
+                  "{EXAMPLE_PROMPTS[promptIndex]}"
+                </motion.span>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </button>
+    </motion.div>
   )
 }

@@ -3,6 +3,9 @@ import { cn } from '@/lib/utils'
 import { Loader2, Mic, Square } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 
+const MAX_RECORDING_SECONDS = 10
+const WARNING_THRESHOLD_SECONDS = 7
+
 interface VoiceRecorderProps {
   onRecordingComplete: (
     audioData: string,
@@ -71,7 +74,14 @@ export function VoiceRecorder({
       setRecordingDuration(0)
 
       timerRef.current = window.setInterval(() => {
-        setRecordingDuration((d) => d + 1)
+        setRecordingDuration((d) => {
+          const newDuration = d + 1
+          if (newDuration >= MAX_RECORDING_SECONDS) {
+            mediaRecorderRef.current?.stop()
+            setIsRecording(false)
+          }
+          return newDuration
+        })
       }, 1000)
     } catch (error) {
       console.error('Failed to start recording:', error)
@@ -113,11 +123,18 @@ export function VoiceRecorder({
       </Button>
 
       {isRecording ? (
-        <p className="text-sm font-medium text-destructive">
-          Gravando... {formatDuration(recordingDuration)}
+        <p
+          className={cn(
+            'text-sm font-medium',
+            recordingDuration >= WARNING_THRESHOLD_SECONDS ? 'text-orange-500' : 'text-destructive'
+          )}
+        >
+          {recordingDuration >= WARNING_THRESHOLD_SECONDS
+            ? `${MAX_RECORDING_SECONDS - recordingDuration}s restantes`
+            : `Gravando... ${formatDuration(recordingDuration)}`}
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground">Toque para gravar sua mensagem</p>
+        <p className="text-sm text-muted-foreground">Toque para gravar (máx 10s)</p>
       )}
     </div>
   )

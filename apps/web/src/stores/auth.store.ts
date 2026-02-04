@@ -2,6 +2,7 @@ import { translateAuthError } from '@/lib/auth-errors'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
 import { create } from 'zustand'
+import { useAIStore } from './ai.store'
 
 interface AuthState {
   user: User | null
@@ -157,6 +158,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      // Clear AI chat history for privacy
+      useAIStore.getState().clearMessages()
       set({ user: null, session: null })
     } finally {
       set({ isLoading: false })

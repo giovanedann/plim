@@ -1,7 +1,11 @@
 import { Button } from '@/components/ui/button'
+import { optimizeImageForAI } from '@/lib/image-utils'
 import { cn } from '@/lib/utils'
-import { Camera, Loader2, Upload, X } from 'lucide-react'
+import { AlertCircle, Camera, Loader2, Upload, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
+
+const MAX_FILE_SIZE_MB = 10
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 interface ImageUploaderProps {
   onImageCapture: (
@@ -17,17 +21,32 @@ export function ImageUploader({
 }: ImageUploaderProps): React.ReactElement {
   const [preview, setPreview] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const processFile = useCallback((file: File) => {
-    const reader = new FileReader()
+  const processFile = useCallback(async (file: File) => {
+    setError(null)
 
-    reader.onloadend = () => {
-      setPreview(reader.result as string)
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`Imagem muito grande. Máximo ${MAX_FILE_SIZE_MB}MB.`)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+      return
     }
 
-    reader.readAsDataURL(file)
+    try {
+      const { base64, mimeType } = await optimizeImageForAI(file)
+      setPreview(`data:${mimeType};base64,${base64}`)
+    } catch (error) {
+      console.error('Failed to optimize image:', error)
+      // Fallback to original behavior
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }, [])
 
   const handleFileChange = useCallback(
@@ -142,7 +161,16 @@ export function ImageUploader({
         </Button>
       </div>
 
-      <p className="text-sm text-muted-foreground">Tire uma foto ou selecione uma imagem</p>
+      {error ? (
+        <p className="flex items-center gap-1.5 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          {error}
+        </p>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Tire uma foto ou selecione uma imagem (máx {MAX_FILE_SIZE_MB}MB)
+        </p>
+      )}
     </div>
   )
 }

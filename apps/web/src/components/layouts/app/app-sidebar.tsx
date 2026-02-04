@@ -115,17 +115,23 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="size-8 rounded-lg object-cover" />
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar"
+                      className="size-8 shrink-0 rounded-lg object-cover"
+                    />
                   ) : (
-                    <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-sm font-medium">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-medium">
                       {displayName?.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="flex flex-col items-start text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{displayName}</span>
-                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+                  <div className="flex flex-col items-start text-left text-sm leading-tight min-w-0 flex-1">
+                    <span className="truncate font-semibold w-full">{displayName}</span>
+                    <span className="truncate text-xs text-muted-foreground w-full">
+                      {user?.email}
+                    </span>
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="start" className="w-56">
