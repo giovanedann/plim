@@ -1,8 +1,10 @@
+import type { AIChatResponse, AIUsageResponse } from '../schemas/ai'
 import type { Category } from '../schemas/category'
 import type { CreditCard } from '../schemas/credit-card'
 import type { Expense } from '../schemas/expense'
 import type { Profile } from '../schemas/profile'
 import type { SalaryHistory } from '../schemas/salary'
+import type { SpendingLimit } from '../schemas/spending-limit'
 
 let idCounter = 0
 
@@ -18,8 +20,8 @@ function getTimestamp(): string {
 export function createMockExpense(overrides: Partial<Expense> = {}): Expense {
   return {
     id: generateId(),
-    user_id: 'user-00000000-0000-0000-0000-000000000001',
-    category_id: 'cat-00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    category_id: '00000000-0000-4000-8000-000000000002',
     description: 'Test expense',
     amount_cents: 5000,
     payment_method: 'pix',
@@ -41,7 +43,7 @@ export function createMockExpense(overrides: Partial<Expense> = {}): Expense {
 export function createMockCategory(overrides: Partial<Category> = {}): Category {
   return {
     id: generateId(),
-    user_id: 'user-00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-4000-8000-000000000001',
     name: 'Test Category',
     icon: 'shopping-cart',
     color: '#3B82F6',
@@ -54,7 +56,7 @@ export function createMockCategory(overrides: Partial<Category> = {}): Category 
 
 export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
   return {
-    user_id: 'user-00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-4000-8000-000000000001',
     name: 'Test User',
     email: 'test@example.com',
     avatar_url: null,
@@ -70,7 +72,7 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
 export function createMockCreditCard(overrides: Partial<CreditCard> = {}): CreditCard {
   return {
     id: generateId(),
-    user_id: 'user-00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-4000-8000-000000000001',
     name: 'Test Card',
     color: 'black',
     flag: 'visa',
@@ -86,7 +88,7 @@ export function createMockCreditCard(overrides: Partial<CreditCard> = {}): Credi
 export function createMockSalaryHistory(overrides: Partial<SalaryHistory> = {}): SalaryHistory {
   return {
     id: generateId(),
-    user_id: 'user-00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-4000-8000-000000000001',
     amount_cents: 500000,
     effective_from: '2026-01-01',
     created_at: getTimestamp(),
@@ -94,6 +96,57 @@ export function createMockSalaryHistory(overrides: Partial<SalaryHistory> = {}):
   }
 }
 
+export function createMockSpendingLimit(overrides: Partial<SpendingLimit> = {}): SpendingLimit {
+  return {
+    id: generateId(),
+    user_id: '00000000-0000-4000-8000-000000000001',
+    year_month: '2026-01',
+    amount_cents: 300000,
+    created_at: getTimestamp(),
+    updated_at: getTimestamp(),
+    ...overrides,
+  }
+}
+
 export function resetIdCounter(): void {
   idCounter = 0
+}
+
+export function createMockAIUsageResponse(
+  overrides: Partial<AIUsageResponse> = {}
+): AIUsageResponse {
+  return {
+    tier: 'free',
+    text: { used: 5, limit: 30, remaining: 25 },
+    voice: { used: 1, limit: 5, remaining: 4 },
+    image: { used: 0, limit: 5, remaining: 5 },
+    used: 6,
+    limit: 40,
+    remainingRequests: 34,
+    ...overrides,
+  }
+}
+
+export function createMockAIChatResponse(overrides: Partial<AIChatResponse> = {}): AIChatResponse {
+  return {
+    message: 'Despesa criada: Almoço de R$35,00',
+    action: undefined,
+    usageInfo: createMockAIUsageResponse(),
+    ...overrides,
+  }
+}
+
+export interface ChatOutput {
+  text: string | null
+  functionCall: { name: string; args: Record<string, unknown> } | null
+  tokensUsed: number
+}
+
+export function createMockChatOutput(overrides: Partial<ChatOutput> = {}): ChatOutput {
+  return {
+    text: 'AI response text',
+    functionCall: null,
+    tokensUsed: 150,
+    ...overrides,
+  }
 }

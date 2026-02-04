@@ -1,4 +1,5 @@
 export * from './account'
+export * from './ai'
 export * from './profile'
 export * from './category'
 export * from './expense'

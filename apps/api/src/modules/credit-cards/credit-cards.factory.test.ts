@@ -29,6 +29,7 @@ function createMockEnv(): Bindings {
     ENVIRONMENT: 'development',
     UPSTASH_REDIS_REST_URL: 'https://redis.test.com',
     UPSTASH_REDIS_REST_TOKEN: 'test-token',
+    GEMINI_API_KEY: 'test-gemini-key',
   }
 }
 

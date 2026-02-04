@@ -9,6 +9,7 @@ export type Bindings = {
   ENVIRONMENT: 'development' | 'production'
   UPSTASH_REDIS_REST_URL: string
   UPSTASH_REDIS_REST_TOKEN: string
+  GEMINI_API_KEY: string
 }
 
 /**

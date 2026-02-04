@@ -1,5 +1,7 @@
+import { AIChatButton, AIChatDrawer } from '@/components/ai'
 import { OnboardingOverlay } from '@/components/onboarding'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { useAIUsage } from '@/hooks/use-ai-usage'
 import { useProfile } from '@/hooks/use-profile'
 import { profileService, salaryService } from '@/services'
 import { useOnboardingStore } from '@/stores/onboarding.store'
@@ -21,6 +23,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { open } = useOnboardingStore()
   const { profile, isLoading: isLoadingProfile } = useProfile()
   const location = useLocation()
+
+  useAIUsage()
 
   const pageTitle = PAGE_TITLES[location.pathname]
 
@@ -61,6 +65,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         onSaveSalary={handleSaveSalary}
         onComplete={handleComplete}
       />
+
+      <AIChatButton />
+      <AIChatDrawer />
     </SidebarProvider>
   )
 }

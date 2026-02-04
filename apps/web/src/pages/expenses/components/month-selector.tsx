@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 interface MonthSelectorProps {
   selectedMonth: string
@@ -36,10 +36,26 @@ function dateToMonth(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
+const DEBOUNCE_MS = 300
+
 export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorProps) {
   const [open, setOpen] = useState(false)
-  const handlePrevious = () => onMonthChange(addMonths(selectedMonth, -1))
-  const handleNext = () => onMonthChange(addMonths(selectedMonth, 1))
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const debouncedMonthChange = useCallback(
+    (month: string) => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+      debounceRef.current = setTimeout(() => {
+        onMonthChange(month)
+      }, DEBOUNCE_MS)
+    },
+    [onMonthChange]
+  )
+
+  const handlePrevious = () => debouncedMonthChange(addMonths(selectedMonth, -1))
+  const handleNext = () => debouncedMonthChange(addMonths(selectedMonth, 1))
 
   const handleMonthSelect = (date: Date) => {
     onMonthChange(dateToMonth(date))
