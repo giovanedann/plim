@@ -68,12 +68,16 @@ const queryExpensesParameters: JsonSchema = {
     },
     category_name: {
       type: 'string',
-      description: 'Filter by category name',
+      description: 'Filter by category name (e.g., "Alimentação", "Pets", "Transporte")',
     },
     payment_method: {
       type: 'string',
       description: 'Filter by payment method',
       enum: ['credit_card', 'debit_card', 'pix', 'cash'],
+    },
+    credit_card_name: {
+      type: 'string',
+      description: 'Filter by credit card name (e.g., "Nubank", "Nubank Ultravioleta", "Itaú")',
     },
     group_by: {
       type: 'string',
@@ -124,10 +128,17 @@ Examples:
     name: 'query_expenses',
     description: `Query and summarize expenses. Use this when the user asks about their spending history or wants to know totals.
 Examples:
-- "Quanto gastei em janeiro?" → query with date range
-- "Quanto gastei com alimentação?" → query by category
-- "Quais foram meus gastos no cartão de crédito?" → query by payment method
-- "Me mostra um resumo do mês" → query current month grouped by category`,
+- "Quanto gastei em janeiro?" → query with date range (first day to last day of January)
+- "Quanto gastei esse mês?" → query current month with start_date: first day of current month, end_date: LAST day of current month (NOT today)
+- "Quanto gastei com alimentação?" → query by category_name
+- "Quanto gastei com meus pets?" → query by category_name (user's custom category)
+- "Quais foram meus gastos no cartão de crédito?" → query by payment_method: credit_card
+- "Quanto gastei no pix?" → query by payment_method: pix
+- "Quanto gastei no cartão Nubank?" → query by credit_card_name
+- "Quanto gastei no Nubank Ultravioleta esse mês?" → query by credit_card_name with date range
+- "Me mostra um resumo do mês" → query current month grouped by category
+
+IMPORTANT: For monthly queries ("esse mês", "mês passado"), always use the FULL month (first day to last day), NOT just up to today's date.`,
     parameters: queryExpensesParameters,
   },
   {
