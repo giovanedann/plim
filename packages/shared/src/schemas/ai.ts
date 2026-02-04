@@ -35,6 +35,25 @@ export const aiChatRequestSchema = z.object({
   messages: z.array(chatMessageSchema).min(1),
 })
 
+// Type usage schema (per request type)
+export const typeUsageSchema = z.object({
+  used: z.number().int().nonnegative(),
+  limit: z.number().int().positive(),
+  remaining: z.number().int().nonnegative(),
+})
+
+// AI Usage Response schema (with tiered limits)
+export const aiUsageResponseSchema = z.object({
+  tier: z.enum(['free', 'pro', 'unlimited']),
+  text: typeUsageSchema,
+  voice: typeUsageSchema,
+  image: typeUsageSchema,
+  // Legacy fields for backwards compatibility
+  used: z.number().int().nonnegative(),
+  limit: z.number().int().positive(),
+  remainingRequests: z.number().int().nonnegative(),
+})
+
 // AI Chat Response schema
 export const aiChatResponseSchema = z.object({
   message: z.string(),
@@ -44,20 +63,7 @@ export const aiChatResponseSchema = z.object({
       data: z.unknown().optional(),
     })
     .optional(),
-  usageInfo: z.object({
-    used: z.number().int().nonnegative(),
-    limit: z.number().int().positive(),
-    tier: z.enum(['free', 'pro', 'unlimited']),
-    remainingRequests: z.number().int().nonnegative(),
-  }),
-})
-
-// AI Usage Response schema
-export const aiUsageResponseSchema = z.object({
-  used: z.number().int().nonnegative(),
-  limit: z.number().int().positive(),
-  tier: z.enum(['free', 'pro', 'unlimited']),
-  remainingRequests: z.number().int().nonnegative(),
+  usageInfo: aiUsageResponseSchema,
 })
 
 // Function parameter schemas for Gemini function calling
@@ -99,6 +105,7 @@ export type ContentPart = z.infer<typeof contentPartSchema>
 export type ChatMessage = z.infer<typeof chatMessageSchema>
 export type AIChatRequest = z.infer<typeof aiChatRequestSchema>
 export type AIChatResponse = z.infer<typeof aiChatResponseSchema>
+export type TypeUsage = z.infer<typeof typeUsageSchema>
 export type AIUsageResponse = z.infer<typeof aiUsageResponseSchema>
 export type CreateExpenseFunctionParams = z.infer<typeof createExpenseFunctionParamsSchema>
 export type QueryExpensesFunctionParams = z.infer<typeof queryExpensesFunctionParamsSchema>
