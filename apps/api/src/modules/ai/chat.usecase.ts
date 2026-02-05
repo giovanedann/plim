@@ -183,7 +183,10 @@ export class ChatUseCase {
     try {
       const cachedIntent = await this.deps.aiRepository.findSimilarIntent(embedding)
 
-      if (!cachedIntent) return null
+      if (!cachedIntent) {
+        console.info('[Intent Cache] MISS', { query: messageText.slice(0, 80) })
+        return null
+      }
 
       console.info('[Intent Cache] HIT', {
         similarity: cachedIntent.similarity,
