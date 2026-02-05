@@ -308,18 +308,34 @@ export class AIRepository {
       max_results: 1,
     })
 
-    if (error || !data || data.length === 0) return null
+    if (error) {
+      console.error('[Intent Cache] RPC find_similar_intent failed', {
+        error: error.message,
+        code: error.code,
+      })
+      return null
+    }
+
+    if (!data || data.length === 0) return null
 
     return data[0] as IntentCacheEntry
   }
 
   async storeIntent(input: StoreIntentInput): Promise<void> {
-    await this.supabase.from('intent_cache').insert({
+    const { error } = await this.supabase.from('intent_cache').insert({
       canonical_text: input.canonical_text,
       embedding: JSON.stringify(input.embedding),
       function_name: input.function_name,
       params_template: input.params_template,
       extraction_hints: input.extraction_hints,
     })
+
+    if (error) {
+      console.error('[Intent Cache] Failed to store intent', {
+        error: error.message,
+        code: error.code,
+        function_name: input.function_name,
+      })
+    }
   }
 }
