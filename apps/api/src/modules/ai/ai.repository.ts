@@ -270,7 +270,7 @@ export class AIRepository {
     }
 
     const expiresAt = new Date()
-    expiresAt.setHours(expiresAt.getHours() + 1) // 1 hour TTL
+    expiresAt.setHours(expiresAt.getHours() + 24) // 24 hour TTL
 
     await this.supabase.from('ai_response_cache').upsert(
       {
