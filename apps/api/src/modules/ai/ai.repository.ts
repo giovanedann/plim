@@ -322,19 +322,4 @@ export class AIRepository {
       extraction_hints: input.extraction_hints,
     })
   }
-
-  async incrementIntentUsage(intentId: string): Promise<void> {
-    const { data } = await this.supabase
-      .from('intent_cache')
-      .select('usage_count')
-      .eq('id', intentId)
-      .single()
-
-    if (data) {
-      await this.supabase
-        .from('intent_cache')
-        .update({ usage_count: (data.usage_count as number) + 1 })
-        .eq('id', intentId)
-    }
-  }
 }
