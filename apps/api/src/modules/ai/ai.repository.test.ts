@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { AIRepository, type CachedResponse, type Subscription } from './ai.repository'
+import {
+  AIRepository,
+  type CachedResponse,
+  type IntentCacheEntry,
+  type Subscription,
+} from './ai.repository'
 
 type MockSupabaseQuery = {
   select: ReturnType<typeof vi.fn>
@@ -31,6 +36,7 @@ function createMockSupabaseQuery(): MockSupabaseQuery {
 function createMockSupabase(query: MockSupabaseQuery) {
   return {
     from: vi.fn().mockReturnValue(query),
+    rpc: vi.fn(),
   }
 }
 
@@ -460,6 +466,100 @@ describe('AIRepository', () => {
 
       expect(consoleSpy).not.toHaveBeenCalled()
       consoleSpy.mockRestore()
+    })
+  })
+
+  describe('findSimilarIntent', () => {
+    const testEmbedding = Array(768).fill(0.1)
+
+    it('returns cached intent when similarity meets threshold', async () => {
+      const cachedIntent: IntentCacheEntry = {
+        id: 'intent-1',
+        canonical_text: 'quanto gastei esse mes',
+        function_name: 'query_expenses',
+        params_template: { period: 'current_month' },
+        extraction_hints: null,
+        usage_count: 5,
+        similarity: 0.95,
+      }
+      mockSupabase.rpc.mockResolvedValue({ data: [cachedIntent], error: null })
+
+      const result = await sut.findSimilarIntent(testEmbedding)
+
+      expect(result).toEqual(cachedIntent)
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('find_similar_intent', {
+        query_embedding: JSON.stringify(testEmbedding),
+        similarity_threshold: 0.92,
+        max_results: 1,
+      })
+    })
+
+    it('returns null when no match found', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: [], error: null })
+
+      const result = await sut.findSimilarIntent(testEmbedding)
+
+      expect(result).toBeNull()
+    })
+
+    it('returns null when RPC errors', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: 'RPC error' } })
+
+      const result = await sut.findSimilarIntent(testEmbedding)
+
+      expect(result).toBeNull()
+    })
+
+    it('uses custom threshold when provided', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: [], error: null })
+
+      await sut.findSimilarIntent(testEmbedding, 0.85)
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('find_similar_intent', {
+        query_embedding: JSON.stringify(testEmbedding),
+        similarity_threshold: 0.85,
+        max_results: 1,
+      })
+    })
+  })
+
+  describe('storeIntent', () => {
+    it('inserts intent with serialized embedding', async () => {
+      mockQuery.insert.mockResolvedValue({ error: null })
+      const embedding = [0.1, 0.2, 0.3]
+
+      await sut.storeIntent({
+        canonical_text: 'quanto gastei esse mes',
+        embedding,
+        function_name: 'query_expenses',
+        params_template: { period: 'current_month' },
+        extraction_hints: 'Dynamic params to extract: start_date, end_date',
+      })
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('intent_cache')
+      expect(mockQuery.insert).toHaveBeenCalledWith({
+        canonical_text: 'quanto gastei esse mes',
+        embedding: JSON.stringify(embedding),
+        function_name: 'query_expenses',
+        params_template: { period: 'current_month' },
+        extraction_hints: 'Dynamic params to extract: start_date, end_date',
+      })
+    })
+
+    it('inserts intent with null extraction hints', async () => {
+      mockQuery.insert.mockResolvedValue({ error: null })
+
+      await sut.storeIntent({
+        canonical_text: 'quais meus cartoes',
+        embedding: [0.1],
+        function_name: 'execute_query',
+        params_template: { entity: 'credit_cards' },
+        extraction_hints: null,
+      })
+
+      expect(mockQuery.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ extraction_hints: null })
+      )
     })
   })
 })
