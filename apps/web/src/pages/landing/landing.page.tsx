@@ -1,4 +1,5 @@
 import {
+  AiDisclaimerSection,
   CtaSection,
   FeaturesShowcase,
   HeroSection,
@@ -26,6 +27,9 @@ export function LandingPage() {
 
         {/* Security */}
         <SecuritySection />
+
+        {/* AI Disclaimer */}
+        <AiDisclaimerSection />
 
         {/* Pricing */}
         <PricingSection />

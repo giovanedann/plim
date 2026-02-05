@@ -1,3 +1,4 @@
+export { AiDisclaimerSection } from './ai-disclaimer-section'
 export { CtaSection } from './cta-section'
 export { FeatureSection } from './feature-section'
 export { FeaturesShowcase } from './features-showcase'
