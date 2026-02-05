@@ -57,6 +57,24 @@ export interface CachedResponse {
   expires_at: string
 }
 
+export interface IntentCacheEntry {
+  id: string
+  canonical_text: string
+  function_name: string
+  params_template: Record<string, unknown>
+  extraction_hints: string | null
+  usage_count: number
+  similarity: number
+}
+
+export interface StoreIntentInput {
+  canonical_text: string
+  embedding: number[]
+  function_name: string
+  params_template: Record<string, unknown>
+  extraction_hints: string | null
+}
+
 export class AIRepository {
   constructor(private supabase: SupabaseClient) {}
 
@@ -278,6 +296,45 @@ export class AIRepository {
 
     if (count && count > 0) {
       console.info('[AI Cache] Invalidated cache for user', { userId, entriesCleared: count })
+    }
+  }
+
+  // Intent cache methods (semantic caching)
+
+  async findSimilarIntent(embedding: number[], threshold = 0.92): Promise<IntentCacheEntry | null> {
+    const { data, error } = await this.supabase.rpc('find_similar_intent', {
+      query_embedding: JSON.stringify(embedding),
+      similarity_threshold: threshold,
+      max_results: 1,
+    })
+
+    if (error || !data || data.length === 0) return null
+
+    return data[0] as IntentCacheEntry
+  }
+
+  async storeIntent(input: StoreIntentInput): Promise<void> {
+    await this.supabase.from('intent_cache').insert({
+      canonical_text: input.canonical_text,
+      embedding: JSON.stringify(input.embedding),
+      function_name: input.function_name,
+      params_template: input.params_template,
+      extraction_hints: input.extraction_hints,
+    })
+  }
+
+  async incrementIntentUsage(intentId: string): Promise<void> {
+    const { data } = await this.supabase
+      .from('intent_cache')
+      .select('usage_count')
+      .eq('id', intentId)
+      .single()
+
+    if (data) {
+      await this.supabase
+        .from('intent_cache')
+        .update({ usage_count: (data.usage_count as number) + 1 })
+        .eq('id', intentId)
     }
   }
 }
