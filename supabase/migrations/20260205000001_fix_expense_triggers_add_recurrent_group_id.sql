@@ -1,24 +1,12 @@
--- Migration 5: Create INSTEAD OF triggers for expense view
--- These triggers handle INSERT, UPDATE, DELETE operations with automatic encryption
+-- Fix expense triggers to include recurrent_group_id column
+-- This was missed in migration 20260204190552_add_recurrent_group_id.sql
 --
--- ⚠️  WARNING: VIEW RECREATION GOTCHA
--- =====================================
--- PostgreSQL drops ALL triggers when a view is dropped and recreated (DROP VIEW; CREATE VIEW).
--- If any future migration needs to modify the public.expense view (e.g., adding columns),
--- it MUST also recreate these INSTEAD OF triggers after recreating the view.
---
--- Example pattern for view modifications:
---   1. DROP VIEW IF EXISTS public.expense CASCADE;
---   2. CREATE VIEW public.expense AS ...;
---   3. Recreate triggers:
---        CREATE TRIGGER expense_insert INSTEAD OF INSERT ON public.expense ...
---        CREATE TRIGGER expense_update INSTEAD OF UPDATE ON public.expense ...
---        CREATE TRIGGER expense_delete INSTEAD OF DELETE ON public.expense ...
---
--- See migration 20260205000001_fix_expense_triggers_add_recurrent_group_id.sql for an example fix.
+-- IMPORTANT: This migration both updates the trigger functions AND recreates
+-- the INSTEAD OF triggers on the expense view, since dropping/recreating a view
+-- also drops all attached triggers.
 
 -- ================================================================
--- INSERT TRIGGER
+-- UPDATE INSERT TRIGGER FUNCTION
 -- ================================================================
 CREATE OR REPLACE FUNCTION private.expense_insert_trigger()
 RETURNS TRIGGER
@@ -29,7 +17,6 @@ AS $$
 DECLARE
   new_id UUID;
 BEGIN
-  -- Enforce CHECK constraint: amount_cents > 0
   IF NEW.amount_cents IS NULL OR NEW.amount_cents <= 0 THEN
     RAISE EXCEPTION 'amount_cents must be greater than 0';
   END IF;
@@ -38,7 +25,7 @@ BEGIN
     id,
     user_id,
     category_id,
-    description,
+    description_encrypted,
     amount_cents_encrypted,
     payment_method,
     date,
@@ -49,13 +36,23 @@ BEGIN
     installment_current,
     installment_total,
     installment_group_id,
+    credit_card_id,
+    recurrent_group_id,
     created_at,
     updated_at
   ) VALUES (
     COALESCE(NEW.id, gen_random_uuid()),
     NEW.user_id,
     NEW.category_id,
-    NEW.description,
+    CASE
+      WHEN NEW.description IS NOT NULL THEN
+        pgp_sym_encrypt(
+          NEW.description,
+          private.get_encryption_key(),
+          'compress-algo=1, cipher-algo=aes256'
+        )
+      ELSE NULL
+    END,
     pgp_sym_encrypt(
       NEW.amount_cents::TEXT,
       private.get_encryption_key(),
@@ -70,24 +67,20 @@ BEGIN
     NEW.installment_current,
     NEW.installment_total,
     NEW.installment_group_id,
+    NEW.credit_card_id,
+    NEW.recurrent_group_id,
     COALESCE(NEW.created_at, NOW()),
     COALESCE(NEW.updated_at, NOW())
   )
   RETURNING id INTO new_id;
 
-  -- Set the ID for RETURNING clause to work
   NEW.id := new_id;
   RETURN NEW;
 END;
 $$;
 
-CREATE TRIGGER expense_insert
-  INSTEAD OF INSERT ON public.expense
-  FOR EACH ROW
-  EXECUTE FUNCTION private.expense_insert_trigger();
-
 -- ================================================================
--- UPDATE TRIGGER
+-- UPDATE UPDATE TRIGGER FUNCTION
 -- ================================================================
 CREATE OR REPLACE FUNCTION private.expense_update_trigger()
 RETURNS TRIGGER
@@ -96,7 +89,6 @@ SECURITY DEFINER
 SET search_path = private, public, extensions
 AS $$
 BEGIN
-  -- Enforce CHECK constraint if amount_cents is being updated
   IF NEW.amount_cents IS NOT NULL AND NEW.amount_cents <= 0 THEN
     RAISE EXCEPTION 'amount_cents must be greater than 0';
   END IF;
@@ -104,7 +96,19 @@ BEGIN
   UPDATE private.expense_data
   SET
     category_id = COALESCE(NEW.category_id, category_id),
-    description = COALESCE(NEW.description, description),
+    description_encrypted = CASE
+      WHEN NEW.description IS DISTINCT FROM OLD.description THEN
+        CASE
+          WHEN NEW.description IS NOT NULL THEN
+            pgp_sym_encrypt(
+              NEW.description,
+              private.get_encryption_key(),
+              'compress-algo=1, cipher-algo=aes256'
+            )
+          ELSE NULL
+        END
+      ELSE description_encrypted
+    END,
     amount_cents_encrypted = CASE
       WHEN NEW.amount_cents IS NOT NULL AND NEW.amount_cents != OLD.amount_cents THEN
         pgp_sym_encrypt(
@@ -123,6 +127,8 @@ BEGIN
     installment_current = NEW.installment_current,
     installment_total = NEW.installment_total,
     installment_group_id = NEW.installment_group_id,
+    credit_card_id = NEW.credit_card_id,
+    recurrent_group_id = NEW.recurrent_group_id,
     updated_at = NOW()
   WHERE id = OLD.id;
 
@@ -130,32 +136,30 @@ BEGIN
 END;
 $$;
 
+-- ================================================================
+-- RECREATE INSTEAD OF TRIGGERS
+-- (These were dropped when the expense view was recreated)
+-- ================================================================
+
+-- Drop existing triggers if they exist (idempotent)
+DROP TRIGGER IF EXISTS expense_insert ON public.expense;
+DROP TRIGGER IF EXISTS expense_update ON public.expense;
+DROP TRIGGER IF EXISTS expense_delete ON public.expense;
+
+-- INSERT TRIGGER
+CREATE TRIGGER expense_insert
+  INSTEAD OF INSERT ON public.expense
+  FOR EACH ROW
+  EXECUTE FUNCTION private.expense_insert_trigger();
+
+-- UPDATE TRIGGER
 CREATE TRIGGER expense_update
   INSTEAD OF UPDATE ON public.expense
   FOR EACH ROW
   EXECUTE FUNCTION private.expense_update_trigger();
 
--- ================================================================
 -- DELETE TRIGGER
--- ================================================================
-CREATE OR REPLACE FUNCTION private.expense_delete_trigger()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = private, public
-AS $$
-BEGIN
-  DELETE FROM private.expense_data WHERE id = OLD.id;
-  RETURN OLD;
-END;
-$$;
-
 CREATE TRIGGER expense_delete
   INSTEAD OF DELETE ON public.expense
   FOR EACH ROW
   EXECUTE FUNCTION private.expense_delete_trigger();
-
--- Grant execute on trigger functions
-GRANT EXECUTE ON FUNCTION private.expense_insert_trigger() TO authenticated;
-GRANT EXECUTE ON FUNCTION private.expense_update_trigger() TO authenticated;
-GRANT EXECUTE ON FUNCTION private.expense_delete_trigger() TO authenticated;
