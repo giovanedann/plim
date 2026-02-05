@@ -6,9 +6,13 @@ import type { AIRepository, CachedResponse } from './ai.repository'
 import { ChatUseCase, type ChatUseCaseDependencies, type ChatUseCaseInput } from './chat.usecase'
 import type { AIClient, ChatOutput } from './client'
 
-function createMockAIClient(): { chat: ReturnType<typeof vi.fn> } {
+function createMockAIClient(): {
+  chat: ReturnType<typeof vi.fn>
+  generateEmbedding: ReturnType<typeof vi.fn>
+} {
   return {
     chat: vi.fn(),
+    generateEmbedding: vi.fn().mockResolvedValue({ embedding: Array(768).fill(0.1) }),
   }
 }
 
@@ -17,12 +21,16 @@ function createMockAIRepository(): {
   getCachedResponse: ReturnType<typeof vi.fn>
   setCachedResponse: ReturnType<typeof vi.fn>
   logUsage: ReturnType<typeof vi.fn>
+  findSimilarIntent: ReturnType<typeof vi.fn>
+  storeIntent: ReturnType<typeof vi.fn>
 } {
   return {
     generateCacheKey: vi.fn().mockReturnValue('cache-key-123'),
     getCachedResponse: vi.fn(),
     setCachedResponse: vi.fn(),
     logUsage: vi.fn(),
+    findSimilarIntent: vi.fn().mockResolvedValue(null),
+    storeIntent: vi.fn().mockResolvedValue(undefined),
   }
 }
 
@@ -667,6 +675,188 @@ describe('ChatUseCase', () => {
       const result = await sut.execute(userId, input)
 
       expect(result.message).toBe('Desculpe, não consegui processar sua mensagem.')
+    })
+  })
+
+  describe('intent cache flow', () => {
+    it('returns cached function result on intent cache hit', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIRepository.findSimilarIntent.mockResolvedValue({
+        id: 'intent-1',
+        canonical_text: 'quanto gastei esse mes',
+        function_name: 'query_expenses',
+        params_template: { start_date: '2026-01-01', end_date: '2026-01-31' },
+        extraction_hints: null,
+        usage_count: 5,
+        similarity: 0.95,
+      })
+      mockExpensesRepository.findByUserId.mockResolvedValue([
+        { id: 'exp-1', amount_cents: 5000, description: 'Test' },
+      ])
+
+      const formatResponse: ChatOutput = createMockChatOutput({
+        text: 'Você gastou R$ 50,00 este mês.',
+        tokensUsed: 40,
+      })
+      mockAIClient.chat.mockResolvedValue(formatResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [
+          { role: 'user', content: [{ type: 'text', text: 'ja gastei quanto esse mes' }] },
+        ],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      expect(result.action?.type).toBe('query_result')
+      expect(result.message).toBe('Você gastou R$ 50,00 este mês.')
+      expect(mockAIRepository.logUsage).toHaveBeenCalledWith(
+        userId,
+        'text',
+        'query_expenses_cached',
+        40
+      )
+    })
+
+    it('falls back to full AI call on intent cache miss', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIRepository.findSimilarIntent.mockResolvedValue(null)
+      mockAIClient.chat.mockResolvedValue(
+        createMockChatOutput({ text: 'Full AI response', tokensUsed: 200 })
+      )
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      expect(result.message).toBe('Full AI response')
+      expect(result.tokensUsed).toBe(200)
+    })
+
+    it('stores new intent after successful function call (not create_expense)', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIRepository.findSimilarIntent.mockResolvedValue(null)
+      mockExpensesRepository.findByUserId.mockResolvedValue([])
+
+      const aiResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'query_expenses',
+          args: { start_date: '2026-01-01', end_date: '2026-01-31' },
+        },
+        tokensUsed: 100,
+      })
+      mockAIClient.chat.mockResolvedValue(aiResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'quanto gastei em janeiro' }] }],
+        requestType: 'text',
+      }
+
+      await sut.execute(userId, input)
+
+      // Wait for fire-and-forget storeIntent
+      await new Promise((r) => setTimeout(r, 10))
+
+      expect(mockAIRepository.storeIntent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canonical_text: 'quanto gastei em janeiro',
+          function_name: 'query_expenses',
+          embedding: expect.any(Array),
+        })
+      )
+    })
+
+    it('does not store intent for create_expense', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIRepository.findSimilarIntent.mockResolvedValue(null)
+
+      const category = createMockCategory({ id: 'cat-1', name: 'Alimentação' })
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'category') {
+          return {
+            select: vi.fn().mockReturnValue({
+              or: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  ilike: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockReturnValue({
+                      single: vi.fn().mockResolvedValue({ data: category, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'profile') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: null, error: null }),
+              }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
+        }
+      })
+      mockCreateExpenseUseCase.execute.mockResolvedValue({ id: 'exp-1' })
+
+      const aiResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'create_expense',
+          args: {
+            description: 'Almoço',
+            amount_cents: 3500,
+            category_name: 'Alimentação',
+            payment_method: 'pix',
+            date: '2026-01-15',
+          },
+        },
+        tokensUsed: 150,
+      })
+      mockAIClient.chat.mockResolvedValue(aiResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Almoço R$35' }] }],
+        requestType: 'text',
+      }
+
+      await sut.execute(userId, input)
+      await new Promise((r) => setTimeout(r, 10))
+
+      expect(mockAIRepository.storeIntent).not.toHaveBeenCalled()
+    })
+
+    it('falls back gracefully when embedding generation fails', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIClient.generateEmbedding.mockRejectedValue(new Error('Embedding API down'))
+      mockAIClient.chat.mockResolvedValue(
+        createMockChatOutput({ text: 'Fallback response', tokensUsed: 100 })
+      )
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      expect(result.message).toBe('Fallback response')
+      expect(mockAIRepository.findSimilarIntent).not.toHaveBeenCalled()
     })
   })
 
