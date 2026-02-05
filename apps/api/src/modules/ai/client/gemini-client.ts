@@ -15,6 +15,7 @@ import type {
   ChatMessage,
   ChatOutput,
   ContentPart,
+  EmbeddingOutput,
   FunctionCall,
   FunctionDefinition,
   ImageContentPart,
@@ -22,6 +23,7 @@ import type {
 } from './ai-client.types'
 
 const DEFAULT_MODEL = 'gemini-2.5-flash'
+const EMBEDDING_MODEL = 'text-embedding-004'
 
 /**
  * Gemini implementation of AIClient
@@ -49,6 +51,12 @@ export class GeminiClient implements AIClient {
     const result = await model.generateContent({ contents })
 
     return this.parseResponse(result)
+  }
+
+  async generateEmbedding(text: string): Promise<EmbeddingOutput> {
+    const model = this.genAI.getGenerativeModel({ model: EMBEDDING_MODEL })
+    const result = await model.embedContent(text)
+    return { embedding: result.embedding.values }
   }
 
   private convertMessages(messages: ChatMessage[]): Content[] {
