@@ -60,9 +60,25 @@ export class ChatUseCase {
       }
     }
 
+    // Generate embedding once for both intent cache lookup and write
+    let embedding: number[] | null = null
+    try {
+      const embeddingResult = await this.deps.aiClient.generateEmbedding(messageText)
+      embedding = embeddingResult.embedding
+    } catch (error) {
+      console.warn('[Intent Cache] Embedding generation failed, skipping cache', error)
+    }
+
     // Semantic intent cache lookup (embedding-based)
-    const intentCacheResult = await this.tryIntentCache(userId, messageText, input.requestType)
-    if (intentCacheResult) return intentCacheResult
+    if (embedding) {
+      const intentCacheResult = await this.tryIntentCache(
+        userId,
+        messageText,
+        input.requestType,
+        embedding
+      )
+      if (intentCacheResult) return intentCacheResult
+    }
 
     const context = await this.buildUserContext(userId)
     const systemPrompt = buildSystemPrompt(context)
@@ -122,6 +138,17 @@ export class ChatUseCase {
         )
       }
 
+      // Store in intent cache for future semantic matching
+      // Skip create_expense (side effects) and failed results
+      if (embedding && result.success && response.functionCall.name !== 'create_expense') {
+        this.storeNewIntent(
+          messageText,
+          embedding,
+          response.functionCall.name,
+          response.functionCall.args
+        )
+      }
+
       return output
     }
 
@@ -150,11 +177,11 @@ export class ChatUseCase {
   private async tryIntentCache(
     userId: string,
     messageText: string,
-    requestType: 'text' | 'voice' | 'image'
+    requestType: 'text' | 'voice' | 'image',
+    embedding: number[]
   ): Promise<ChatUseCaseOutput | null> {
     try {
-      const embedding = await this.deps.aiClient.generateEmbedding(messageText)
-      const cachedIntent = await this.deps.aiRepository.findSimilarIntent(embedding.embedding)
+      const cachedIntent = await this.deps.aiRepository.findSimilarIntent(embedding)
 
       if (!cachedIntent) return null
 
@@ -242,6 +269,36 @@ Return ONLY a valid JSON object with the extracted parameters. No explanation.`
     }
 
     return template
+  }
+
+  private storeNewIntent(
+    messageText: string,
+    embedding: number[],
+    functionName: string,
+    args: Record<string, unknown>
+  ): void {
+    // Fire-and-forget — don't block the response
+    this.deps.aiRepository
+      .storeIntent({
+        canonical_text: messageText,
+        embedding,
+        function_name: functionName,
+        params_template: args,
+        extraction_hints: this.buildExtractionHints(args),
+      })
+      .catch((error) => {
+        console.warn('[Intent Cache] Failed to store new intent', error)
+      })
+  }
+
+  private buildExtractionHints(args: Record<string, unknown>): string | null {
+    const dynamicKeys = Object.entries(args)
+      .filter(([key]) => ['start_date', 'end_date', 'amount_cents', 'date'].includes(key))
+      .map(([key]) => key)
+
+    if (dynamicKeys.length === 0) return null
+
+    return `Dynamic params to extract: ${dynamicKeys.join(', ')}`
   }
 
   private extractMessageText(messages: ChatMessage[]): string {
