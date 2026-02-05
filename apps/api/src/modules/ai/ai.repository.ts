@@ -301,7 +301,7 @@ export class AIRepository {
 
   // Intent cache methods (semantic caching)
 
-  async findSimilarIntent(embedding: number[], threshold = 0.92): Promise<IntentCacheEntry | null> {
+  async findSimilarIntent(embedding: number[], threshold = 0.85): Promise<IntentCacheEntry | null> {
     const { data, error } = await this.supabase.rpc('find_similar_intent', {
       query_embedding: JSON.stringify(embedding),
       similarity_threshold: threshold,

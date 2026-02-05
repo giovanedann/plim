@@ -489,7 +489,7 @@ describe('AIRepository', () => {
       expect(result).toEqual(cachedIntent)
       expect(mockSupabase.rpc).toHaveBeenCalledWith('find_similar_intent', {
         query_embedding: JSON.stringify(testEmbedding),
-        similarity_threshold: 0.92,
+        similarity_threshold: 0.85,
         max_results: 1,
       })
     })
