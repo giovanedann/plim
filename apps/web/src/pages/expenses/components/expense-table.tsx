@@ -261,7 +261,7 @@ export function ExpenseTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-md border">
+      <div className="rounded-md border mb-20">
         <Table>
           <TableHeader>
             <TableRow>
@@ -289,7 +289,7 @@ export function ExpenseTable({
 
   if (expenses.length === 0) {
     return (
-      <div className="rounded-md border p-8 text-center">
+      <div className="rounded-md border mb-20 p-8 text-center">
         <p className="text-muted-foreground">Nenhuma despesa encontrada para este mês.</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Clique em &quot;Nova Despesa&quot; para adicionar sua primeira despesa.
@@ -300,7 +300,8 @@ export function ExpenseTable({
 
   return (
     <>
-      <div className="rounded-md border">
+      {/* mb-20 ensures the last row is accessible above the fixed AI chat FAB */}
+      <div className="rounded-md border mb-20">
         <Table>
           <TableHeader>
             <TableRow>
