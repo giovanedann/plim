@@ -80,8 +80,16 @@ export interface ChatOutput {
 }
 
 /**
+ * Output from embedding generation
+ */
+export interface EmbeddingOutput {
+  embedding: number[]
+}
+
+/**
  * AI Client interface - abstracts the underlying LLM provider
  */
 export interface AIClient {
   chat(input: ChatInput): Promise<ChatOutput>
+  generateEmbedding(text: string): Promise<EmbeddingOutput>
 }

@@ -2,7 +2,7 @@ import type { Category, CreditCard } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../expenses/expenses.repository'
-import type { AIRepository } from './ai.repository'
+import type { AIRepository, IntentCacheEntry } from './ai.repository'
 import type { AIClient, ChatMessage, ChatOutput } from './client'
 import { type FunctionExecutionResult, aiFunctionDefinitions, executeFunction } from './functions'
 import { buildSystemPrompt } from './system-prompt'
@@ -58,6 +58,26 @@ export class ChatUseCase {
           tokensUsed: 0,
         }
       }
+    }
+
+    // Generate embedding once for both intent cache lookup and write
+    let embedding: number[] | null = null
+    try {
+      const embeddingResult = await this.deps.aiClient.generateEmbedding(messageText)
+      embedding = embeddingResult.embedding
+    } catch (error) {
+      console.warn('[Intent Cache] Embedding generation failed, skipping cache', error)
+    }
+
+    // Semantic intent cache lookup (embedding-based)
+    if (embedding) {
+      const intentCacheResult = await this.tryIntentCache(
+        userId,
+        messageText,
+        input.requestType,
+        embedding
+      )
+      if (intentCacheResult) return intentCacheResult
     }
 
     const context = await this.buildUserContext(userId)
@@ -118,6 +138,17 @@ export class ChatUseCase {
         )
       }
 
+      // Store in intent cache for future semantic matching
+      // Skip create_expense (side effects) and failed results
+      if (embedding && result.success && response.functionCall.name !== 'create_expense') {
+        this.storeNewIntent(
+          messageText,
+          embedding,
+          response.functionCall.name,
+          response.functionCall.args
+        )
+      }
+
       return output
     }
 
@@ -141,6 +172,136 @@ export class ChatUseCase {
     }
 
     return output
+  }
+
+  private async tryIntentCache(
+    userId: string,
+    messageText: string,
+    requestType: 'text' | 'voice' | 'image',
+    embedding: number[]
+  ): Promise<ChatUseCaseOutput | null> {
+    try {
+      const cachedIntent = await this.deps.aiRepository.findSimilarIntent(embedding)
+
+      if (!cachedIntent) {
+        console.info('[Intent Cache] MISS', { query: messageText.slice(0, 80) })
+        return null
+      }
+
+      console.info('[Intent Cache] HIT', {
+        similarity: cachedIntent.similarity,
+        function: cachedIntent.function_name,
+        canonical: cachedIntent.canonical_text,
+      })
+
+      // Extract dynamic params from the user message using a lightweight prompt
+      const params = await this.extractParamsFromCache(messageText, cachedIntent)
+
+      // Execute the cached function
+      const result = await executeFunction(
+        { name: cachedIntent.function_name, args: params },
+        {
+          userId,
+          supabase: this.deps.supabase,
+          createExpenseUseCase: this.deps.createExpenseUseCase,
+          expensesRepository: this.deps.expensesRepository,
+        }
+      )
+
+      // Format query results with AI
+      const context = await this.buildUserContext(userId)
+      let formattedMessage = result.message
+      let formatTokens = 0
+
+      if (result.success && result.data && result.actionType === 'query_result') {
+        const formatResult = await this.formatResultWithAI(
+          messageText,
+          cachedIntent.function_name,
+          result.data,
+          context
+        )
+        formattedMessage = formatResult.text ?? result.message
+        formatTokens = formatResult.tokensUsed
+      }
+
+      await this.deps.aiRepository.logUsage(
+        userId,
+        requestType,
+        `${cachedIntent.function_name}_cached`,
+        formatTokens
+      )
+
+      return this.formatFunctionResult({ ...result, message: formattedMessage }, formatTokens)
+    } catch (error) {
+      console.warn('[Intent Cache] Error during cache lookup, falling back to full AI call', error)
+      return null
+    }
+  }
+
+  private async extractParamsFromCache(
+    userMessage: string,
+    cachedIntent: IntentCacheEntry
+  ): Promise<Record<string, unknown>> {
+    const template = cachedIntent.params_template as Record<string, unknown>
+
+    // If no dynamic params needed, return template as-is
+    if (!cachedIntent.extraction_hints) return template
+
+    const extractionPrompt = `Extract parameters from this user message for a finance app function.
+
+Function: ${cachedIntent.function_name}
+Parameter template: ${JSON.stringify(template)}
+Extraction hints: ${cachedIntent.extraction_hints}
+User message: "${userMessage}"
+Today's date: ${new Date().toISOString().slice(0, 10)}
+
+Return ONLY a valid JSON object with the extracted parameters. No explanation.`
+
+    const response = await this.deps.aiClient.chat({
+      messages: [{ role: 'user', content: [{ type: 'text', text: extractionPrompt }] }],
+    })
+
+    try {
+      const text = response.text?.trim() ?? ''
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]) as Record<string, unknown>
+      }
+    } catch {
+      // Parse failed, fall back to template
+    }
+
+    return template
+  }
+
+  private storeNewIntent(
+    messageText: string,
+    embedding: number[],
+    functionName: string,
+    args: Record<string, unknown>
+  ): void {
+    // Fire-and-forget — don't block the response
+    this.deps.aiRepository
+      .storeIntent({
+        canonical_text: messageText,
+        embedding,
+        function_name: functionName,
+        params_template: args,
+        extraction_hints: this.buildExtractionHints(args),
+      })
+      .catch((error) => {
+        console.warn('[Intent Cache] Failed to store new intent', error)
+      })
+  }
+
+  private buildExtractionHints(args: Record<string, unknown>): string | null {
+    const dynamicKeys = Object.entries(args)
+      .filter(([key]) => ['start_date', 'end_date', 'amount_cents', 'date'].includes(key))
+      .map(([key]) => key)
+
+    if (dynamicKeys.length === 0) return null
+
+    return `Dynamic params to extract: ${dynamicKeys.join(', ')}`
   }
 
   private extractMessageText(messages: ChatMessage[]): string {
