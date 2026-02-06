@@ -52,9 +52,20 @@ export function useAIChat(): UseAIChatReturn {
       }
 
       if (isErrorResponse(response)) {
-        setError(response.error.message)
+        const isLimitReached = response.error.code === 'FORBIDDEN'
+        const message = isLimitReached
+          ? 'Voce atingiu o limite semanal. Atualize para o Pro!'
+          : response.error.message
+        setError(message)
         setIsLoading(false)
-        toast.error(response.error.message)
+        toast.error(
+          message,
+          isLimitReached
+            ? {
+                action: { label: 'Ver planos', onClick: () => window.location.assign('/upgrade') },
+              }
+            : undefined
+        )
         return
       }
 

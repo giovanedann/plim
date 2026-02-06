@@ -26,6 +26,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import {
   ChevronsUpDown,
   CreditCard,
+  Crown,
   LayoutDashboard,
   LogOut,
   Receipt,
@@ -141,6 +142,12 @@ export function AppSidebar() {
                   <Link to="/profile">
                     <User className="mr-2 h-4 w-4" />
                     Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/upgrade">
+                    <Crown className="mr-2 h-4 w-4" />
+                    Plano
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
