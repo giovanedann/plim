@@ -376,8 +376,8 @@ function getExpensesArray(cacheData: ExpensesCacheData): Expense[] {
 }
 
 function wrapExpensesArray(expenses: Expense[], original: ExpensesCacheData): ExpensesCacheData {
-  // Preserve the original shape
-  return Array.isArray(original) ? expenses : { data: expenses }
+  // Preserve the original shape including extra properties (e.g. meta for paginated queries)
+  return Array.isArray(original) ? expenses : { ...original, data: expenses }
 }
 
 function expenseMatchesFilters(expense: Expense, filters: ExpenseFilters): boolean {
