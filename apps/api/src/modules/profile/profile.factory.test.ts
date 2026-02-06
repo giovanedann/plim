@@ -30,6 +30,8 @@ function createMockEnv(): Bindings {
     UPSTASH_REDIS_REST_URL: 'https://redis.test.com',
     UPSTASH_REDIS_REST_TOKEN: 'test-token',
     GEMINI_API_KEY: 'test-gemini-key',
+    MERCADO_PAGO_ACCESS_TOKEN: 'test-mp-token',
+    MERCADO_PAGO_WEBHOOK_SECRET: 'test-mp-webhook-secret',
   }
 }
 
