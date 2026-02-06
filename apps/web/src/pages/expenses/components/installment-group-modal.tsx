@@ -117,6 +117,10 @@ export function InstallmentGroupModal({ open, onOpenChange, expense }: Installme
       }
       toast.error(error.message || 'Erro ao antecipar parcela')
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+    },
   })
 
   const totalAmount = installments?.reduce((sum, i) => sum + i.amount_cents, 0) ?? 0

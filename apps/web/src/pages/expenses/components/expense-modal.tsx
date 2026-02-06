@@ -315,6 +315,10 @@ export function ExpenseModal({
       }
       toast.error(error.message || 'Erro ao criar despesa')
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+    },
   })
 
   const updateMutation = useMutation({
@@ -371,7 +375,10 @@ export function ExpenseModal({
         amount_cents: updateData.amount_cents ?? expense.amount_cents,
         category_id: updateData.category_id ?? expense.category_id,
         payment_method: updateData.payment_method ?? expense.payment_method,
-        credit_card_id: updateData.credit_card_id ?? expense.credit_card_id,
+        credit_card_id:
+          updateData.credit_card_id !== undefined
+            ? updateData.credit_card_id
+            : expense.credit_card_id,
         date: updateData.date ?? expense.date,
         description: updateData.description ?? expense.description,
       }
@@ -394,6 +401,10 @@ export function ExpenseModal({
         rollbackExpensesUpdate(queryClient, context.previousExpenses)
       }
       toast.error(error.message || 'Erro ao atualizar despesa')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 
