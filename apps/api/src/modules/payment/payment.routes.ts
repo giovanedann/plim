@@ -161,5 +161,102 @@ async function verifyWebhookSignature(
   return computedHash === expectedHash
 }
 
+export function createPaymentRouterWithDeps(deps: PaymentDependencies): Hono<PaymentEnv> {
+  const router = new Hono<PaymentEnv>()
+
+  router.use('*', async (c, next) => {
+    c.set('paymentDeps', deps)
+    await next()
+  })
+
+  router.post('/pix', async (c) => {
+    const d = c.get('paymentDeps')
+    const userId = c.get('userId')
+
+    const email = await getUserEmail(d, userId)
+    if (!email) {
+      return error(c, ERROR_CODES.NOT_FOUND, 'Perfil nao encontrado', HTTP_STATUS.NOT_FOUND)
+    }
+
+    const result = await d.createPixPayment.execute(userId, email)
+    return success(c, result, HTTP_STATUS.CREATED)
+  })
+
+  router.post('/card', async (c) => {
+    const d = c.get('paymentDeps')
+    const userId = c.get('userId')
+
+    const email = await getUserEmail(d, userId)
+    if (!email) {
+      return error(c, ERROR_CODES.NOT_FOUND, 'Perfil nao encontrado', HTTP_STATUS.NOT_FOUND)
+    }
+
+    const result = await d.createCardSubscription.execute(userId, email)
+    return success(c, result, HTTP_STATUS.CREATED)
+  })
+
+  router.get('/status', async (c) => {
+    const d = c.get('paymentDeps')
+    const userId = c.get('userId')
+
+    const result = await d.getSubscriptionStatus.execute(userId)
+    return success(c, result, HTTP_STATUS.OK)
+  })
+
+  router.post('/cancel', async (c) => {
+    const d = c.get('paymentDeps')
+    const userId = c.get('userId')
+
+    const result = await d.cancelSubscription.execute(userId)
+    return success(c, result, HTTP_STATUS.OK)
+  })
+
+  return router
+}
+
+export interface WebhookTestDependencies {
+  handleWebhook: { execute: (payload: unknown) => Promise<void> }
+  verifySignature?: (
+    signature: string | undefined,
+    requestId: string | undefined,
+    dataId: string | undefined,
+    secret: string
+  ) => Promise<boolean>
+}
+
+export function createWebhookRouterWithDeps(
+  deps: WebhookTestDependencies,
+  secret = 'test-secret'
+): Hono<WebhookEnv> {
+  const router = new Hono<WebhookEnv>()
+
+  router.post('/mercadopago', async (c) => {
+    const body = await c.req.json()
+
+    const signature = c.req.header('x-signature')
+    const requestId = c.req.header('x-request-id')
+
+    const verify = deps.verifySignature ?? verifyWebhookSignature
+    const isValid = await verify(signature, requestId, body.data?.id, secret)
+
+    if (!isValid) {
+      return error(
+        c,
+        ERROR_CODES.UNAUTHORIZED,
+        'Invalid webhook signature',
+        HTTP_STATUS.UNAUTHORIZED
+      )
+    }
+
+    await deps.handleWebhook.execute(body)
+
+    return c.json({ received: true }, 200)
+  })
+
+  return router
+}
+
+export { verifyWebhookSignature }
+
 export const paymentRouter = createPaymentRouter()
 export const webhookRouter = createWebhookRouter()
