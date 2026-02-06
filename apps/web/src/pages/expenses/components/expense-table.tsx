@@ -134,6 +134,10 @@ export function ExpenseTable({
       }
       toast.error(error.message || 'Erro ao excluir despesa')
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+    },
   })
 
   const cancelRecurrenceMutation = useMutation({
@@ -163,6 +167,10 @@ export function ExpenseTable({
         rollbackExpensesUpdate(queryClient, context.previousExpenses)
       }
       toast.error(error.message || 'Erro ao cancelar recorrência')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 
@@ -199,6 +207,10 @@ export function ExpenseTable({
       }
       toast.error(error.message || 'Erro ao excluir parcelas')
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+    },
   })
 
   const deleteRecurrentGroupMutation = useMutation({
@@ -228,6 +240,10 @@ export function ExpenseTable({
         rollbackExpensesUpdate(queryClient, context.previousExpenses)
       }
       toast.error(error.message || 'Erro ao excluir despesa recorrente')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 
