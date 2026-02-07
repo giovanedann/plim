@@ -2,9 +2,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AIRepository, UsageInfo } from './ai.repository'
 import { CheckUsageLimitUseCase } from './check-usage-limit.usecase'
 
-function createMockRepository(): { getUsageInfo: ReturnType<typeof vi.fn> } {
+function createMockRepository(): {
+  getUsageInfo: ReturnType<typeof vi.fn>
+  getSubscription: ReturnType<typeof vi.fn>
+  downgradeExpiredPix: ReturnType<typeof vi.fn>
+} {
   return {
     getUsageInfo: vi.fn(),
+    getSubscription: vi.fn().mockResolvedValue({
+      tier: 'free',
+      payment_method: null,
+      current_period_end: null,
+    }),
+    downgradeExpiredPix: vi.fn().mockResolvedValue(false),
   }
 }
 

@@ -214,8 +214,13 @@ describe('useAIChat', () => {
         await result.current.sendMessage([{ type: 'text', text: 'Hello' }])
       })
 
-      expect(result.current.error).toBe('Rate limit exceeded')
-      expect(toast.error).toHaveBeenCalledWith('Rate limit exceeded')
+      expect(result.current.error).toBe('Voce atingiu o limite semanal. Atualize para o Pro!')
+      expect(toast.error).toHaveBeenCalledWith(
+        'Voce atingiu o limite semanal. Atualize para o Pro!',
+        expect.objectContaining({
+          action: expect.objectContaining({ label: 'Ver planos' }),
+        })
+      )
     })
 
     it('does not add assistant message on API error', async () => {

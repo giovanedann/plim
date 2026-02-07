@@ -10,6 +10,9 @@ export type Bindings = {
   UPSTASH_REDIS_REST_URL: string
   UPSTASH_REDIS_REST_TOKEN: string
   GEMINI_API_KEY: string
+  MERCADO_PAGO_ACCESS_TOKEN: string
+  MERCADO_PAGO_WEBHOOK_SECRET: string
+  API_BASE_URL: string
 }
 
 /**

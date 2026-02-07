@@ -12,6 +12,14 @@ vi.mock('@/hooks/use-profile', () => ({
   useProfile: vi.fn(),
 }))
 
+vi.mock('@/hooks/use-subscription', () => ({
+  useSubscription: vi.fn(),
+}))
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to }: any) => <a href={to}>{children}</a>,
+}))
+
 vi.mock('@/stores/ai.store', () => ({
   useAIStore: vi.fn(),
 }))
@@ -22,6 +30,7 @@ vi.mock('@/stores/auth.store', () => ({
 
 import { useAIChat } from '@/hooks/use-ai-chat'
 import { useProfile } from '@/hooks/use-profile'
+import { useSubscription } from '@/hooks/use-subscription'
 import { type StoredChatMessage, useAIStore } from '@/stores/ai.store'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -68,6 +77,13 @@ describe('AIChatDrawer', () => {
     vi.mocked(useAuthStore).mockReturnValue({
       user: { email: 'test@example.com', user_metadata: {} },
     } as never)
+    vi.mocked(useSubscription).mockReturnValue({
+      subscription: null,
+      isPro: false,
+      isExpiringSoon: false,
+      daysRemaining: null,
+      isLoading: false,
+    })
   })
 
   afterEach(() => {
@@ -330,7 +346,7 @@ describe('AIChatDrawer', () => {
     it('disables send button when input is empty', () => {
       render(<AIChatDrawer />)
 
-      const sendButton = screen.getByRole('button', { name: '' })
+      const sendButton = screen.getByRole('button', { name: /Enviar/ })
       expect(sendButton).toBeDisabled()
     })
 

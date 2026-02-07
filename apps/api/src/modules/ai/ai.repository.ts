@@ -17,6 +17,7 @@ export interface Subscription {
   ai_text_limit: number
   ai_voice_limit: number
   ai_image_limit: number
+  payment_method: 'pix' | 'credit_card' | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   current_period_start: string | null
@@ -116,6 +117,7 @@ export class AIRepository {
         ai_text_limit: 15,
         ai_voice_limit: 2,
         ai_image_limit: 3,
+        payment_method: null,
         stripe_customer_id: null,
         stripe_subscription_id: null,
         current_period_start: null,
@@ -337,5 +339,34 @@ export class AIRepository {
         function_name: input.function_name,
       })
     }
+  }
+
+  async downgradeExpiredPix(userId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('subscription')
+      .update({
+        tier: 'free',
+        ai_requests_limit: 20,
+        ai_text_limit: 15,
+        ai_voice_limit: 2,
+        ai_image_limit: 3,
+        mp_payment_status: 'expired',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('tier', 'pro')
+      .eq('payment_method', 'pix')
+      .lt('current_period_end', new Date().toISOString())
+      .select('id')
+
+    if (error) {
+      console.error('[PIX Expiration] Failed to downgrade user', {
+        userId,
+        error: error.message,
+      })
+      return false
+    }
+
+    return (data?.length ?? 0) > 0
   }
 }

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
-import { Check, Sparkles } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 interface PricingTier {
   name: string
@@ -11,7 +11,6 @@ interface PricingTier {
   features: string[]
   cta: string
   highlighted?: boolean
-  comingSoon?: boolean
 }
 
 const tiers: PricingTier[] = [
@@ -36,11 +35,11 @@ const tiers: PricingTier[] = [
     description: 'Para quem quer o máximo da IA',
     features: [
       'Tudo do plano Grátis',
-      'Limites expandidos de IA',
-      'Mais funcionalidades em breve...',
+      '100 requisições de texto por semana',
+      '20 requisições de imagem por semana',
+      '15 requisições de voz por semana',
     ],
-    cta: 'Avise-me quando lançar',
-    comingSoon: true,
+    cta: 'Assinar Pro',
   },
 ]
 
@@ -74,14 +73,6 @@ export function PricingSection() {
                   : 'border-border bg-background'
               )}
             >
-              {/* Coming soon badge */}
-              {tier.comingSoon && (
-                <div className="absolute -top-3 right-4 flex items-center gap-1 rounded-full bg-violet-500 px-3 py-1 text-xs font-medium text-white">
-                  <Sparkles className="h-3 w-3" />
-                  Em breve
-                </div>
-              )}
-
               {/* Tier name */}
               <h3 className="mb-2 text-xl font-semibold text-foreground">{tier.name}</h3>
 
@@ -107,22 +98,16 @@ export function PricingSection() {
               </ul>
 
               {/* CTA */}
-              {tier.comingSoon ? (
-                <Button variant="outline" size="lg" disabled className="w-full">
-                  {tier.cta}
-                </Button>
-              ) : (
-                <Button
-                  asChild
-                  size="lg"
-                  className={cn(
-                    'w-full',
-                    tier.highlighted && 'bg-amber-500 text-slate-950 hover:bg-amber-400'
-                  )}
-                >
-                  <Link to="/sign-up">{tier.cta}</Link>
-                </Button>
-              )}
+              <Button
+                asChild
+                size="lg"
+                className={cn(
+                  'w-full',
+                  tier.highlighted && 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                )}
+              >
+                <Link to={tier.highlighted ? '/sign-up' : '/upgrade'}>{tier.cta}</Link>
+              </Button>
             </div>
           ))}
         </div>

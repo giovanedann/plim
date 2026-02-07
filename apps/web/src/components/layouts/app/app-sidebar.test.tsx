@@ -45,6 +45,16 @@ vi.mock('@/hooks/use-profile', () => ({
   }),
 }))
 
+vi.mock('@/hooks/use-subscription', () => ({
+  useSubscription: () => ({
+    subscription: null,
+    isPro: false,
+    isExpiringSoon: false,
+    daysRemaining: null,
+    isLoading: false,
+  }),
+}))
+
 vi.mock('@/stores/auth.store', () => ({
   useAuthStore: () => ({
     user: mockUser,
