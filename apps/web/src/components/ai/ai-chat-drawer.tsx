@@ -285,10 +285,8 @@ function UpgradeBanner({
   inputMode: InputMode
   onNavigate: () => void
 }): React.ReactElement | null {
-  // TODO: revert — temporarily show banner for all users (testing)
-  // const { isPro } = useSubscription()
-  // if (isPro) return null
-  useSubscription()
+  const { isPro } = useSubscription()
+  if (isPro) return null
 
   const limitReached = usage?.[inputMode]?.remaining === 0
 

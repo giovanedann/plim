@@ -109,8 +109,7 @@ describe('AIChatDrawer Integration', () => {
       })
     })
 
-    // TODO: revert — skipped while banner is force-shown for all users (testing)
-    it.skip('pro user does not see upgrade banner', async () => {
+    it('pro user does not see upgrade banner', async () => {
       vi.spyOn(paymentService, 'getSubscriptionStatus').mockResolvedValue({
         data: PRO_STATUS,
       })
