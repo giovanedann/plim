@@ -1,4 +1,5 @@
 import { PlimIcon } from '@/components/icons'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { useProfile } from '@/hooks/use-profile'
+import { useSubscription } from '@/hooks/use-subscription'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link, useLocation } from '@tanstack/react-router'
 import {
@@ -61,6 +63,7 @@ export function AppSidebar() {
   const location = useLocation()
   const { signOut, user } = useAuthStore()
   const { profile } = useProfile()
+  const { isPro } = useSubscription()
 
   const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url
   const displayName = profile?.name ?? user?.email?.split('@')[0]
@@ -127,7 +130,17 @@ export function AppSidebar() {
                     </div>
                   )}
                   <div className="flex flex-col items-start text-left text-sm leading-tight min-w-0 flex-1">
-                    <span className="truncate font-semibold w-full">{displayName}</span>
+                    <span className="flex items-center gap-1.5 w-full">
+                      <span className="truncate font-semibold">{displayName}</span>
+                      {isPro && (
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] font-bold text-amber-500"
+                        >
+                          PRO
+                        </Badge>
+                      )}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground w-full">
                       {user?.email}
                     </span>

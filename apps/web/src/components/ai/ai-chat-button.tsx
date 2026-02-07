@@ -1,3 +1,4 @@
+import { HoverBorderGradient } from '@/components/ui/hover-border-gradient'
 import { cn } from '@/lib/utils'
 import { useAIStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -31,40 +32,17 @@ export function AIChatButton(): React.ReactElement {
       transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.5 }}
       className="fixed bottom-6 right-6 z-50"
     >
-      <button
-        type="button"
+      <HoverBorderGradient
+        as="button"
+        containerClassName="rounded-2xl"
+        className="rounded-[15px] bg-background px-4 py-3 w-[220px]"
+        duration={2}
         onClick={toggleDrawer}
-        className="group relative cursor-pointer"
         aria-label="Abrir assistente de IA"
       >
-        {/* Subtle animated border glow */}
-        <div
-          className={cn(
-            'absolute -inset-[1px] rounded-2xl',
-            'bg-gradient-to-r from-amber-500/20 via-amber-400/40 to-amber-500/20',
-            'dark:from-amber-500/40 dark:via-amber-400/60 dark:to-amber-500/40',
-            'opacity-60 group-hover:opacity-90',
-            'transition-opacity duration-500',
-            'animate-[pulse_3s_ease-in-out_infinite]'
-          )}
-        />
+        <div className={cn('flex items-center gap-3', isPulsing && 'animate-pulse')}>
+          <Sparkles className="h-5 w-5 text-amber-500 shrink-0" />
 
-        {/* Main pill button - fixed width to prevent size changes */}
-        <div
-          className={cn(
-            'relative flex items-center gap-3 px-4 py-3 rounded-2xl w-[220px]',
-            'bg-background border border-border',
-            'transition-all duration-300',
-            'group-hover:bg-muted',
-            isPulsing && 'animate-pulse'
-          )}
-        >
-          {/* Icon */}
-          <Sparkles
-            className={cn('h-5 w-5 text-amber-500 shrink-0', 'transition-all duration-300')}
-          />
-
-          {/* Text content */}
           <div className="flex flex-col items-start gap-0.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 w-full">
               <span className="text-sm font-medium text-foreground whitespace-nowrap">
@@ -92,7 +70,7 @@ export function AIChatButton(): React.ReactElement {
             </div>
           </div>
         </div>
-      </button>
+      </HoverBorderGradient>
     </motion.div>
   )
 }
