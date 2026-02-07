@@ -20,12 +20,14 @@ import {
 } from '@/components/ui/sheet'
 import { useAIChat } from '@/hooks/use-ai-chat'
 import { useProfile } from '@/hooks/use-profile'
+import { useSubscription } from '@/hooks/use-subscription'
 import { cn } from '@/lib/utils'
 import { type StoredChatMessage, useAIStore } from '@/stores/ai.store'
 import { useAuthStore } from '@/stores/auth.store'
-import type { ContentPart } from '@plim/shared'
+import type { AIUsageResponse, ContentPart } from '@plim/shared'
+import { Link } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Camera, ImageIcon, Info, Mic, Send, Sparkles, Volume2 } from 'lucide-react'
+import { Camera, Crown, ImageIcon, Info, Mic, Send, Sparkles, Volume2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ImageUploader } from './image-uploader'
 import { VoiceRecorder } from './voice-recorder'
@@ -274,6 +276,56 @@ function ClearChatButton(): React.ReactElement {
   )
 }
 
+function UpgradeBanner({
+  usage,
+  inputMode,
+  onNavigate,
+}: {
+  usage: AIUsageResponse | null
+  inputMode: InputMode
+  onNavigate: () => void
+}): React.ReactElement | null {
+  // TODO: revert — temporarily show banner for all users (testing)
+  // const { isPro } = useSubscription()
+  // if (isPro) return null
+  useSubscription()
+
+  const limitReached = usage?.[inputMode]?.remaining === 0
+
+  if (limitReached) {
+    return (
+      <div className="mx-auto mb-2 flex w-fit max-w-full items-center justify-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-2">
+        <Crown className="h-4 w-4 shrink-0 text-amber-500" />
+        <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+          Limite atingido —{' '}
+          <Link
+            to="/upgrade"
+            onClick={onNavigate}
+            className="underline underline-offset-2 hover:text-amber-600 dark:hover:text-amber-300"
+          >
+            faça upgrade para continuar
+          </Link>
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto mb-2 flex w-fit max-w-full items-center justify-center gap-2 rounded-lg bg-amber-500/10 px-3 py-1.5">
+      <Crown className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+      <span className="text-xs text-amber-700/80 dark:text-amber-400/80">
+        <Link
+          to="/upgrade"
+          onClick={onNavigate}
+          className="underline underline-offset-2 hover:text-amber-600 dark:hover:text-amber-300"
+        >
+          Desbloqueie mais com o Pro
+        </Link>
+      </span>
+    </div>
+  )
+}
+
 function getUsageDisplay(
   usage: {
     text: { remaining: number; limit: number; used: number }
@@ -299,10 +351,13 @@ function getUsageDisplay(
 export function AIChatDrawer(): React.ReactElement {
   const { isDrawerOpen, closeDrawer, messages, usage } = useAIStore()
   const { sendMessage, isLoading } = useAIChat()
+  const { isPro } = useSubscription()
   const [inputMode, setInputMode] = useState<InputMode>('text')
   const [textInput, setTextInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const isLimitReached = !isPro && usage?.[inputMode]?.remaining === 0
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -407,6 +462,9 @@ export function AIChatDrawer(): React.ReactElement {
             <ClearChatButton />
           </div>
 
+          {/* Upgrade Banner */}
+          <UpgradeBanner usage={usage} inputMode={inputMode} onNavigate={closeDrawer} />
+
           {/* Mode Selector */}
           <div className="mb-3 flex justify-center gap-1">
             {[
@@ -432,14 +490,14 @@ export function AIChatDrawer(): React.ReactElement {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex gap-3"
+              className="flex flex-col gap-2 sm:flex-row sm:gap-3"
             >
               <textarea
                 ref={textareaRef}
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Digite sua mensagem..."
+                placeholder={isLimitReached ? 'Limite atingido' : 'Digite sua mensagem...'}
                 className={cn(
                   'flex-1 resize-none rounded-xl border bg-muted/50 px-4 py-3',
                   'text-sm placeholder:text-muted-foreground',
@@ -447,14 +505,15 @@ export function AIChatDrawer(): React.ReactElement {
                   'transition-all duration-200'
                 )}
                 rows={2}
-                disabled={isLoading}
+                disabled={isLoading || isLimitReached}
               />
               <Button
                 onClick={handleSendText}
-                disabled={!textInput.trim() || isLoading}
-                className="h-auto min-w-[56px] rounded-xl px-5 shadow-sm sm:min-w-[64px] sm:px-6"
+                disabled={!textInput.trim() || isLoading || isLimitReached}
+                className="w-full rounded-xl shadow-sm sm:h-auto sm:w-auto sm:min-w-[64px] sm:px-6"
               >
                 <Send className="h-5 w-5" />
+                <span className="sm:hidden">Enviar</span>
               </Button>
             </motion.div>
           )}
@@ -462,14 +521,20 @@ export function AIChatDrawer(): React.ReactElement {
           {/* Voice Input */}
           {inputMode === 'voice' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <VoiceRecorder onRecordingComplete={handleSendAudio} disabled={isLoading} />
+              <VoiceRecorder
+                onRecordingComplete={handleSendAudio}
+                disabled={isLoading || isLimitReached}
+              />
             </motion.div>
           )}
 
           {/* Image Input */}
           {inputMode === 'image' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <ImageUploader onImageCapture={handleSendImage} disabled={isLoading} />
+              <ImageUploader
+                onImageCapture={handleSendImage}
+                disabled={isLoading || isLimitReached}
+              />
             </motion.div>
           )}
         </div>
