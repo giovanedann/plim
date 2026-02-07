@@ -1,5 +1,6 @@
 import { AIChatButton, AIChatDrawer } from '@/components/ai'
 import { OnboardingOverlay } from '@/components/onboarding'
+import { RenewalReminderModal } from '@/components/renewal-reminder-modal'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useAIUsage } from '@/hooks/use-ai-usage'
 import { useProfile } from '@/hooks/use-profile'
@@ -65,6 +66,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         onSaveSalary={handleSaveSalary}
         onComplete={handleComplete}
       />
+
+      <RenewalReminderModal />
 
       <AIChatButton />
       <AIChatDrawer />

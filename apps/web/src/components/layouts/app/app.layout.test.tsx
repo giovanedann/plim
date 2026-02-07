@@ -63,6 +63,11 @@ vi.mock('@/components/onboarding', () => ({
   OnboardingOverlay: () => <div data-testid="onboarding-overlay">Onboarding</div>,
 }))
 
+// Mock renewal reminder modal
+vi.mock('@/components/renewal-reminder-modal', () => ({
+  RenewalReminderModal: () => <div data-testid="renewal-reminder-modal">Renewal Modal</div>,
+}))
+
 // Mock AI components
 vi.mock('@/components/ai', () => ({
   AIChatButton: () => <div data-testid="ai-chat-button">AI Chat Button</div>,
