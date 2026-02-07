@@ -1,5 +1,15 @@
 const MP_API_BASE = 'https://api.mercadopago.com'
 
+export interface CreatePixPaymentParams {
+  email: string
+  amountBrl: number
+  notificationUrl?: string
+  externalReference: string
+  statementDescriptor: string
+  firstName?: string
+  lastName?: string
+}
+
 export interface MpPixPaymentResponse {
   id: number
   status: string
@@ -21,89 +31,70 @@ export interface MpPaymentStatusResponse {
   date_approved: string | null
 }
 
-export interface MpPreApprovalResponse {
-  id: string
-  status: string
-  init_point: string
-  payer_id: number
-  auto_recurring: {
-    frequency: number
-    frequency_type: string
-    transaction_amount: number
-    currency_id: string
-  }
-}
-
-export interface MpPreApprovalStatusResponse {
-  id: string
-  status: string
-  payer_id: number
-  auto_recurring: {
-    frequency: number
-    frequency_type: string
-    transaction_amount: number
-    currency_id: string
-  }
-  next_payment_date: string | null
-}
-
 export class MercadoPagoClient {
   constructor(private accessToken: string) {}
 
-  async createPixPayment(email: string, amountBrl: number): Promise<MpPixPaymentResponse> {
+  async createPixPayment(params: CreatePixPaymentParams): Promise<MpPixPaymentResponse> {
     const expiresAt = new Date()
     expiresAt.setMinutes(expiresAt.getMinutes() + 30)
 
-    const body = {
-      transaction_amount: amountBrl,
+    const payer: Record<string, string> = { email: params.email }
+    if (params.firstName) payer.first_name = params.firstName
+    if (params.lastName) payer.last_name = params.lastName
+
+    const body: Record<string, unknown> = {
+      transaction_amount: params.amountBrl,
       payment_method_id: 'pix',
-      payer: { email },
+      payer,
       description: 'Plim Pro - 30 dias',
       date_of_expiration: expiresAt.toISOString(),
+      external_reference: params.externalReference,
+      statement_descriptor: params.statementDescriptor,
+      additional_info: {
+        items: [
+          {
+            id: 'plim-pro-30d',
+            title: 'Plim Pro - 30 dias',
+            description: 'Assinatura Plim Pro por 30 dias',
+            category_id: 'services',
+            quantity: 1,
+            unit_price: params.amountBrl,
+          },
+        ],
+      },
     }
 
-    const response = await this.request<MpPixPaymentResponse>('POST', '/v1/payments', body)
-    return response
+    if (params.notificationUrl) {
+      body.notification_url = params.notificationUrl
+    }
+
+    const timeWindow = Math.floor(Date.now() / 300_000)
+    const idempotencyKey = `pix-${params.email}-${params.amountBrl}-${timeWindow}`
+    return this.request<MpPixPaymentResponse>('POST', '/v1/payments', body, idempotencyKey)
   }
 
   async getPaymentStatus(paymentId: string): Promise<MpPaymentStatusResponse> {
     return this.request<MpPaymentStatusResponse>('GET', `/v1/payments/${paymentId}`)
   }
 
-  async createCardSubscription(email: string, amountBrl: number): Promise<MpPreApprovalResponse> {
-    const body = {
-      reason: 'Plim Pro - Assinatura mensal',
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: amountBrl,
-        currency_id: 'BRL',
-      },
-      payer_email: email,
-      back_url: 'https://plim.app.br/upgrade',
-      status: 'pending',
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    idempotencyKey?: string
+  ): Promise<T> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.accessToken}`,
+      'Content-Type': 'application/json',
     }
 
-    return this.request<MpPreApprovalResponse>('POST', '/preapproval', body)
-  }
+    if (idempotencyKey) {
+      headers['X-Idempotency-Key'] = idempotencyKey
+    }
 
-  async getSubscriptionStatus(preapprovalId: string): Promise<MpPreApprovalStatusResponse> {
-    return this.request<MpPreApprovalStatusResponse>('GET', `/preapproval/${preapprovalId}`)
-  }
-
-  async cancelSubscription(preapprovalId: string): Promise<MpPreApprovalStatusResponse> {
-    return this.request<MpPreApprovalStatusResponse>('PUT', `/preapproval/${preapprovalId}`, {
-      status: 'cancelled',
-    })
-  }
-
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${MP_API_BASE}${path}`, {
       method,
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     })
 

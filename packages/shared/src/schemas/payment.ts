@@ -7,11 +7,6 @@ export const pixPaymentResponseSchema = z.object({
   expires_at: z.string(),
 })
 
-export const cardSubscriptionResponseSchema = z.object({
-  init_point: z.string(),
-  mp_preapproval_id: z.string(),
-})
-
 export const subscriptionStatusResponseSchema = z.object({
   tier: z.enum(['free', 'pro', 'unlimited']),
   payment_method: z.enum(['pix', 'credit_card']).nullable(),
@@ -22,11 +17,5 @@ export const subscriptionStatusResponseSchema = z.object({
   days_remaining: z.number().int().nullable(),
 })
 
-export const cancelSubscriptionResponseSchema = z.object({
-  success: z.boolean(),
-})
-
 export type PixPaymentResponse = z.infer<typeof pixPaymentResponseSchema>
-export type CardSubscriptionResponse = z.infer<typeof cardSubscriptionResponseSchema>
 export type SubscriptionStatusResponse = z.infer<typeof subscriptionStatusResponseSchema>
-export type CancelSubscriptionResponse = z.infer<typeof cancelSubscriptionResponseSchema>

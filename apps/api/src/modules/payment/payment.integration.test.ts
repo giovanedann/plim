@@ -1,6 +1,4 @@
 import {
-  type CancelSubscriptionResponse,
-  type CardSubscriptionResponse,
   ERROR_CODES,
   HTTP_STATUS,
   type PixPaymentResponse,
@@ -9,7 +7,6 @@ import {
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorHandler } from '../../middleware/error-handler.middleware'
-import { AppError } from '../../middleware/error-handler.middleware'
 import { TEST_USER_ID, createIntegrationApp } from '../../test-utils/api-integration'
 import type { Env } from '../../types'
 import type { PaymentDependencies } from './payment.factory'
@@ -21,15 +18,16 @@ import {
 } from './payment.routes'
 
 const mockCreatePixPayment = { execute: vi.fn() }
-const mockCreateCardSubscription = { execute: vi.fn() }
 const mockGetSubscriptionStatus = { execute: vi.fn() }
-const mockCancelSubscription = { execute: vi.fn() }
 
 const mockSupabase = {
   from: vi.fn().mockReturnValue({
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: { email: 'user@email.com' }, error: null }),
+        single: vi.fn().mockResolvedValue({
+          data: { email: 'user@email.com', name: 'Test User' },
+          error: null,
+        }),
       }),
     }),
   }),
@@ -40,9 +38,7 @@ const mockDependencies = {
   mpClient: {},
   supabase: mockSupabase,
   createPixPayment: mockCreatePixPayment,
-  createCardSubscription: mockCreateCardSubscription,
   getSubscriptionStatus: mockGetSubscriptionStatus,
-  cancelSubscription: mockCancelSubscription,
 } as unknown as PaymentDependencies
 
 describe('Payment Integration', () => {
@@ -54,7 +50,10 @@ describe('Payment Integration', () => {
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { email: 'user@email.com' }, error: null }),
+          single: vi.fn().mockResolvedValue({
+            data: { email: 'user@email.com', name: 'Test User' },
+            error: null,
+          }),
         }),
       }),
     })
@@ -90,7 +89,10 @@ describe('Payment Integration', () => {
 
       await app.request('/payment/pix', { method: 'POST' })
 
-      expect(mockCreatePixPayment.execute).toHaveBeenCalledWith(TEST_USER_ID, 'user@email.com')
+      expect(mockCreatePixPayment.execute).toHaveBeenCalledWith(TEST_USER_ID, {
+        email: 'user@email.com',
+        name: 'Test User',
+      })
     })
 
     it('returns 404 when user profile not found', async () => {
@@ -107,80 +109,6 @@ describe('Payment Integration', () => {
       expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
       const body = (await res.json()) as { error: { code: string } }
       expect(body.error.code).toBe(ERROR_CODES.NOT_FOUND)
-    })
-
-    it('returns 403 when user already has active card subscription', async () => {
-      mockCreatePixPayment.execute.mockRejectedValue(
-        new AppError(
-          ERROR_CODES.FORBIDDEN,
-          'Voce ja possui uma assinatura ativa com cartao de credito',
-          HTTP_STATUS.FORBIDDEN
-        )
-      )
-
-      const res = await app.request('/payment/pix', { method: 'POST' })
-
-      expect(res.status).toBe(HTTP_STATUS.FORBIDDEN)
-      const body = (await res.json()) as { error: { code: string; message: string } }
-      expect(body.error.code).toBe(ERROR_CODES.FORBIDDEN)
-      expect(body.error.message).toContain('assinatura ativa')
-    })
-  })
-
-  describe('POST /payment/card - Create card subscription', () => {
-    const cardResponse: CardSubscriptionResponse = {
-      init_point: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=sub-123',
-      mp_preapproval_id: 'sub-123',
-    }
-
-    it('returns 201 with init_point URL', async () => {
-      mockCreateCardSubscription.execute.mockResolvedValue(cardResponse)
-
-      const res = await app.request('/payment/card', { method: 'POST' })
-
-      expect(res.status).toBe(HTTP_STATUS.CREATED)
-      const body = (await res.json()) as { data: CardSubscriptionResponse }
-      expect(body.data.init_point).toContain('mercadopago.com.br')
-      expect(body.data.mp_preapproval_id).toBe('sub-123')
-    })
-
-    it('passes userId and email to use case', async () => {
-      mockCreateCardSubscription.execute.mockResolvedValue(cardResponse)
-
-      await app.request('/payment/card', { method: 'POST' })
-
-      expect(mockCreateCardSubscription.execute).toHaveBeenCalledWith(
-        TEST_USER_ID,
-        'user@email.com'
-      )
-    })
-
-    it('returns 404 when user profile not found', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-      })
-
-      const res = await app.request('/payment/card', { method: 'POST' })
-
-      expect(res.status).toBe(HTTP_STATUS.NOT_FOUND)
-    })
-
-    it('returns 403 when user already has active card subscription', async () => {
-      mockCreateCardSubscription.execute.mockRejectedValue(
-        new AppError(
-          ERROR_CODES.FORBIDDEN,
-          'Voce ja possui uma assinatura ativa com cartao de credito',
-          HTTP_STATUS.FORBIDDEN
-        )
-      )
-
-      const res = await app.request('/payment/card', { method: 'POST' })
-
-      expect(res.status).toBe(HTTP_STATUS.FORBIDDEN)
     })
   })
 
@@ -246,25 +174,6 @@ describe('Payment Integration', () => {
       expect(body.data.days_remaining).toBe(3)
     })
 
-    it('returns 200 with active Pro card subscription', async () => {
-      const status: SubscriptionStatusResponse = {
-        tier: 'pro',
-        payment_method: 'credit_card',
-        current_period_start: '2026-02-01T00:00:00.000Z',
-        current_period_end: '2026-03-01T00:00:00.000Z',
-        mp_payment_status: 'approved',
-        is_expiring_soon: false,
-        days_remaining: 23,
-      }
-      mockGetSubscriptionStatus.execute.mockResolvedValue(status)
-
-      const res = await app.request('/payment/status')
-
-      const body = (await res.json()) as { data: SubscriptionStatusResponse }
-      expect(body.data.tier).toBe('pro')
-      expect(body.data.payment_method).toBe('credit_card')
-    })
-
     it('passes userId to use case', async () => {
       const status: SubscriptionStatusResponse = {
         tier: 'free',
@@ -280,44 +189,6 @@ describe('Payment Integration', () => {
       await app.request('/payment/status')
 
       expect(mockGetSubscriptionStatus.execute).toHaveBeenCalledWith(TEST_USER_ID)
-    })
-  })
-
-  describe('POST /payment/cancel - Cancel subscription', () => {
-    const cancelResponse: CancelSubscriptionResponse = { success: true }
-
-    it('returns 200 with success', async () => {
-      mockCancelSubscription.execute.mockResolvedValue(cancelResponse)
-
-      const res = await app.request('/payment/cancel', { method: 'POST' })
-
-      expect(res.status).toBe(HTTP_STATUS.OK)
-      const body = (await res.json()) as { data: CancelSubscriptionResponse }
-      expect(body.data.success).toBe(true)
-    })
-
-    it('passes userId to use case', async () => {
-      mockCancelSubscription.execute.mockResolvedValue(cancelResponse)
-
-      await app.request('/payment/cancel', { method: 'POST' })
-
-      expect(mockCancelSubscription.execute).toHaveBeenCalledWith(TEST_USER_ID)
-    })
-
-    it('returns 403 when user has no active subscription', async () => {
-      mockCancelSubscription.execute.mockRejectedValue(
-        new AppError(
-          ERROR_CODES.FORBIDDEN,
-          'Voce nao possui uma assinatura ativa para cancelar',
-          HTTP_STATUS.FORBIDDEN
-        )
-      )
-
-      const res = await app.request('/payment/cancel', { method: 'POST' })
-
-      expect(res.status).toBe(HTTP_STATUS.FORBIDDEN)
-      const body = (await res.json()) as { error: { code: string; message: string } }
-      expect(body.error.message).toContain('assinatura ativa')
     })
   })
 })
@@ -363,40 +234,6 @@ describe('Webhook Integration', () => {
         type: 'payment',
         action: 'payment.updated',
         data: { id: '12345' },
-      })
-    })
-
-    it('returns 200 with card subscription event', async () => {
-      const webhookApp = new Hono<Env>()
-      webhookApp.onError(errorHandler)
-      const webhookDeps: WebhookTestDependencies = {
-        handleWebhook: mockHandleWebhook,
-        verifySignature: vi.fn().mockResolvedValue(true),
-      }
-      const router = createWebhookRouterWithDeps(webhookDeps)
-      webhookApp.route('/webhooks', router)
-
-      mockHandleWebhook.execute.mockResolvedValue(undefined)
-
-      const res = await webhookApp.request('/webhooks/mercadopago', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-signature': 'ts=1234,v1=validhash',
-          'x-request-id': 'req-456',
-        },
-        body: JSON.stringify({
-          type: 'subscription_preapproval',
-          action: 'subscription_preapproval.updated',
-          data: { id: 'sub-abc-123' },
-        }),
-      })
-
-      expect(res.status).toBe(200)
-      expect(mockHandleWebhook.execute).toHaveBeenCalledWith({
-        type: 'subscription_preapproval',
-        action: 'subscription_preapproval.updated',
-        data: { id: 'sub-abc-123' },
       })
     })
 
@@ -485,48 +322,60 @@ describe('verifyWebhookSignature', () => {
     const requestId = 'req-abc'
     const hash = await generateSignature(dataId, requestId, ts, SECRET)
 
-    const result = await verifyWebhookSignature(`ts=${ts},v1=${hash}`, requestId, dataId, SECRET)
+    const result = await verifyWebhookSignature(`ts=${ts},v1=${hash}`, requestId, dataId, [SECRET])
+
+    expect(result).toBe(true)
+  })
+
+  it('returns true when signature matches second secret', async () => {
+    const ts = '1706745600'
+    const dataId = '12345'
+    const requestId = 'req-abc'
+    const secondSecret = 'other-webhook-secret'
+    const hash = await generateSignature(dataId, requestId, ts, secondSecret)
+
+    const result = await verifyWebhookSignature(`ts=${ts},v1=${hash}`, requestId, dataId, [
+      'wrong-secret',
+      secondSecret,
+    ])
 
     expect(result).toBe(true)
   })
 
   it('returns false for invalid signature', async () => {
-    const result = await verifyWebhookSignature(
-      'ts=1234,v1=invalidhash',
-      'req-123',
-      '12345',
-      SECRET
-    )
+    const result = await verifyWebhookSignature('ts=1234,v1=invalidhash', 'req-123', '12345', [
+      SECRET,
+    ])
 
     expect(result).toBe(false)
   })
 
   it('returns false when signature header is undefined', async () => {
-    const result = await verifyWebhookSignature(undefined, 'req-123', '12345', SECRET)
+    const result = await verifyWebhookSignature(undefined, 'req-123', '12345', [SECRET])
 
     expect(result).toBe(false)
   })
 
-  it('returns false when secret is empty', async () => {
-    const result = await verifyWebhookSignature('ts=1234,v1=hash', 'req-123', '12345', '')
+  it('returns false when secrets array is empty', async () => {
+    const result = await verifyWebhookSignature('ts=1234,v1=hash', 'req-123', '12345', [])
 
     expect(result).toBe(false)
   })
 
   it('returns false when signature format is malformed', async () => {
-    const result = await verifyWebhookSignature('malformed-signature', 'req-123', '12345', SECRET)
+    const result = await verifyWebhookSignature('malformed-signature', 'req-123', '12345', [SECRET])
 
     expect(result).toBe(false)
   })
 
   it('returns false when ts is missing', async () => {
-    const result = await verifyWebhookSignature('v1=somehash', 'req-123', '12345', SECRET)
+    const result = await verifyWebhookSignature('v1=somehash', 'req-123', '12345', [SECRET])
 
     expect(result).toBe(false)
   })
 
   it('returns false when v1 is missing', async () => {
-    const result = await verifyWebhookSignature('ts=1234', 'req-123', '12345', SECRET)
+    const result = await verifyWebhookSignature('ts=1234', 'req-123', '12345', [SECRET])
 
     expect(result).toBe(false)
   })

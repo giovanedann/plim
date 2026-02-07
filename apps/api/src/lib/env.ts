@@ -12,6 +12,7 @@ export type Bindings = {
   GEMINI_API_KEY: string
   MERCADO_PAGO_ACCESS_TOKEN: string
   MERCADO_PAGO_WEBHOOK_SECRET: string
+  API_BASE_URL: string
 }
 
 /**

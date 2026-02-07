@@ -4,9 +4,7 @@ import {
   createSupabaseAdminClient,
   createSupabaseClientWithAuth,
 } from '../../lib/env'
-import { CancelSubscriptionUseCase } from './cancel-subscription.usecase'
 import { MercadoPagoClient } from './client/mercado-pago-client'
-import { CreateCardSubscriptionUseCase } from './create-card-subscription.usecase'
 import { CreatePixPaymentUseCase } from './create-pix-payment.usecase'
 import { GetSubscriptionStatusUseCase } from './get-subscription-status.usecase'
 import { HandleWebhookUseCase } from './handle-webhook.usecase'
@@ -17,9 +15,7 @@ export interface PaymentDependencies {
   mpClient: MercadoPagoClient
   supabase: SupabaseClient
   createPixPayment: CreatePixPaymentUseCase
-  createCardSubscription: CreateCardSubscriptionUseCase
   getSubscriptionStatus: GetSubscriptionStatusUseCase
-  cancelSubscription: CancelSubscriptionUseCase
 }
 
 export interface WebhookDependencies {
@@ -42,10 +38,10 @@ export function createPaymentDependencies(options: CreateDependenciesOptions): P
     repository,
     mpClient,
     supabase,
-    createPixPayment: new CreatePixPaymentUseCase(repository, mpClient),
-    createCardSubscription: new CreateCardSubscriptionUseCase(repository, mpClient),
+    createPixPayment: new CreatePixPaymentUseCase(repository, mpClient, {
+      apiBaseUrl: options.env.API_BASE_URL,
+    }),
     getSubscriptionStatus: new GetSubscriptionStatusUseCase(repository),
-    cancelSubscription: new CancelSubscriptionUseCase(repository, mpClient),
   }
 }
 

@@ -1,33 +1,49 @@
 import type { PixPaymentResponse } from '@plim/shared'
-import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
-import { AppError } from '../../middleware/error-handler.middleware'
-import type { MercadoPagoClient } from './client/mercado-pago-client'
+import type { CreatePixPaymentParams, MercadoPagoClient } from './client/mercado-pago-client'
 import type { PaymentRepository } from './payment.repository'
 
-const PRO_PRICE_BRL = 24.9
+const PRO_PRICE_BRL = 0.5
+
+export interface PixPaymentUrls {
+  apiBaseUrl: string
+}
+
+export function splitName(name: string | null): { firstName?: string; lastName?: string } {
+  if (!name) return {}
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 0 || parts[0] === '') return {}
+  if (parts.length === 1) return { firstName: parts[0] }
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+}
 
 export class CreatePixPaymentUseCase {
   constructor(
     private repository: PaymentRepository,
-    private mpClient: MercadoPagoClient
+    private mpClient: MercadoPagoClient,
+    private urls: PixPaymentUrls
   ) {}
 
-  async execute(userId: string, email: string): Promise<PixPaymentResponse> {
-    const subscription = await this.repository.getSubscription(userId)
+  async execute(
+    userId: string,
+    profile: { email: string; name: string | null }
+  ): Promise<PixPaymentResponse> {
+    const { firstName, lastName } = splitName(profile.name)
 
-    if (
-      subscription?.tier === 'pro' &&
-      subscription.payment_method === 'credit_card' &&
-      subscription.mp_payment_status === 'approved'
-    ) {
-      throw new AppError(
-        ERROR_CODES.FORBIDDEN,
-        'Voce ja possui uma assinatura ativa com cartao de credito',
-        HTTP_STATUS.FORBIDDEN
-      )
+    const notificationUrl = this.urls.apiBaseUrl.startsWith('https://')
+      ? `${this.urls.apiBaseUrl}/api/v1/webhooks/mercadopago`
+      : undefined
+
+    const params: CreatePixPaymentParams = {
+      email: profile.email,
+      amountBrl: PRO_PRICE_BRL,
+      notificationUrl,
+      externalReference: `plim-pro-${userId}`,
+      statementDescriptor: 'PLIM PRO',
+      firstName,
+      lastName,
     }
 
-    const mpPayment = await this.mpClient.createPixPayment(email, PRO_PRICE_BRL)
+    const mpPayment = await this.mpClient.createPixPayment(params)
 
     await this.repository.setPaymentPending(userId, {
       payment_method: 'pix',

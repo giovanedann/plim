@@ -41,7 +41,8 @@ export function AIChatButton(): React.ReactElement {
         <div
           className={cn(
             'absolute -inset-[1px] rounded-2xl',
-            'bg-gradient-to-r from-amber-500/40 via-amber-400/60 to-amber-500/40',
+            'bg-gradient-to-r from-amber-500/20 via-amber-400/40 to-amber-500/20',
+            'dark:from-amber-500/40 dark:via-amber-400/60 dark:to-amber-500/40',
             'opacity-60 group-hover:opacity-90',
             'transition-opacity duration-500',
             'animate-[pulse_3s_ease-in-out_infinite]'
@@ -52,25 +53,25 @@ export function AIChatButton(): React.ReactElement {
         <div
           className={cn(
             'relative flex items-center gap-3 px-4 py-3 rounded-2xl w-[220px]',
-            'bg-neutral-950',
+            'bg-background border border-border',
             'transition-all duration-300',
-            'group-hover:bg-neutral-900',
+            'group-hover:bg-muted',
             isPulsing && 'animate-pulse'
           )}
         >
           {/* Icon */}
           <Sparkles
-            className={cn('h-5 w-5 text-amber-400 shrink-0', 'transition-all duration-300')}
+            className={cn('h-5 w-5 text-amber-500 shrink-0', 'transition-all duration-300')}
           />
 
           {/* Text content */}
           <div className="flex flex-col items-start gap-0.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 w-full">
-              <span className="text-sm font-medium text-amber-50/90 whitespace-nowrap">
+              <span className="text-sm font-medium text-foreground whitespace-nowrap">
                 Pedir ajuda pra IA
               </span>
               {usageDisplay && (
-                <span className="text-[10px] font-medium text-amber-400/70 bg-amber-400/10 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400/70 bg-amber-500/10 px-1.5 py-0.5 rounded">
                   {usageDisplay}
                 </span>
               )}
@@ -83,7 +84,7 @@ export function AIChatButton(): React.ReactElement {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.3 }}
-                  className="block text-xs text-amber-50/50 truncate"
+                  className="block text-xs text-muted-foreground truncate"
                 >
                   "{EXAMPLE_PROMPTS[promptIndex]}"
                 </motion.span>

@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  type CreatePixPaymentParams,
   MercadoPagoClient,
   type MpPaymentStatusResponse,
   type MpPixPaymentResponse,
-  type MpPreApprovalResponse,
-  type MpPreApprovalStatusResponse,
 } from './mercado-pago-client'
 
-const ACCESS_TOKEN = 'TEST-access-token-123'
+const ACCESS_TOKEN = 'TEST-payments-token-123'
 const BASE_URL = 'https://api.mercadopago.com'
 
 function createFetchResponse(body: unknown, ok = true, status = 200): Response {
@@ -18,6 +17,19 @@ function createFetchResponse(body: unknown, ok = true, status = 200): Response {
     json: () => Promise.resolve(body),
     text: () => Promise.resolve(JSON.stringify(body)),
   } as Response
+}
+
+function createDefaultParams(overrides?: Partial<CreatePixPaymentParams>): CreatePixPaymentParams {
+  return {
+    email: 'user@email.com',
+    amountBrl: 29.9,
+    notificationUrl: 'https://api.plim.app.br/api/v1/webhooks/mercadopago',
+    externalReference: 'plim-pro-user-1',
+    statementDescriptor: 'PLIM PRO',
+    firstName: 'Joao',
+    lastName: 'Silva',
+    ...overrides,
+  }
 }
 
 describe('MercadoPagoClient', () => {
@@ -42,27 +54,28 @@ describe('MercadoPagoClient', () => {
       date_of_expiration: '2026-02-06T12:30:00.000Z',
     }
 
-    it('sends POST to /v1/payments with correct headers and body', async () => {
+    it('sends POST to /v1/payments with access token and idempotency key', async () => {
       vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(pixResponse))
 
-      await sut.createPixPayment('user@email.com', 29.9)
+      await sut.createPixPayment(createDefaultParams())
 
       expect(global.fetch).toHaveBeenCalledWith(
         `${BASE_URL}/v1/payments`,
         expect.objectContaining({
           method: 'POST',
-          headers: {
+          headers: expect.objectContaining({
             Authorization: `Bearer ${ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
-          },
+            'X-Idempotency-Key': expect.stringContaining('pix-user@email.com-29.9-'),
+          }),
         })
       )
     })
 
-    it('includes payer email, amount, pix method, and expiration in the body', async () => {
+    it('includes all enriched fields in the body', async () => {
       vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(pixResponse))
 
-      await sut.createPixPayment('user@email.com', 29.9)
+      await sut.createPixPayment(createDefaultParams())
 
       const call = vi.mocked(global.fetch).mock.calls[0]!
       const body = JSON.parse(call[1]?.body as string)
@@ -70,16 +83,55 @@ describe('MercadoPagoClient', () => {
       expect(body).toMatchObject({
         transaction_amount: 29.9,
         payment_method_id: 'pix',
-        payer: { email: 'user@email.com' },
+        payer: { email: 'user@email.com', first_name: 'Joao', last_name: 'Silva' },
         description: 'Plim Pro - 30 dias',
+        notification_url: 'https://api.plim.app.br/api/v1/webhooks/mercadopago',
+        external_reference: 'plim-pro-user-1',
+        statement_descriptor: 'PLIM PRO',
+        additional_info: {
+          items: [
+            {
+              id: 'plim-pro-30d',
+              title: 'Plim Pro - 30 dias',
+              description: 'Assinatura Plim Pro por 30 dias',
+              category_id: 'services',
+              quantity: 1,
+              unit_price: 29.9,
+            },
+          ],
+        },
       })
       expect(body.date_of_expiration).toBeDefined()
+    })
+
+    it('omits notification_url when notificationUrl is undefined', async () => {
+      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(pixResponse))
+
+      await sut.createPixPayment(createDefaultParams({ notificationUrl: undefined }))
+
+      const call = vi.mocked(global.fetch).mock.calls[0]!
+      const body = JSON.parse(call[1]?.body as string)
+
+      expect(body.notification_url).toBeUndefined()
+    })
+
+    it('omits first_name and last_name when undefined', async () => {
+      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(pixResponse))
+
+      await sut.createPixPayment(createDefaultParams({ firstName: undefined, lastName: undefined }))
+
+      const call = vi.mocked(global.fetch).mock.calls[0]!
+      const body = JSON.parse(call[1]?.body as string)
+
+      expect(body.payer).toEqual({ email: 'user@email.com' })
+      expect(body.payer.first_name).toBeUndefined()
+      expect(body.payer.last_name).toBeUndefined()
     })
 
     it('returns the parsed API response', async () => {
       vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(pixResponse))
 
-      const result = await sut.createPixPayment('user@email.com', 29.9)
+      const result = await sut.createPixPayment(createDefaultParams())
 
       expect(result).toEqual(pixResponse)
     })
@@ -89,7 +141,7 @@ describe('MercadoPagoClient', () => {
         createFetchResponse({ message: 'invalid_token' }, false, 401)
       )
 
-      await expect(sut.createPixPayment('user@email.com', 29.9)).rejects.toThrow(
+      await expect(sut.createPixPayment(createDefaultParams())).rejects.toThrow(
         'Mercado Pago API error: 401'
       )
     })
@@ -105,7 +157,7 @@ describe('MercadoPagoClient', () => {
       date_approved: '2026-02-06T10:00:00.000Z',
     }
 
-    it('sends GET to /v1/payments/:id with auth header', async () => {
+    it('sends GET to /v1/payments/:id with access token', async () => {
       vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(statusResponse))
 
       await sut.getPaymentStatus('12345')
@@ -140,167 +192,6 @@ describe('MercadoPagoClient', () => {
     })
   })
 
-  describe('createCardSubscription', () => {
-    const subscriptionResponse: MpPreApprovalResponse = {
-      id: 'sub-abc-123',
-      status: 'pending',
-      init_point:
-        'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=sub-abc-123',
-      payer_id: 98765,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: 29.9,
-        currency_id: 'BRL',
-      },
-    }
-
-    it('sends POST to /preapproval with subscription body', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(subscriptionResponse))
-
-      await sut.createCardSubscription('user@email.com', 29.9)
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        `${BASE_URL}/preapproval`,
-        expect.objectContaining({ method: 'POST' })
-      )
-
-      const call = vi.mocked(global.fetch).mock.calls[0]!
-      const body = JSON.parse(call[1]?.body as string)
-
-      expect(body).toEqual({
-        reason: 'Plim Pro - Assinatura mensal',
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: 'months',
-          transaction_amount: 29.9,
-          currency_id: 'BRL',
-        },
-        payer_email: 'user@email.com',
-        back_url: 'https://plim.app.br/upgrade',
-        status: 'pending',
-      })
-    })
-
-    it('returns the parsed subscription response', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(subscriptionResponse))
-
-      const result = await sut.createCardSubscription('user@email.com', 29.9)
-
-      expect(result).toEqual(subscriptionResponse)
-    })
-
-    it('throws when the API returns a non-ok response', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        createFetchResponse({ message: 'bad_request' }, false, 400)
-      )
-
-      await expect(sut.createCardSubscription('user@email.com', 29.9)).rejects.toThrow(
-        'Mercado Pago API error: 400'
-      )
-    })
-  })
-
-  describe('getSubscriptionStatus', () => {
-    const statusResponse: MpPreApprovalStatusResponse = {
-      id: 'sub-abc-123',
-      status: 'authorized',
-      payer_id: 98765,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: 29.9,
-        currency_id: 'BRL',
-      },
-      next_payment_date: '2026-03-06T10:00:00.000Z',
-    }
-
-    it('sends GET to /preapproval/:id with auth header', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(statusResponse))
-
-      await sut.getSubscriptionStatus('sub-abc-123')
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        `${BASE_URL}/preapproval/sub-abc-123`,
-        expect.objectContaining({
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${ACCESS_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: undefined,
-        })
-      )
-    })
-
-    it('returns the parsed subscription status', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(statusResponse))
-
-      const result = await sut.getSubscriptionStatus('sub-abc-123')
-
-      expect(result).toEqual(statusResponse)
-    })
-
-    it('throws when the API returns a non-ok response', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        createFetchResponse({ message: 'not_found' }, false, 404)
-      )
-
-      await expect(sut.getSubscriptionStatus('invalid-id')).rejects.toThrow(
-        'Mercado Pago API error: 404'
-      )
-    })
-  })
-
-  describe('cancelSubscription', () => {
-    const cancelledResponse: MpPreApprovalStatusResponse = {
-      id: 'sub-abc-123',
-      status: 'cancelled',
-      payer_id: 98765,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: 29.9,
-        currency_id: 'BRL',
-      },
-      next_payment_date: null,
-    }
-
-    it('sends PUT to /preapproval/:id with cancelled status', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(cancelledResponse))
-
-      await sut.cancelSubscription('sub-abc-123')
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        `${BASE_URL}/preapproval/sub-abc-123`,
-        expect.objectContaining({ method: 'PUT' })
-      )
-
-      const call = vi.mocked(global.fetch).mock.calls[0]!
-      const body = JSON.parse(call[1]?.body as string)
-
-      expect(body).toEqual({ status: 'cancelled' })
-    })
-
-    it('returns the parsed cancellation response', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(cancelledResponse))
-
-      const result = await sut.cancelSubscription('sub-abc-123')
-
-      expect(result).toEqual(cancelledResponse)
-    })
-
-    it('throws when the API returns a non-ok response', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        createFetchResponse({ message: 'forbidden' }, false, 403)
-      )
-
-      await expect(sut.cancelSubscription('sub-abc-123')).rejects.toThrow(
-        'Mercado Pago API error: 403'
-      )
-    })
-  })
-
   describe('error handling', () => {
     it('includes status code and response body in error message', async () => {
       vi.mocked(global.fetch).mockResolvedValue(
@@ -316,7 +207,7 @@ describe('MercadoPagoClient', () => {
       const errorBody = { message: 'insufficient_funds', cause: 'card_declined' }
       vi.mocked(global.fetch).mockResolvedValue(createFetchResponse(errorBody, false, 402))
 
-      await expect(sut.createPixPayment('user@email.com', 29.9)).rejects.toThrow(
+      await expect(sut.createPixPayment(createDefaultParams())).rejects.toThrow(
         'insufficient_funds'
       )
     })

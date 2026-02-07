@@ -34,25 +34,12 @@ export function createPaymentRouter(): Hono<PaymentEnv> {
     const deps = c.get('paymentDeps')
     const userId = c.get('userId')
 
-    const email = await getUserEmail(deps, userId)
-    if (!email) {
+    const profile = await getUserProfile(deps, userId)
+    if (!profile) {
       return error(c, ERROR_CODES.NOT_FOUND, 'Perfil nao encontrado', HTTP_STATUS.NOT_FOUND)
     }
 
-    const result = await deps.createPixPayment.execute(userId, email)
-    return success(c, result, HTTP_STATUS.CREATED)
-  })
-
-  router.post('/card', async (c) => {
-    const deps = c.get('paymentDeps')
-    const userId = c.get('userId')
-
-    const email = await getUserEmail(deps, userId)
-    if (!email) {
-      return error(c, ERROR_CODES.NOT_FOUND, 'Perfil nao encontrado', HTTP_STATUS.NOT_FOUND)
-    }
-
-    const result = await deps.createCardSubscription.execute(userId, email)
+    const result = await deps.createPixPayment.execute(userId, profile)
     return success(c, result, HTTP_STATUS.CREATED)
   })
 
@@ -61,14 +48,6 @@ export function createPaymentRouter(): Hono<PaymentEnv> {
     const userId = c.get('userId')
 
     const result = await deps.getSubscriptionStatus.execute(userId)
-    return success(c, result, HTTP_STATUS.OK)
-  })
-
-  router.post('/cancel', async (c) => {
-    const deps = c.get('paymentDeps')
-    const userId = c.get('userId')
-
-    const result = await deps.cancelSubscription.execute(userId)
     return success(c, result, HTTP_STATUS.OK)
   })
 
@@ -85,12 +64,9 @@ export function createWebhookRouter(): Hono<WebhookEnv> {
     const signature = c.req.header('x-signature')
     const requestId = c.req.header('x-request-id')
 
-    const isValid = await verifyWebhookSignature(
-      signature,
-      requestId,
-      body.data?.id,
-      c.env.MERCADO_PAGO_WEBHOOK_SECRET
-    )
+    const isValid = await verifyWebhookSignature(signature, requestId, body.data?.id, [
+      c.env.MERCADO_PAGO_WEBHOOK_SECRET,
+    ])
 
     if (!isValid) {
       return error(
@@ -109,25 +85,28 @@ export function createWebhookRouter(): Hono<WebhookEnv> {
   return router
 }
 
-async function getUserEmail(deps: PaymentDependencies, userId: string): Promise<string | null> {
+async function getUserProfile(
+  deps: PaymentDependencies,
+  userId: string
+): Promise<{ email: string; name: string | null } | null> {
   const { data } = await deps.supabase
     .from('profile')
-    .select('email')
+    .select('email, name')
     .eq('user_id', userId)
     .single()
 
-  return data?.email ?? null
+  if (!data?.email) return null
+  return { email: data.email, name: data.name ?? null }
 }
 
 async function verifyWebhookSignature(
   signature: string | undefined,
   requestId: string | undefined,
   dataId: string | undefined,
-  secret: string
+  secrets: string[]
 ): Promise<boolean> {
-  if (!signature || !secret) return false
+  if (!signature || secrets.length === 0) return false
 
-  // MP sends: ts=xxx,v1=hash
   const parts = signature.split(',')
   const tsEntry = parts.find((p) => p.startsWith('ts='))
   const v1Entry = parts.find((p) => p.startsWith('v1='))
@@ -139,26 +118,30 @@ async function verifyWebhookSignature(
 
   if (!ts || !expectedHash) return false
 
-  // Build manifest string per MP docs
   const manifest = `id:${dataId ?? ''};request-id:${requestId ?? ''};ts:${ts};`
-
-  // HMAC-SHA256 using Web Crypto API (Cloudflare Workers compatible)
   const encoder = new TextEncoder()
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
 
-  const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(manifest))
+  for (const secret of secrets) {
+    if (!secret) continue
 
-  const computedHash = Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
 
-  return computedHash === expectedHash
+    const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(manifest))
+
+    const computedHash = Array.from(new Uint8Array(signatureBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    if (computedHash === expectedHash) return true
+  }
+
+  return false
 }
 
 export function createPaymentRouterWithDeps(deps: PaymentDependencies): Hono<PaymentEnv> {
@@ -173,25 +156,12 @@ export function createPaymentRouterWithDeps(deps: PaymentDependencies): Hono<Pay
     const d = c.get('paymentDeps')
     const userId = c.get('userId')
 
-    const email = await getUserEmail(d, userId)
-    if (!email) {
+    const profile = await getUserProfile(d, userId)
+    if (!profile) {
       return error(c, ERROR_CODES.NOT_FOUND, 'Perfil nao encontrado', HTTP_STATUS.NOT_FOUND)
     }
 
-    const result = await d.createPixPayment.execute(userId, email)
-    return success(c, result, HTTP_STATUS.CREATED)
-  })
-
-  router.post('/card', async (c) => {
-    const d = c.get('paymentDeps')
-    const userId = c.get('userId')
-
-    const email = await getUserEmail(d, userId)
-    if (!email) {
-      return error(c, ERROR_CODES.NOT_FOUND, 'Perfil nao encontrado', HTTP_STATUS.NOT_FOUND)
-    }
-
-    const result = await d.createCardSubscription.execute(userId, email)
+    const result = await d.createPixPayment.execute(userId, profile)
     return success(c, result, HTTP_STATUS.CREATED)
   })
 
@@ -200,14 +170,6 @@ export function createPaymentRouterWithDeps(deps: PaymentDependencies): Hono<Pay
     const userId = c.get('userId')
 
     const result = await d.getSubscriptionStatus.execute(userId)
-    return success(c, result, HTTP_STATUS.OK)
-  })
-
-  router.post('/cancel', async (c) => {
-    const d = c.get('paymentDeps')
-    const userId = c.get('userId')
-
-    const result = await d.cancelSubscription.execute(userId)
     return success(c, result, HTTP_STATUS.OK)
   })
 
@@ -220,13 +182,13 @@ export interface WebhookTestDependencies {
     signature: string | undefined,
     requestId: string | undefined,
     dataId: string | undefined,
-    secret: string
+    secrets: string[]
   ) => Promise<boolean>
 }
 
 export function createWebhookRouterWithDeps(
   deps: WebhookTestDependencies,
-  secret = 'test-secret'
+  secrets: string[] = ['test-secret']
 ): Hono<WebhookEnv> {
   const router = new Hono<WebhookEnv>()
 
@@ -237,7 +199,7 @@ export function createWebhookRouterWithDeps(
     const requestId = c.req.header('x-request-id')
 
     const verify = deps.verifySignature ?? verifyWebhookSignature
-    const isValid = await verify(signature, requestId, body.data?.id, secret)
+    const isValid = await verify(signature, requestId, body.data?.id, secrets)
 
     if (!isValid) {
       return error(

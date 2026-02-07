@@ -1,8 +1,10 @@
-import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AppError } from '../../../middleware/error-handler.middleware'
 import type { MercadoPagoClient } from '../client/mercado-pago-client'
-import { CreatePixPaymentUseCase } from '../create-pix-payment.usecase'
+import {
+  CreatePixPaymentUseCase,
+  type PixPaymentUrls,
+  splitName,
+} from '../create-pix-payment.usecase'
 import type { PaymentRepository } from '../payment.repository'
 
 const mockRepository = {
@@ -12,16 +14,16 @@ const mockRepository = {
   updatePaymentStatus: vi.fn(),
   setPaymentPending: vi.fn(),
   getByMpPaymentId: vi.fn(),
-  getByMpPreapprovalId: vi.fn(),
   logPaymentEvent: vi.fn(),
 }
 
 const mockMpClient = {
   createPixPayment: vi.fn(),
   getPaymentStatus: vi.fn(),
-  createCardSubscription: vi.fn(),
-  getSubscriptionStatus: vi.fn(),
-  cancelSubscription: vi.fn(),
+}
+
+const mockUrls: PixPaymentUrls = {
+  apiBaseUrl: 'https://api.test.plim.app.br',
 }
 
 const mockMpPayment = {
@@ -43,15 +45,15 @@ describe('CreatePixPaymentUseCase', () => {
     vi.clearAllMocks()
     sut = new CreatePixPaymentUseCase(
       mockRepository as unknown as PaymentRepository,
-      mockMpClient as unknown as MercadoPagoClient
+      mockMpClient as unknown as MercadoPagoClient,
+      mockUrls
     )
   })
 
   it('creates pix payment and returns QR code data', async () => {
-    mockRepository.getSubscription.mockResolvedValue(null)
     mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
 
-    const result = await sut.execute('user-1', 'user@email.com')
+    const result = await sut.execute('user-1', { email: 'user@email.com', name: 'Joao Silva' })
 
     expect(result).toEqual({
       qr_code_base64: 'base64data',
@@ -61,58 +63,70 @@ describe('CreatePixPaymentUseCase', () => {
     })
   })
 
-  it('calls mpClient.createPixPayment with email and price', async () => {
-    mockRepository.getSubscription.mockResolvedValue(null)
+  it('calls mpClient.createPixPayment with enriched params', async () => {
     mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
 
-    await sut.execute('user-1', 'user@email.com')
+    await sut.execute('user-1', { email: 'user@email.com', name: 'Joao Silva' })
 
-    expect(mockMpClient.createPixPayment).toHaveBeenCalledWith('user@email.com', 24.9)
-  })
-
-  it('rejects when user has active card subscription', async () => {
-    mockRepository.getSubscription.mockResolvedValue({
-      tier: 'pro',
-      payment_method: 'credit_card',
-      mp_payment_status: 'approved',
-    })
-
-    const error = await sut.execute('user-1', 'user@email.com').catch((e: unknown) => e)
-
-    expect(error).toBeInstanceOf(AppError)
-    expect(error).toMatchObject({
-      code: ERROR_CODES.FORBIDDEN,
-      status: HTTP_STATUS.FORBIDDEN,
+    expect(mockMpClient.createPixPayment).toHaveBeenCalledWith({
+      email: 'user@email.com',
+      amountBrl: 0.5,
+      notificationUrl: 'https://api.test.plim.app.br/api/v1/webhooks/mercadopago',
+      externalReference: 'plim-pro-user-1',
+      statementDescriptor: 'PLIM PRO',
+      firstName: 'Joao',
+      lastName: 'Silva',
     })
   })
 
-  it('allows payment when user has no subscription', async () => {
-    mockRepository.getSubscription.mockResolvedValue(null)
+  it('omits firstName and lastName when name is null', async () => {
     mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
 
-    const result = await sut.execute('user-1', 'user@email.com')
+    await sut.execute('user-1', { email: 'user@email.com', name: null })
 
-    expect(result.mp_payment_id).toBe('12345')
+    expect(mockMpClient.createPixPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstName: undefined,
+        lastName: undefined,
+      })
+    )
   })
 
-  it('allows payment when subscription is cancelled', async () => {
-    mockRepository.getSubscription.mockResolvedValue({
-      tier: 'pro',
-      payment_method: 'credit_card',
-      mp_payment_status: 'cancelled',
-    })
+  it('sets only firstName when name is a single word', async () => {
     mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
 
-    const result = await sut.execute('user-1', 'user@email.com')
+    await sut.execute('user-1', { email: 'user@email.com', name: 'Joao' })
 
-    expect(result.mp_payment_id).toBe('12345')
+    expect(mockMpClient.createPixPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstName: 'Joao',
+        lastName: undefined,
+      })
+    )
+  })
+
+  it('omits notificationUrl when apiBaseUrl is not HTTPS', async () => {
+    mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
+
+    const localSut = new CreatePixPaymentUseCase(
+      mockRepository as unknown as PaymentRepository,
+      mockMpClient as unknown as MercadoPagoClient,
+      { apiBaseUrl: 'http://localhost:8787' }
+    )
+
+    await localSut.execute('user-1', { email: 'user@email.com', name: 'Joao' })
+
+    expect(mockMpClient.createPixPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notificationUrl: undefined,
+      })
+    )
   })
 
   it('calls setPaymentPending with pix payment data', async () => {
-    mockRepository.getSubscription.mockResolvedValue(null)
     mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
 
-    await sut.execute('user-1', 'user@email.com')
+    await sut.execute('user-1', { email: 'user@email.com', name: 'Joao Silva' })
 
     expect(mockRepository.setPaymentPending).toHaveBeenCalledWith('user-1', {
       payment_method: 'pix',
@@ -121,17 +135,42 @@ describe('CreatePixPaymentUseCase', () => {
   })
 
   it('logs pix_payment_created event', async () => {
-    mockRepository.getSubscription.mockResolvedValue(null)
     mockMpClient.createPixPayment.mockResolvedValue(mockMpPayment)
 
-    await sut.execute('user-1', 'user@email.com')
+    await sut.execute('user-1', { email: 'user@email.com', name: 'Joao Silva' })
 
     expect(mockRepository.logPaymentEvent).toHaveBeenCalledWith({
       user_id: 'user-1',
       mp_payment_id: '12345',
       event_type: 'pix_payment_created',
-      amount_cents: 2490,
+      amount_cents: 50,
       raw_payload: { mp_id: 12345, status: 'pending' },
     })
+  })
+})
+
+describe('splitName', () => {
+  it('returns empty object for null', () => {
+    expect(splitName(null)).toEqual({})
+  })
+
+  it('returns empty object for empty string', () => {
+    expect(splitName('')).toEqual({})
+  })
+
+  it('returns firstName only for single word', () => {
+    expect(splitName('Joao')).toEqual({ firstName: 'Joao' })
+  })
+
+  it('returns firstName and lastName for two words', () => {
+    expect(splitName('Joao Silva')).toEqual({ firstName: 'Joao', lastName: 'Silva' })
+  })
+
+  it('joins remaining words into lastName for multiple words', () => {
+    expect(splitName('Joao da Silva')).toEqual({ firstName: 'Joao', lastName: 'da Silva' })
+  })
+
+  it('trims whitespace', () => {
+    expect(splitName('  Joao  Silva  ')).toEqual({ firstName: 'Joao', lastName: 'Silva' })
   })
 })

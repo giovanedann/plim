@@ -70,9 +70,10 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
     if (isPro && open && !isApproved) {
       setIsApproved(true)
       cleanup()
+      queryClient.invalidateQueries({ queryKey: ['ai-usage'] })
       toast.success('Pagamento confirmado! Voce agora e Pro.')
     }
-  }, [isPro, open, isApproved, cleanup])
+  }, [isPro, open, isApproved, cleanup, queryClient])
 
   async function handleCopy(): Promise<void> {
     if (!pixData) return
@@ -86,7 +87,7 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="overflow-x-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isApproved ? 'Pagamento confirmado!' : 'Pagar com PIX'}</DialogTitle>
           <DialogDescription>
@@ -109,7 +110,7 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 overflow-hidden">
             {/* QR Code */}
             <div className="rounded-lg bg-white p-4">
               <img
@@ -124,7 +125,7 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
 
             {/* Copy code */}
             <div className="flex w-full gap-2">
-              <code className="flex-1 truncate rounded-md border bg-muted px-3 py-2 text-xs">
+              <code className="min-w-0 flex-1 truncate rounded-md border bg-muted px-3 py-2 text-xs">
                 {pixData.pix_copia_cola}
               </code>
               <Button variant="outline" size="icon" onClick={handleCopy}>

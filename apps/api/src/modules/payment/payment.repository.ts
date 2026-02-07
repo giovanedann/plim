@@ -162,18 +162,6 @@ export class PaymentRepository {
     return data as PaymentSubscription
   }
 
-  async getByMpPreapprovalId(mpPreapprovalId: string): Promise<PaymentSubscription | null> {
-    const { data, error } = await this.supabase
-      .from('subscription')
-      .select('*')
-      .eq('mp_preapproval_id', mpPreapprovalId)
-      .single()
-
-    if (error || !data) return null
-
-    return data as PaymentSubscription
-  }
-
   async logPaymentEvent(input: PaymentLogInput): Promise<void> {
     const { error } = await this.supabase.from('payment_log').insert({
       user_id: input.user_id,
