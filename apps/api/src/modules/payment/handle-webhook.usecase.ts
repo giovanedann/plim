@@ -40,13 +40,22 @@ export class HandleWebhookUseCase {
 
     if (mpPayment.status === 'approved') {
       const now = new Date()
-      const periodEnd = new Date(now)
+
+      const currentSub = await this.repository.getSubscription(subscription.user_id)
+      const isActivePro =
+        currentSub?.tier === 'pro' &&
+        currentSub.current_period_end !== null &&
+        new Date(currentSub.current_period_end) > now
+
+      const periodStart = isActivePro ? new Date(currentSub.current_period_end!) : now
+
+      const periodEnd = new Date(periodStart)
       periodEnd.setDate(periodEnd.getDate() + 30)
 
       await this.repository.upgradeToPro(subscription.user_id, {
         payment_method: 'pix',
         mp_payment_id: paymentId,
-        period_start: now.toISOString(),
+        period_start: periodStart.toISOString(),
         period_end: periodEnd.toISOString(),
       })
     } else {

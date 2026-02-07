@@ -56,6 +56,7 @@ describe('HandleWebhookUseCase', () => {
   describe('PIX payment webhook', () => {
     it('upgrades to pro when payment is approved', async () => {
       mockRepository.getByMpPaymentId.mockResolvedValue(mockSubscription)
+      mockRepository.getSubscription.mockResolvedValue(mockSubscription)
       mockMpClient.getPaymentStatus.mockResolvedValue({
         id: 12345,
         status: 'approved',
@@ -121,8 +122,89 @@ describe('HandleWebhookUseCase', () => {
       expect(mockRepository.updatePaymentStatus).not.toHaveBeenCalled()
     })
 
+    it('extends from current expiry for early renewal (active Pro)', async () => {
+      const activeProSubscription = {
+        ...mockSubscription,
+        tier: 'pro' as const,
+        mp_payment_status: 'pending' as const,
+        current_period_start: '2026-02-01T12:00:00.000Z',
+        current_period_end: '2026-02-15T12:00:00.000Z',
+      }
+      mockRepository.getByMpPaymentId.mockResolvedValue(activeProSubscription)
+      mockRepository.getSubscription.mockResolvedValue(activeProSubscription)
+      mockMpClient.getPaymentStatus.mockResolvedValue({
+        id: 12345,
+        status: 'approved',
+        status_detail: 'accredited',
+        payer: { email: 'user@email.com' },
+        transaction_amount: 24.9,
+        date_approved: '2026-02-01T12:00:00Z',
+      })
+
+      await sut.execute({ action: 'payment.updated', type: 'payment', data: { id: 'pay-123' } })
+
+      expect(mockRepository.upgradeToPro).toHaveBeenCalledWith('user-1', {
+        payment_method: 'pix',
+        mp_payment_id: 'pay-123',
+        period_start: '2026-02-15T12:00:00.000Z',
+        period_end: '2026-03-17T12:00:00.000Z',
+      })
+    })
+
+    it('starts from now for expired Pro renewal', async () => {
+      const expiredProSubscription = {
+        ...mockSubscription,
+        tier: 'pro' as const,
+        mp_payment_status: 'pending' as const,
+        current_period_start: '2026-01-01T12:00:00.000Z',
+        current_period_end: '2026-01-31T12:00:00.000Z',
+      }
+      mockRepository.getByMpPaymentId.mockResolvedValue(expiredProSubscription)
+      mockRepository.getSubscription.mockResolvedValue(expiredProSubscription)
+      mockMpClient.getPaymentStatus.mockResolvedValue({
+        id: 12345,
+        status: 'approved',
+        status_detail: 'accredited',
+        payer: { email: 'user@email.com' },
+        transaction_amount: 24.9,
+        date_approved: '2026-02-01T12:00:00Z',
+      })
+
+      await sut.execute({ action: 'payment.updated', type: 'payment', data: { id: 'pay-123' } })
+
+      expect(mockRepository.upgradeToPro).toHaveBeenCalledWith('user-1', {
+        payment_method: 'pix',
+        mp_payment_id: 'pay-123',
+        period_start: '2026-02-01T12:00:00.000Z',
+        period_end: '2026-03-03T12:00:00.000Z',
+      })
+    })
+
+    it('starts from now for first-time upgrade (free user)', async () => {
+      mockRepository.getByMpPaymentId.mockResolvedValue(mockSubscription)
+      mockRepository.getSubscription.mockResolvedValue(mockSubscription)
+      mockMpClient.getPaymentStatus.mockResolvedValue({
+        id: 12345,
+        status: 'approved',
+        status_detail: 'accredited',
+        payer: { email: 'user@email.com' },
+        transaction_amount: 24.9,
+        date_approved: '2026-02-01T12:00:00Z',
+      })
+
+      await sut.execute({ action: 'payment.updated', type: 'payment', data: { id: 'pay-123' } })
+
+      expect(mockRepository.upgradeToPro).toHaveBeenCalledWith('user-1', {
+        payment_method: 'pix',
+        mp_payment_id: 'pay-123',
+        period_start: '2026-02-01T12:00:00.000Z',
+        period_end: '2026-03-03T12:00:00.000Z',
+      })
+    })
+
     it('logs payment event on status change', async () => {
       mockRepository.getByMpPaymentId.mockResolvedValue(mockSubscription)
+      mockRepository.getSubscription.mockResolvedValue(mockSubscription)
       mockMpClient.getPaymentStatus.mockResolvedValue({
         id: 12345,
         status: 'approved',
