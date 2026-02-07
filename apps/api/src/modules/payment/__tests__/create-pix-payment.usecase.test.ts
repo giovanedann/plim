@@ -70,7 +70,7 @@ describe('CreatePixPaymentUseCase', () => {
 
     expect(mockMpClient.createPixPayment).toHaveBeenCalledWith({
       email: 'user@email.com',
-      amountBrl: 0.5,
+      amountBrl: 24.9,
       notificationUrl: 'https://api.test.plim.app.br/api/v1/webhooks/mercadopago',
       externalReference: 'plim-pro-user-1',
       statementDescriptor: 'PLIM PRO',
@@ -143,7 +143,7 @@ describe('CreatePixPaymentUseCase', () => {
       user_id: 'user-1',
       mp_payment_id: '12345',
       event_type: 'pix_payment_created',
-      amount_cents: 50,
+      amount_cents: 2490,
       raw_payload: { mp_id: 12345, status: 'pending' },
     })
   })
