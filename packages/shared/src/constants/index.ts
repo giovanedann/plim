@@ -1,5 +1,8 @@
 import type { ExpenseType, PaymentMethod } from '../schemas'
 
+export { PLAN_LIMITS } from './limits'
+export type { PlanTier, TierLimits } from './limits'
+
 export interface PaymentMethodOption {
   value: PaymentMethod
   label: string

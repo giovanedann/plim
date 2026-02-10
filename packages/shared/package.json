@@ -16,6 +16,10 @@
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
     },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "import": "./dist/constants/index.js"
+    },
     "./test-utils": {
       "types": "./dist/test-utils/index.d.ts",
       "import": "./dist/test-utils/index.js"
