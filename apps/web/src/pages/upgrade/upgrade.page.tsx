@@ -7,15 +7,29 @@ import { useSubscription } from '@/hooks/use-subscription'
 import { isErrorResponse } from '@/lib/api-client'
 import { paymentService } from '@/services/payment.service'
 import type { PixPaymentResponse } from '@plim/shared'
-import { AlertTriangle, Calendar, CheckCircle2, Clock, Crown, QrCode, Sparkles } from 'lucide-react'
+import {
+  AlertTriangle,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Crown,
+  LayoutDashboard,
+  QrCode,
+  Sparkles,
+  Tags,
+} from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { PixPaymentDialog } from './components/pix-payment-dialog'
 
 const PERKS = [
-  { icon: Sparkles, text: '100 requisicoes de texto com IA por semana' },
-  { icon: Sparkles, text: '20 requisicoes de imagem com IA por semana' },
-  { icon: Sparkles, text: '15 requisicoes de voz com IA por semana' },
+  { icon: Tags, text: 'Categorias ilimitadas' },
+  { icon: CreditCard, text: 'Cartões de crédito ilimitados' },
+  { icon: LayoutDashboard, text: 'Dashboard completo — trimestre e ano' },
+  { icon: Sparkles, text: '100 requisições de texto com IA por semana' },
+  { icon: Sparkles, text: '20 requisições de imagem com IA por semana' },
+  { icon: Sparkles, text: '15 requisições de voz com IA por semana' },
 ]
 
 function getElapsedPercent(periodStart: string | null, periodEnd: string | null): number {

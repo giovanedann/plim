@@ -90,9 +90,9 @@ describe('UpgradePage Integration', () => {
         expect(screen.getByText('R$ 24,90')).toBeInTheDocument()
       })
 
-      expect(screen.getByText(/100 requisicoes de texto/)).toBeInTheDocument()
-      expect(screen.getByText(/20 requisicoes de imagem/)).toBeInTheDocument()
-      expect(screen.getByText(/15 requisicoes de voz/)).toBeInTheDocument()
+      expect(screen.getByText(/100 requisições de texto/)).toBeInTheDocument()
+      expect(screen.getByText(/20 requisições de imagem/)).toBeInTheDocument()
+      expect(screen.getByText(/15 requisições de voz/)).toBeInTheDocument()
     })
 
     it('renders "Pagar com PIX" button', async () => {
