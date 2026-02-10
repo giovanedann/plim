@@ -5,7 +5,7 @@ export async function getDashboardController(
   userId: string,
   query: DashboardQuery & { group_by?: string },
   getDashboardUseCase: GetDashboardUseCase,
-  tier: PlanTier = 'free'
+  tier: PlanTier = 'pro'
 ): Promise<DashboardData> {
   return getDashboardUseCase.execute(userId, query, tier)
 }

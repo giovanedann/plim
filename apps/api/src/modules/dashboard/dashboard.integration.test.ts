@@ -699,7 +699,7 @@ describe('Dashboard Integration', () => {
       )
     })
 
-    it('returns complete dashboard data for pro tier', async () => {
+    it('returns complete dashboard data with pro date range', async () => {
       const dashboard = {
         summary: {
           total_income: 500000,
@@ -722,7 +722,7 @@ describe('Dashboard Integration', () => {
         },
       }
 
-      // Mock clampDateRange to return pro tier
+      // Mock clampDateRange to return pro tier (unclamped dates)
       vi.mocked(clampDateRange).mockResolvedValueOnce({
         start_date: '2024-01-01',
         end_date: '2024-01-31',

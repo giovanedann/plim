@@ -42,7 +42,7 @@ export class GetDashboardUseCase {
   async execute(
     userId: string,
     query: GetDashboardQuery,
-    tier: PlanTier = 'free'
+    tier: PlanTier = 'pro'
   ): Promise<DashboardData> {
     const dateQuery = { start_date: query.start_date, end_date: query.end_date }
     const timelineQuery: ExpensesTimelineQuery = {

@@ -61,11 +61,29 @@ describe('GetDashboardUseCase', () => {
     vi.useRealTimers()
   })
 
-  it('returns free charts and null pro-only charts for free tier', async () => {
+  it('defaults to pro tier (fail-safe) and returns all charts', async () => {
     const result = await sut.execute('user-123', {
       start_date: '2024-01-01',
       end_date: '2024-01-31',
     })
+
+    expect(result.summary).toBeDefined()
+    expect(result.expensesTimeline).toBeDefined()
+    expect(result.categoryBreakdown).toBeDefined()
+    expect(result.paymentBreakdown).toBeDefined()
+    expect(result.incomeVsExpenses).toBeDefined()
+    expect(result.creditCardBreakdown).toBeDefined()
+    expect(result.savingsRate).toBeDefined()
+    expect(result.salaryTimeline).toBeDefined()
+    expect(result.installmentForecast).toBeDefined()
+  })
+
+  it('returns free charts and null pro-only charts for free tier', async () => {
+    const result = await sut.execute(
+      'user-123',
+      { start_date: '2024-01-01', end_date: '2024-01-31' },
+      'free'
+    )
 
     expect(result.summary).toBeDefined()
     expect(result.expensesTimeline).toBeDefined()
@@ -86,10 +104,6 @@ describe('GetDashboardUseCase', () => {
       'pro'
     )
 
-    expect(result.summary).toBeDefined()
-    expect(result.expensesTimeline).toBeDefined()
-    expect(result.categoryBreakdown).toBeDefined()
-    expect(result.paymentBreakdown).toBeDefined()
     expect(result.incomeVsExpenses).toBeDefined()
     expect(result.creditCardBreakdown).toBeDefined()
     expect(result.savingsRate).toBeDefined()
@@ -112,10 +126,7 @@ describe('GetDashboardUseCase', () => {
   })
 
   it('skips pro-only DB queries for free tier', async () => {
-    await sut.execute('user-123', {
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
-    })
+    await sut.execute('user-123', { start_date: '2024-01-01', end_date: '2024-01-31' }, 'free')
 
     expect(mockRepository.getExpensesForPeriod).toHaveBeenCalled()
     expect(mockRepository.getExpensesWithCreditCards).not.toHaveBeenCalled()
