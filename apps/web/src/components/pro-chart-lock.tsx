@@ -9,7 +9,7 @@ interface ProChartLockProps {
 
 export function ProChartLock({ title, children }: ProChartLockProps): React.JSX.Element {
   return (
-    <div className="relative overflow-hidden rounded-xl border">
+    <div className="relative h-full overflow-hidden rounded-xl border">
       {children && (
         <div className="pointer-events-none select-none blur-[6px] opacity-50">{children}</div>
       )}

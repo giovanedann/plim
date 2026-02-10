@@ -92,7 +92,7 @@ export function CreditCardBreakdownChart({ data }: CreditCardBreakdownChartProps
 
   if (!chartData.length) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Cartões de Crédito</CardTitle>
           <CardDescription>Gastos por cartão</CardDescription>

@@ -47,7 +47,7 @@ export function CategoryBreakdownChart({ data }: CategoryBreakdownChartProps) {
 
   if (!chartData.length) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Despesas por Categoria</CardTitle>
           <CardDescription>Distribuição do período</CardDescription>

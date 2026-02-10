@@ -50,7 +50,7 @@ export function PaymentBreakdownChart({ data }: PaymentBreakdownChartProps) {
 
   if (!chartData.length) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Formas de Pagamento</CardTitle>
           <CardDescription>Distribuição do período</CardDescription>
