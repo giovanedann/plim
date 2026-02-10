@@ -35,14 +35,19 @@ async function clampQuery<T extends { start_date: string; end_date: string }>(
   deps: DashboardDependencies,
   userId: string,
   query: T
-): Promise<T> {
+): Promise<T & { tier: import('@plim/shared').PlanTier }> {
   const clamped = await clampDateRange({
     supabase: deps.supabase,
     userId,
     startDate: query.start_date,
     endDate: query.end_date,
   })
-  return { ...query, start_date: clamped.start_date, end_date: clamped.end_date }
+  return {
+    ...query,
+    start_date: clamped.start_date,
+    end_date: clamped.end_date,
+    tier: clamped.tier,
+  }
 }
 
 export function createDashboardRouter(): Hono<DashboardEnv> {
@@ -61,21 +66,21 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
   // Route handlers: Extract data → Clamp dates for free users → Call controller → Format response
   router.get('/', sValidator('query', getDashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
-    const result = await getDashboardController(c.get('userId'), query, deps.getDashboard)
+    const { tier, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const result = await getDashboardController(c.get('userId'), query, deps.getDashboard, tier)
     return success(c, result, HTTP_STATUS.OK)
   })
 
   router.get('/summary', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getSummaryController(c.get('userId'), query, deps.getSummary)
     return success(c, result, HTTP_STATUS.OK)
   })
 
   router.get('/expenses-timeline', sValidator('query', expensesTimelineQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getExpensesTimelineController(
       c.get('userId'),
       query,
@@ -86,7 +91,7 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
 
   router.get('/income-vs-expenses', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getIncomeVsExpensesController(
       c.get('userId'),
       query,
@@ -97,7 +102,7 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
 
   router.get('/category-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getCategoryBreakdownController(
       c.get('userId'),
       query,
@@ -108,7 +113,7 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
 
   router.get('/payment-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getPaymentBreakdownController(
       c.get('userId'),
       query,
@@ -119,7 +124,7 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
 
   router.get('/credit-card-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getCreditCardBreakdownController(
       c.get('userId'),
       query,
@@ -130,14 +135,14 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
 
   router.get('/savings-rate', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getSavingsRateController(c.get('userId'), query, deps.getSavingsRate)
     return success(c, result, HTTP_STATUS.OK)
   })
 
   router.get('/salary-timeline', sValidator('query', dashboardQuerySchema), async (c) => {
     const deps = c.get('dashboardDeps')
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getSalaryTimelineController(c.get('userId'), query, deps.getSalaryTimeline)
     return success(c, result, HTTP_STATUS.OK)
   })
@@ -159,19 +164,19 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
   const router = new Hono<DashboardEnv>()
 
   router.get('/', sValidator('query', getDashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
-    const result = await getDashboardController(c.get('userId'), query, deps.getDashboard)
+    const { tier, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const result = await getDashboardController(c.get('userId'), query, deps.getDashboard, tier)
     return success(c, result, HTTP_STATUS.OK)
   })
 
   router.get('/summary', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getSummaryController(c.get('userId'), query, deps.getSummary)
     return success(c, result, HTTP_STATUS.OK)
   })
 
   router.get('/expenses-timeline', sValidator('query', expensesTimelineQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getExpensesTimelineController(
       c.get('userId'),
       query,
@@ -181,7 +186,7 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
   })
 
   router.get('/income-vs-expenses', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getIncomeVsExpensesController(
       c.get('userId'),
       query,
@@ -191,7 +196,7 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
   })
 
   router.get('/category-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getCategoryBreakdownController(
       c.get('userId'),
       query,
@@ -201,7 +206,7 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
   })
 
   router.get('/payment-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getPaymentBreakdownController(
       c.get('userId'),
       query,
@@ -211,7 +216,7 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
   })
 
   router.get('/credit-card-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getCreditCardBreakdownController(
       c.get('userId'),
       query,
@@ -221,13 +226,13 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
   })
 
   router.get('/savings-rate', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getSavingsRateController(c.get('userId'), query, deps.getSavingsRate)
     return success(c, result, HTTP_STATUS.OK)
   })
 
   router.get('/salary-timeline', sValidator('query', dashboardQuerySchema), async (c) => {
-    const query = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getSalaryTimelineController(c.get('userId'), query, deps.getSalaryTimeline)
     return success(c, result, HTTP_STATUS.OK)
   })

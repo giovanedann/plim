@@ -311,18 +311,27 @@ export function updateDashboardOptimistically(
 ): DashboardData | undefined {
   if (!oldData) return undefined
 
-  const updatedIncomeVsExpenses = updateIncomeVsExpenses(oldData.incomeVsExpenses, change)
+  const updatedIncomeVsExpenses = oldData.incomeVsExpenses
+    ? updateIncomeVsExpenses(oldData.incomeVsExpenses, change)
+    : null
 
   return {
     summary: updateSummary(oldData.summary, change),
     categoryBreakdown: updateCategoryBreakdown(oldData.categoryBreakdown, change),
     paymentBreakdown: updatePaymentBreakdown(oldData.paymentBreakdown, change),
-    creditCardBreakdown: updateCreditCardBreakdown(oldData.creditCardBreakdown, change),
+    creditCardBreakdown: oldData.creditCardBreakdown
+      ? updateCreditCardBreakdown(oldData.creditCardBreakdown, change)
+      : null,
     expensesTimeline: updateExpensesTimeline(oldData.expensesTimeline, change, groupBy),
     incomeVsExpenses: updatedIncomeVsExpenses,
-    savingsRate: updateSavingsRate(oldData.savingsRate, change, updatedIncomeVsExpenses),
+    savingsRate:
+      oldData.savingsRate && updatedIncomeVsExpenses
+        ? updateSavingsRate(oldData.savingsRate, change, updatedIncomeVsExpenses)
+        : null,
     salaryTimeline: oldData.salaryTimeline,
-    installmentForecast: updateInstallmentForecast(oldData.installmentForecast, change),
+    installmentForecast: oldData.installmentForecast
+      ? updateInstallmentForecast(oldData.installmentForecast, change)
+      : null,
   }
 }
 

@@ -283,7 +283,7 @@ describe('optimistic-updates', () => {
 
         const result = updateDashboardOptimistically(oldData, change, 'day')
 
-        const card = result?.creditCardBreakdown.data.find((c) => c.credit_card_id === 'card-001')
+        const card = result?.creditCardBreakdown?.data.find((c) => c.credit_card_id === 'card-001')
         expect(card?.amount).toBe(65000)
       })
 
@@ -316,7 +316,7 @@ describe('optimistic-updates', () => {
 
         const result = updateDashboardOptimistically(oldData, change, 'day')
 
-        const newCard = result?.creditCardBreakdown.data.find(
+        const newCard = result?.creditCardBreakdown?.data.find(
           (c) => c.credit_card_id === 'card-new'
         )
         expect(newCard).toBeDefined()
@@ -400,7 +400,7 @@ describe('optimistic-updates', () => {
 
         const result = updateDashboardOptimistically(oldData, change, 'day')
 
-        const monthData = result?.incomeVsExpenses.data.find((d) => d.month === '2026-01')
+        const monthData = result?.incomeVsExpenses?.data.find((d) => d.month === '2026-01')
         expect(monthData?.expenses).toBe(230000)
       })
 
@@ -414,7 +414,7 @@ describe('optimistic-updates', () => {
 
         const result = updateDashboardOptimistically(oldData, change, 'day')
 
-        const monthData = result?.incomeVsExpenses.data.find((d) => d.month === '2026-02')
+        const monthData = result?.incomeVsExpenses?.data.find((d) => d.month === '2026-02')
         expect(monthData).toBeDefined()
         expect(monthData?.expenses).toBe(25000)
         expect(monthData?.income).toBe(0)
@@ -444,10 +444,10 @@ describe('optimistic-updates', () => {
 
         const result = updateDashboardOptimistically(oldData, change, 'day')
 
-        expect(result!.installmentForecast.data).toHaveLength(3)
-        expect(result!.installmentForecast.data[0]!.month).toBe('2026-01')
-        expect(result!.installmentForecast.data[1]!.month).toBe('2026-02')
-        expect(result!.installmentForecast.data[2]!.month).toBe('2026-03')
+        expect(result!.installmentForecast!.data).toHaveLength(3)
+        expect(result!.installmentForecast!.data[0]!.month).toBe('2026-01')
+        expect(result!.installmentForecast!.data[1]!.month).toBe('2026-02')
+        expect(result!.installmentForecast!.data[2]!.month).toBe('2026-03')
       })
     })
   })

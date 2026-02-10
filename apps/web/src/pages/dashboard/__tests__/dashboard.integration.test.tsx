@@ -242,8 +242,8 @@ describe('DashboardPage Integration', () => {
         end_date: '2024-01-31',
       })) as ApiSuccessResponse<DashboardData>
 
-      expect(result.data.installmentForecast.data).toHaveLength(2)
-      expect(result.data.installmentForecast.data[0]!.month).toBe('2024-02')
+      expect(result.data.installmentForecast!.data).toHaveLength(2)
+      expect(result.data.installmentForecast!.data[0]!.month).toBe('2024-02')
     })
   })
 

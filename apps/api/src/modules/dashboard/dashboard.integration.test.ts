@@ -8,6 +8,7 @@ vi.mock('../../lib/clamp-date-range', () => ({
   clampDateRange: vi.fn(({ startDate, endDate }) => ({
     start_date: startDate,
     end_date: endDate,
+    tier: 'free',
   })),
 }))
 
@@ -690,10 +691,11 @@ describe('Dashboard Integration', () => {
       expect(body.data.summary).toBeDefined()
       expect(body.data.category_breakdown).toBeDefined()
       expect(body.data.expenses_timeline).toBeDefined()
-      expect(mockGetDashboard.execute).toHaveBeenCalledWith(TEST_USER_ID, {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
-      })
+      expect(mockGetDashboard.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        { start_date: '2024-01-01', end_date: '2024-01-31' },
+        'free'
+      )
     })
   })
 })

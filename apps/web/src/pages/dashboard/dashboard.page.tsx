@@ -86,7 +86,7 @@ export function DashboardPage() {
       {hasSalary && (
         <div className="px-4 lg:px-6">
           {isPro ? (
-            <IncomeExpensesChart data={incomeVsExpenses} />
+            <IncomeExpensesChart data={incomeVsExpenses!} />
           ) : (
             <ProChartLock title="Receita vs Despesas">
               <div className="h-80" />
@@ -102,7 +102,7 @@ export function DashboardPage() {
         {hasSalary && (
           <div className="min-w-0">
             {isPro ? (
-              <SavingsRateChart data={savingsRate} />
+              <SavingsRateChart data={savingsRate!} />
             ) : (
               <ProChartLock title="Taxa de Economia">
                 <div className="h-64" />
@@ -121,7 +121,7 @@ export function DashboardPage() {
         </div>
         <div className="min-w-0 md:col-span-2 lg:col-span-1">
           {isPro ? (
-            <CreditCardBreakdownChart data={creditCardBreakdown} />
+            <CreditCardBreakdownChart data={creditCardBreakdown!} />
           ) : (
             <ProChartLock title="Gastos por Cartão">
               <div className="h-64" />
@@ -143,7 +143,7 @@ export function DashboardPage() {
         {hasSalary && (
           <div className="min-w-0">
             {isPro ? (
-              <SalaryTimelineChart data={salaryTimeline} />
+              <SalaryTimelineChart data={salaryTimeline!} />
             ) : (
               <ProChartLock title="Histórico de Salários">
                 <div className="h-64" />
@@ -155,7 +155,7 @@ export function DashboardPage() {
 
       <div className="px-4 lg:px-6">
         {isPro ? (
-          <InstallmentForecast data={installmentForecast} />
+          <InstallmentForecast data={installmentForecast!} />
         ) : (
           <ProChartLock title="Previsão de Parcelas">
             <div className="h-64" />

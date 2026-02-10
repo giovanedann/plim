@@ -138,13 +138,13 @@ export type CreditCardBreakdownResponse = z.infer<typeof creditCardBreakdownResp
 export const dashboardDataSchema = z.object({
   summary: dashboardSummarySchema,
   expensesTimeline: expensesTimelineResponseSchema,
-  incomeVsExpenses: incomeVsExpensesResponseSchema,
+  incomeVsExpenses: incomeVsExpensesResponseSchema.nullable(),
   categoryBreakdown: categoryBreakdownResponseSchema,
   paymentBreakdown: paymentBreakdownResponseSchema,
-  creditCardBreakdown: creditCardBreakdownResponseSchema,
-  savingsRate: savingsRateResponseSchema,
-  salaryTimeline: salaryTimelineResponseSchema,
-  installmentForecast: installmentForecastResponseSchema,
+  creditCardBreakdown: creditCardBreakdownResponseSchema.nullable(),
+  savingsRate: savingsRateResponseSchema.nullable(),
+  salaryTimeline: salaryTimelineResponseSchema.nullable(),
+  installmentForecast: installmentForecastResponseSchema.nullable(),
 })
 
 export type DashboardData = z.infer<typeof dashboardDataSchema>

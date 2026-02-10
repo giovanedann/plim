@@ -61,21 +61,78 @@ describe('GetDashboardUseCase', () => {
     vi.useRealTimers()
   })
 
-  it('returns complete dashboard data', async () => {
+  it('returns free charts and null pro-only charts for free tier', async () => {
     const result = await sut.execute('user-123', {
       start_date: '2024-01-01',
       end_date: '2024-01-31',
     })
 
-    expect(result).toHaveProperty('summary')
-    expect(result).toHaveProperty('expensesTimeline')
-    expect(result).toHaveProperty('incomeVsExpenses')
-    expect(result).toHaveProperty('categoryBreakdown')
-    expect(result).toHaveProperty('paymentBreakdown')
-    expect(result).toHaveProperty('creditCardBreakdown')
-    expect(result).toHaveProperty('savingsRate')
-    expect(result).toHaveProperty('salaryTimeline')
-    expect(result).toHaveProperty('installmentForecast')
+    expect(result.summary).toBeDefined()
+    expect(result.expensesTimeline).toBeDefined()
+    expect(result.categoryBreakdown).toBeDefined()
+    expect(result.paymentBreakdown).toBeDefined()
+
+    expect(result.incomeVsExpenses).toBeNull()
+    expect(result.creditCardBreakdown).toBeNull()
+    expect(result.savingsRate).toBeNull()
+    expect(result.salaryTimeline).toBeNull()
+    expect(result.installmentForecast).toBeNull()
+  })
+
+  it('returns all charts for pro tier', async () => {
+    const result = await sut.execute(
+      'user-123',
+      { start_date: '2024-01-01', end_date: '2024-01-31' },
+      'pro'
+    )
+
+    expect(result.summary).toBeDefined()
+    expect(result.expensesTimeline).toBeDefined()
+    expect(result.categoryBreakdown).toBeDefined()
+    expect(result.paymentBreakdown).toBeDefined()
+    expect(result.incomeVsExpenses).toBeDefined()
+    expect(result.creditCardBreakdown).toBeDefined()
+    expect(result.savingsRate).toBeDefined()
+    expect(result.salaryTimeline).toBeDefined()
+    expect(result.installmentForecast).toBeDefined()
+  })
+
+  it('returns all charts for unlimited tier', async () => {
+    const result = await sut.execute(
+      'user-123',
+      { start_date: '2024-01-01', end_date: '2024-01-31' },
+      'unlimited'
+    )
+
+    expect(result.incomeVsExpenses).toBeDefined()
+    expect(result.creditCardBreakdown).toBeDefined()
+    expect(result.savingsRate).toBeDefined()
+    expect(result.salaryTimeline).toBeDefined()
+    expect(result.installmentForecast).toBeDefined()
+  })
+
+  it('skips pro-only DB queries for free tier', async () => {
+    await sut.execute('user-123', {
+      start_date: '2024-01-01',
+      end_date: '2024-01-31',
+    })
+
+    expect(mockRepository.getExpensesForPeriod).toHaveBeenCalled()
+    expect(mockRepository.getExpensesWithCreditCards).not.toHaveBeenCalled()
+    expect(mockRepository.getFutureExpenses).not.toHaveBeenCalled()
+    expect(mockRepository.aggregateByCreditCard).not.toHaveBeenCalled()
+    expect(mockRepository.calculateInstallmentForecast).not.toHaveBeenCalled()
+  })
+
+  it('runs all DB queries for pro tier', async () => {
+    await sut.execute('user-123', { start_date: '2024-01-01', end_date: '2024-01-31' }, 'pro')
+
+    expect(mockRepository.getExpensesWithCreditCards).toHaveBeenCalled()
+    expect(mockRepository.getFutureExpenses).toHaveBeenCalled()
+    expect(mockRepository.calculateMonthlyIncomeExpenses).toHaveBeenCalled()
+    expect(mockRepository.calculateSavingsRate).toHaveBeenCalled()
+    expect(mockRepository.formatSalaryTimeline).toHaveBeenCalled()
+    expect(mockRepository.calculateInstallmentForecast).toHaveBeenCalled()
   })
 
   it('uses default group_by of day when not specified', async () => {
@@ -111,10 +168,11 @@ describe('GetDashboardUseCase', () => {
         { month: '2024-01', income: 500000, expenses: 30000 },
       ])
 
-      const result = await sut.execute('user-123', {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
-      })
+      const result = await sut.execute(
+        'user-123',
+        { start_date: '2024-01-01', end_date: '2024-01-31' },
+        'pro'
+      )
 
       expect(result.summary.total_income).toBe(500000)
       expect(result.summary.total_expenses).toBe(30000)

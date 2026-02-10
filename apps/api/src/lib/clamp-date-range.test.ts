@@ -59,6 +59,7 @@ describe('clampDateRange', () => {
       // Assert
       expect(result.start_date).toBe('2024-03-01')
       expect(result.end_date).toBe('2024-03-31')
+      expect(result.tier).toBe('free')
       expect(mocks.mockFrom).toHaveBeenCalledWith('subscription')
       expect(mocks.mockSelect).toHaveBeenCalledWith('tier')
       expect(mocks.mockEq).toHaveBeenCalledWith('user_id', userId)
@@ -126,6 +127,7 @@ describe('clampDateRange', () => {
       // Assert
       expect(result.start_date).toBe('2024-01-01')
       expect(result.end_date).toBe('2024-12-31')
+      expect(result.tier).toBe('pro')
     })
   })
 
@@ -148,6 +150,7 @@ describe('clampDateRange', () => {
       // Assert
       expect(result.start_date).toBe('2024-05-31')
       expect(result.end_date).toBe('2024-06-30')
+      expect(result.tier).toBe('free')
     })
   })
 })

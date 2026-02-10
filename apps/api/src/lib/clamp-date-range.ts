@@ -11,6 +11,7 @@ interface ClampDateRangeParams {
 interface ClampedDateRange {
   start_date: string
   end_date: string
+  tier: PlanTier
 }
 
 export async function clampDateRange({
@@ -25,7 +26,7 @@ export async function clampDateRange({
   const maxDays = PLAN_LIMITS[tier].dashboard.timeRangeDays
 
   if (maxDays === Number.POSITIVE_INFINITY) {
-    return { start_date: startDate, end_date: endDate }
+    return { start_date: startDate, end_date: endDate, tier }
   }
 
   const end = new Date(endDate)
@@ -38,8 +39,9 @@ export async function clampDateRange({
     return {
       start_date: clampedStart.toISOString().slice(0, 10),
       end_date: endDate,
+      tier,
     }
   }
 
-  return { start_date: startDate, end_date: endDate }
+  return { start_date: startDate, end_date: endDate, tier }
 }
