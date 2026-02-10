@@ -1,4 +1,8 @@
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { UpgradePrompt } from '@/components/upgrade-prompt'
+import { usePlanLimits } from '@/hooks/use-plan-limits'
+import { PLAN_LIMITS } from '@plim/shared'
 import type { Category } from '@plim/shared'
 import { Plus, Tags } from 'lucide-react'
 import { useState } from 'react'
@@ -19,6 +23,9 @@ export function CategoriesPage() {
     isUpdating,
     isDeleting,
   } = useCategoriesPage()
+
+  const { isPro, isAtLimit } = usePlanLimits()
+  const atLimit = isAtLimit('categories.custom', userCategories.length)
 
   const [showModal, setShowModal] = useState(false)
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>()
@@ -71,6 +78,28 @@ export function CategoriesPage() {
     )
   }
 
+  const createButton = (className: string) =>
+    atLimit ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={className}>
+              <Button disabled className="w-full">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Categoria
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Limite de categorias atingido</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : (
+      <Button onClick={handleCreateClick} className={className}>
+        <Plus className="mr-2 h-4 w-4" />
+        Nova Categoria
+      </Button>
+    )
+
   return (
     <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex items-center justify-between">
@@ -80,16 +109,18 @@ export function CategoriesPage() {
             Gerencie as categorias para organizar suas despesas.
           </p>
         </div>
-        <Button onClick={handleCreateClick} className="hidden sm:inline-flex">
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Categoria
-        </Button>
+        {createButton('hidden sm:inline-flex')}
       </div>
 
-      <Button onClick={handleCreateClick} className="w-full sm:hidden">
-        <Plus className="mr-2 h-4 w-4" />
-        Nova Categoria
-      </Button>
+      {createButton('w-full sm:hidden')}
+
+      {!isPro && (
+        <UpgradePrompt
+          current={userCategories.length}
+          limit={PLAN_LIMITS.free.categories.custom}
+          featureLabel="categorias"
+        />
+      )}
 
       {userCategories.length > 0 && (
         <section>
@@ -115,10 +146,12 @@ export function CategoriesPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Crie categorias personalizadas para organizar melhor suas despesas.
           </p>
-          <Button className="mt-4" onClick={handleCreateClick}>
-            <Plus className="mr-2 h-4 w-4" />
-            Criar Categoria
-          </Button>
+          {!atLimit && (
+            <Button className="mt-4" onClick={handleCreateClick}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Categoria
+            </Button>
+          )}
         </div>
       )}
 
