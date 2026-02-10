@@ -21,8 +21,9 @@ const tiers: PricingTier[] = [
     description: 'Tudo que você precisa para começar',
     features: [
       'Despesas ilimitadas',
-      'Dashboard completo',
-      'Categorias personalizadas',
+      'Dashboard — últimos 30 dias',
+      'Até 5 categorias personalizadas',
+      'Até 2 cartões de crédito',
       'Histórico de salários',
     ],
     cta: 'Começar grátis',
@@ -35,6 +36,9 @@ const tiers: PricingTier[] = [
     description: 'Para quem quer o máximo da IA',
     features: [
       'Tudo do plano Grátis',
+      'Categorias ilimitadas',
+      'Cartões de crédito ilimitados',
+      'Dashboard completo — trimestre e ano',
       '100 requisições de texto por semana',
       '20 requisições de imagem por semana',
       '15 requisições de voz por semana',
