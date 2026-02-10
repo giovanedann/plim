@@ -1,4 +1,6 @@
+import { ProChartLock } from '@/components/pro-chart-lock'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePlanLimits } from '@/hooks/use-plan-limits'
 import { CategoryBreakdownChart } from './components/category-breakdown-chart'
 import { CreditCardBreakdownChart } from './components/credit-card-breakdown-chart'
 import { ExpensesTimelineChart } from './components/expenses-timeline-chart'
@@ -62,6 +64,8 @@ export function DashboardPage() {
     isLoading,
   } = useDashboard()
 
+  const { isPro } = usePlanLimits()
+
   if (isLoading) {
     return <DashboardSkeleton />
   }
@@ -81,7 +85,13 @@ export function DashboardPage() {
 
       {hasSalary && (
         <div className="px-4 lg:px-6">
-          <IncomeExpensesChart data={incomeVsExpenses} />
+          {isPro ? (
+            <IncomeExpensesChart data={incomeVsExpenses} />
+          ) : (
+            <ProChartLock title="Receita vs Despesas">
+              <div className="h-80" />
+            </ProChartLock>
+          )}
         </div>
       )}
 
@@ -91,7 +101,13 @@ export function DashboardPage() {
         </div>
         {hasSalary && (
           <div className="min-w-0">
-            <SavingsRateChart data={savingsRate} />
+            {isPro ? (
+              <SavingsRateChart data={savingsRate} />
+            ) : (
+              <ProChartLock title="Taxa de Economia">
+                <div className="h-64" />
+              </ProChartLock>
+            )}
           </div>
         )}
       </div>
@@ -104,23 +120,47 @@ export function DashboardPage() {
           <PaymentBreakdownChart data={paymentBreakdown} />
         </div>
         <div className="min-w-0 md:col-span-2 lg:col-span-1">
-          <CreditCardBreakdownChart data={creditCardBreakdown} />
+          {isPro ? (
+            <CreditCardBreakdownChart data={creditCardBreakdown} />
+          ) : (
+            <ProChartLock title="Gastos por Cartão">
+              <div className="h-64" />
+            </ProChartLock>
+          )}
         </div>
       </div>
 
       <div className={`grid min-w-0 gap-4 px-4 lg:px-6 ${hasSalary ? 'md:grid-cols-2' : ''}`}>
         <div className="min-w-0">
-          <TopCategoriesChart data={categoryBreakdown} />
+          {isPro ? (
+            <TopCategoriesChart data={categoryBreakdown} />
+          ) : (
+            <ProChartLock title="Top Categorias">
+              <div className="h-64" />
+            </ProChartLock>
+          )}
         </div>
         {hasSalary && (
           <div className="min-w-0">
-            <SalaryTimelineChart data={salaryTimeline} />
+            {isPro ? (
+              <SalaryTimelineChart data={salaryTimeline} />
+            ) : (
+              <ProChartLock title="Histórico de Salários">
+                <div className="h-64" />
+              </ProChartLock>
+            )}
           </div>
         )}
       </div>
 
       <div className="px-4 lg:px-6">
-        <InstallmentForecast data={installmentForecast} />
+        {isPro ? (
+          <InstallmentForecast data={installmentForecast} />
+        ) : (
+          <ProChartLock title="Previsão de Parcelas">
+            <div className="h-64" />
+          </ProChartLock>
+        )}
       </div>
     </div>
   )

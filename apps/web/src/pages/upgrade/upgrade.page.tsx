@@ -26,7 +26,7 @@ import { PixPaymentDialog } from './components/pix-payment-dialog'
 const PERKS = [
   { icon: Tags, text: 'Categorias ilimitadas' },
   { icon: CreditCard, text: 'Cartões de crédito ilimitados' },
-  { icon: LayoutDashboard, text: 'Dashboard completo — trimestre e ano' },
+  { icon: LayoutDashboard, text: 'Dashboard com mais gráficos, ranges e insights' },
   { icon: Sparkles, text: '100 requisições de texto com IA por semana' },
   { icon: Sparkles, text: '20 requisições de imagem com IA por semana' },
   { icon: Sparkles, text: '15 requisições de voz com IA por semana' },

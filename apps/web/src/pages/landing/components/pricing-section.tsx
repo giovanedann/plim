@@ -38,7 +38,7 @@ const tiers: PricingTier[] = [
       'Tudo do plano Grátis',
       'Categorias ilimitadas',
       'Cartões de crédito ilimitados',
-      'Dashboard completo — trimestre e ano',
+      'Dashboard com mais gráficos, ranges e insights',
       '100 requisições de texto por semana',
       '20 requisições de imagem por semana',
       '15 requisições de voz por semana',
