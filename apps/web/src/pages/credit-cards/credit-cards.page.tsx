@@ -10,6 +10,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { UpgradePrompt } from '@/components/upgrade-prompt'
+import { usePlanLimits } from '@/hooks/use-plan-limits'
+import { PLAN_LIMITS } from '@plim/shared'
 import { Plus } from 'lucide-react'
 import { CreditCardList } from './components/credit-card-list'
 import { CreditCardModal } from './components/credit-card-modal'
@@ -32,6 +36,31 @@ export function CreditCardsPage() {
     isDeleting,
   } = useCreditCardsPage()
 
+  const { isPro, isAtLimit } = usePlanLimits()
+  const atLimit = isAtLimit('creditCards', creditCards.length)
+
+  const createButton = (className: string) =>
+    atLimit ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={className}>
+              <Button disabled className="w-full">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Cartão
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Limite de cartões atingido</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : (
+      <Button onClick={openCreateModal} className={className}>
+        <Plus className="mr-2 h-4 w-4" />
+        Novo Cartão
+      </Button>
+    )
+
   return (
     <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex items-center justify-between">
@@ -41,16 +70,18 @@ export function CreditCardsPage() {
             Organize suas despesas por cartão. Apenas para controle, sem dados reais.
           </p>
         </div>
-        <Button onClick={openCreateModal} className="hidden sm:inline-flex">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Cartão
-        </Button>
+        {createButton('hidden sm:inline-flex')}
       </div>
 
-      <Button onClick={openCreateModal} className="w-full sm:hidden">
-        <Plus className="mr-2 h-4 w-4" />
-        Novo Cartão
-      </Button>
+      {createButton('w-full sm:hidden')}
+
+      {!isPro && (
+        <UpgradePrompt
+          current={creditCards.length}
+          limit={PLAN_LIMITS.free.creditCards}
+          featureLabel="cartões"
+        />
+      )}
 
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

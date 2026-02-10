@@ -1,11 +1,29 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { creditCardService } from '@/services/credit-card.service'
-import { createMockCreditCard, resetIdCounter } from '@plim/shared'
+import { PLAN_LIMITS, createMockCreditCard, resetIdCounter } from '@plim/shared'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CreditCardsPage } from '../credit-cards.page'
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+  useNavigate: () => vi.fn(),
+}))
+
+vi.mock('@/hooks/use-plan-limits', () => ({
+  usePlanLimits: () => ({
+    limits: PLAN_LIMITS.free,
+    isPro: false,
+    isAtLimit: (_feature: string, current: number) => current >= 2,
+    remaining: (_feature: string, current: number) => Math.max(0, 2 - current),
+  }),
+}))
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
   const testQueryClient = new QueryClient({
