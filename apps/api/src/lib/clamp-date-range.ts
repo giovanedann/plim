@@ -20,9 +20,23 @@ export async function clampDateRange({
   startDate,
   endDate,
 }: ClampDateRangeParams): Promise<ClampedDateRange> {
-  const { data } = await supabase.from('subscription').select('tier').eq('user_id', userId).single()
+  const { data, error } = await supabase
+    .from('subscription')
+    .select('tier')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-  const tier: PlanTier = (data?.tier as PlanTier) ?? 'free'
+  if (error) {
+    console.error('[clampDateRange] Subscription query error:', error.message)
+    return { start_date: startDate, end_date: endDate, tier: 'pro' }
+  }
+
+  if (!data) {
+    console.error('[clampDateRange] No subscription row found for user:', userId)
+    return { start_date: startDate, end_date: endDate, tier: 'pro' }
+  }
+
+  const tier: PlanTier = (data.tier as PlanTier) ?? 'free'
   const maxDays = PLAN_LIMITS[tier].dashboard.timeRangeDays
 
   if (maxDays === Number.POSITIVE_INFINITY) {
