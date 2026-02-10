@@ -26,7 +26,7 @@ export function createCreditCardsDependencies(
   return {
     repository,
     listCreditCards: new ListCreditCardsUseCase(repository),
-    createCreditCard: new CreateCreditCardUseCase(repository),
+    createCreditCard: new CreateCreditCardUseCase(repository, supabase),
     updateCreditCard: new UpdateCreditCardUseCase(repository),
     deleteCreditCard: new DeleteCreditCardUseCase(repository),
   }

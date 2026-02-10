@@ -33,6 +33,16 @@ export class CreditCardsRepository {
     return data as CreditCard
   }
 
+  async countByUserId(userId: string): Promise<number> {
+    const { count } = await this.supabase
+      .from('credit_card')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    return count ?? 0
+  }
+
   async create(userId: string, input: CreateCreditCard): Promise<CreditCard | null> {
     const { data, error } = await this.supabase
       .from('credit_card')

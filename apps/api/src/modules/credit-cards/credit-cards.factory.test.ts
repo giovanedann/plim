@@ -72,7 +72,9 @@ describe('createCreditCardsDependencies', () => {
   it('creates CreateCreditCardUseCase with repository', () => {
     const sut = createCreditCardsDependencies({ env: mockEnv, accessToken: mockAccessToken })
 
-    expect(CreateCreditCardUseCase).toHaveBeenCalledWith(sut.repository)
+    expect(CreateCreditCardUseCase).toHaveBeenCalledWith(sut.repository, {
+      mock: 'supabase-client',
+    })
     expect(sut.createCreditCard).toBeInstanceOf(CreateCreditCardUseCase)
   })
 
