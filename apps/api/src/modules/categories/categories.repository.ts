@@ -32,6 +32,16 @@ export class CategoriesRepository {
     return data as Category
   }
 
+  async countByUserId(userId: string): Promise<number> {
+    const { count } = await this.supabase
+      .from('category')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    return count ?? 0
+  }
+
   async create(userId: string, input: CreateCategory): Promise<Category | null> {
     const { data, error } = await this.supabase
       .from('category')

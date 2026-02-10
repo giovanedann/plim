@@ -26,7 +26,7 @@ export function createCategoriesDependencies(
   return {
     repository,
     listCategories: new ListCategoriesUseCase(repository),
-    createCategory: new CreateCategoryUseCase(repository),
+    createCategory: new CreateCategoryUseCase(repository, supabase),
     updateCategory: new UpdateCategoryUseCase(repository),
     deleteCategory: new DeleteCategoryUseCase(repository),
   }

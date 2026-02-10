@@ -1,26 +1,38 @@
 import { type CreateCategory, ERROR_CODES, HTTP_STATUS, createMockCategory } from '@plim/shared'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { CategoriesRepository } from './categories.repository'
 import { CreateCategoryUseCase } from './create-category.usecase'
 
+vi.mock('../../lib/check-plan-limit', () => ({
+  checkPlanLimit: vi.fn(),
+}))
+
+import { checkPlanLimit } from '../../lib/check-plan-limit'
+
 type MockRepository = {
   create: ReturnType<typeof vi.fn>
+  countByUserId: ReturnType<typeof vi.fn>
 }
 
 function createMockRepository(): MockRepository {
   return {
     create: vi.fn(),
+    countByUserId: vi.fn().mockResolvedValue(0),
   }
 }
+
+const mockSupabase = {} as SupabaseClient
 
 describe('CreateCategoryUseCase', () => {
   let sut: CreateCategoryUseCase
   let mockRepository: MockRepository
 
   beforeEach(() => {
+    vi.clearAllMocks()
     mockRepository = createMockRepository()
-    sut = new CreateCategoryUseCase(mockRepository as unknown as CategoriesRepository)
+    sut = new CreateCategoryUseCase(mockRepository as unknown as CategoriesRepository, mockSupabase)
   })
 
   it('creates and returns new category', async () => {
@@ -69,6 +81,49 @@ describe('CreateCategoryUseCase', () => {
 
       expect(result.icon).toBeNull()
       expect(result.color).toBeNull()
+    })
+  })
+
+  describe('plan limit enforcement', () => {
+    it('calls checkPlanLimit before creating category', async () => {
+      const input: CreateCategory = { name: 'Test', icon: null, color: null }
+      mockRepository.countByUserId.mockResolvedValue(3)
+      mockRepository.create.mockResolvedValue(createMockCategory())
+
+      await sut.execute('user-123', input)
+
+      expect(checkPlanLimit).toHaveBeenCalledWith({
+        supabase: mockSupabase,
+        userId: 'user-123',
+        feature: 'categories.custom',
+        currentCount: 3,
+      })
+    })
+
+    it('throws LIMIT_EXCEEDED when free user has 5 custom categories', async () => {
+      const input: CreateCategory = { name: 'Test', icon: null, color: null }
+      mockRepository.countByUserId.mockResolvedValue(5)
+      vi.mocked(checkPlanLimit).mockRejectedValueOnce(
+        new AppError(ERROR_CODES.LIMIT_EXCEEDED, 'Plan limit exceeded', HTTP_STATUS.FORBIDDEN)
+      )
+
+      await expect(sut.execute('user-123', input)).rejects.toMatchObject({
+        code: ERROR_CODES.LIMIT_EXCEEDED,
+        status: HTTP_STATUS.FORBIDDEN,
+      })
+      expect(mockRepository.create).not.toHaveBeenCalled()
+    })
+
+    it('creates category when free user has fewer than 5', async () => {
+      const input: CreateCategory = { name: 'Test', icon: null, color: null }
+      mockRepository.countByUserId.mockResolvedValue(3)
+      const category = createMockCategory({ name: 'Test' })
+      mockRepository.create.mockResolvedValue(category)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result).toEqual(category)
+      expect(mockRepository.create).toHaveBeenCalled()
     })
   })
 })

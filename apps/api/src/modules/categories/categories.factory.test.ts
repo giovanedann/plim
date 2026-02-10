@@ -72,7 +72,7 @@ describe('createCategoriesDependencies', () => {
   it('creates CreateCategoryUseCase with repository', () => {
     const sut = createCategoriesDependencies({ env: mockEnv, accessToken: mockAccessToken })
 
-    expect(CreateCategoryUseCase).toHaveBeenCalledWith(sut.repository)
+    expect(CreateCategoryUseCase).toHaveBeenCalledWith(sut.repository, { mock: 'supabase-client' })
     expect(sut.createCategory).toBeInstanceOf(CreateCategoryUseCase)
   })
 
