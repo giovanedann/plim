@@ -135,24 +135,6 @@ describe('ErrorBoundary', () => {
       expect(window.location.href).toMatch(/\/$/)
       expect(window.location.pathname).toBe('/')
     })
-
-    it('resets error state when navigating home', async () => {
-      const user = userEvent.setup()
-
-      render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
-        </ErrorBoundary>
-      )
-
-      expect(screen.getByText('Algo deu errado')).toBeInTheDocument()
-
-      const homeButton = screen.getByRole('button', { name: 'Ir para o inicio' })
-      await user.click(homeButton)
-
-      // After clicking, the error state should be reset
-      // (Though in practice, the page would have navigated away)
-    })
   })
 
   describe('accessibility', () => {

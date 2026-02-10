@@ -134,12 +134,16 @@ describe('AuthCallbackPage Integration', () => {
     it('logs error to console on failure', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+      const exchangeMock = vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
         data: { session: null, user: null },
         error: { message: 'Invalid code', name: 'AuthError' } as any,
       } as any)
 
       render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(exchangeMock).toHaveBeenCalled()
+      })
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith('Auth callback error:', expect.any(Object))
