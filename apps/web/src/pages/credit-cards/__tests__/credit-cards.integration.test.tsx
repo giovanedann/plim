@@ -16,12 +16,15 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
 }))
 
+let mockIsPro = false
+
 vi.mock('@/hooks/use-plan-limits', () => ({
   usePlanLimits: () => ({
-    limits: PLAN_LIMITS.free,
-    isPro: false,
-    isAtLimit: (_feature: string, current: number) => current >= 2,
-    remaining: (_feature: string, current: number) => Math.max(0, 2 - current),
+    limits: mockIsPro ? PLAN_LIMITS.pro : PLAN_LIMITS.free,
+    isPro: mockIsPro,
+    isAtLimit: (_feature: string, current: number) => (mockIsPro ? false : current >= 2),
+    remaining: (_feature: string, current: number) =>
+      mockIsPro ? Number.POSITIVE_INFINITY : Math.max(0, 2 - current),
   }),
 }))
 
@@ -52,6 +55,7 @@ describe('CreditCardsPage Integration', () => {
     user = userEvent.setup()
     vi.clearAllMocks()
     resetIdCounter()
+    mockIsPro = false
   })
 
   afterEach(() => {
@@ -223,6 +227,164 @@ describe('CreditCardsPage Integration', () => {
         expect(screen.getByText('Premium Card')).toBeInTheDocument()
         expect(screen.getByText(/••• 8888/)).toBeInTheDocument()
       })
+    })
+  })
+
+  describe('free user plan limits', () => {
+    beforeEach(() => {
+      mockIsPro = false
+    })
+
+    it('shows UpgradePrompt for free users', async () => {
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText(/0\/2 cartões usadas/i)).toBeInTheDocument()
+        expect(screen.getByText(/seja pro/i)).toBeInTheDocument()
+      })
+    })
+
+    it('shows disabled create buttons when at limit', async () => {
+      const cards = [
+        createMockCreditCard({ name: 'Card 1', last_4_digits: '1111' }),
+        createMockCreditCard({ name: 'Card 2', last_4_digits: '2222' }),
+      ]
+
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: cards })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Card 1')).toBeInTheDocument()
+      })
+
+      const createButtons = screen.getAllByText('Novo Cartão')
+      for (const button of createButtons) {
+        expect(button).toBeDisabled()
+      }
+    })
+
+    it('shows tooltip for disabled create button when at limit', async () => {
+      const cards = [
+        createMockCreditCard({ name: 'Card 1', last_4_digits: '1111' }),
+        createMockCreditCard({ name: 'Card 2', last_4_digits: '2222' }),
+      ]
+
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: cards })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Card 1')).toBeInTheDocument()
+      })
+
+      // Get the first button element (not just text), which should be disabled
+      const createButtons = screen.getAllByRole('button', { name: /novo cartão/i })
+      const disabledButton = createButtons.find((btn) => btn.hasAttribute('disabled'))
+      expect(disabledButton).toBeDefined()
+
+      await user.hover(disabledButton!)
+
+      await waitFor(() => {
+        const tooltips = screen.getAllByText(/vire pro pra criar cartões ilimitados/i)
+        expect(tooltips.length).toBeGreaterThan(0)
+      })
+    })
+  })
+
+  describe('pro user plan limits', () => {
+    beforeEach(() => {
+      mockIsPro = true
+    })
+
+    it('does NOT show UpgradePrompt for pro users', async () => {
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [] })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Cartões de Crédito')).toBeInTheDocument()
+      })
+
+      expect(screen.queryByText(/cartões usadas/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/seja pro/i)).not.toBeInTheDocument()
+    })
+
+    it('create buttons are NOT disabled for pro users', async () => {
+      const cards = [
+        createMockCreditCard({ name: 'Card 1', last_4_digits: '1111' }),
+        createMockCreditCard({ name: 'Card 2', last_4_digits: '2222' }),
+        createMockCreditCard({ name: 'Card 3', last_4_digits: '3333' }),
+      ]
+
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: cards })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Card 1')).toBeInTheDocument()
+      })
+
+      const createButtons = screen.getAllByText('Novo Cartão')
+      for (const button of createButtons) {
+        expect(button).not.toBeDisabled()
+      }
+    })
+
+    it('tooltip "Vire Pro pra criar cartões ilimitados" does NOT appear for pro users', async () => {
+      const cards = [
+        createMockCreditCard({ name: 'Card 1', last_4_digits: '1111' }),
+        createMockCreditCard({ name: 'Card 2', last_4_digits: '2222' }),
+        createMockCreditCard({ name: 'Card 3', last_4_digits: '3333' }),
+      ]
+
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: cards })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Card 1')).toBeInTheDocument()
+      })
+
+      const createButton = screen.getAllByText('Novo Cartão')[0]!
+      await user.hover(createButton)
+
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByText(/vire pro pra criar cartões ilimitados/i)
+          ).not.toBeInTheDocument()
+        },
+        { timeout: 1000 }
+      )
+    })
+
+    it('allows creating more than 2 cards for pro users', async () => {
+      const cards = [
+        createMockCreditCard({ name: 'Card 1', last_4_digits: '1111' }),
+        createMockCreditCard({ name: 'Card 2', last_4_digits: '2222' }),
+        createMockCreditCard({ name: 'Card 3', last_4_digits: '3333' }),
+        createMockCreditCard({ name: 'Card 4', last_4_digits: '4444' }),
+      ]
+
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: cards })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Card 1')).toBeInTheDocument()
+        expect(screen.getByText('Card 2')).toBeInTheDocument()
+        expect(screen.getByText('Card 3')).toBeInTheDocument()
+        expect(screen.getByText('Card 4')).toBeInTheDocument()
+      })
+
+      const createButtons = screen.getAllByText('Novo Cartão')
+      expect(createButtons.length).toBeGreaterThan(0)
+      for (const button of createButtons) {
+        expect(button).not.toBeDisabled()
+      }
     })
   })
 })

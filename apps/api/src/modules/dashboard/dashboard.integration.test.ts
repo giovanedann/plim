@@ -1,5 +1,6 @@
 import { type DashboardSummary, HTTP_STATUS } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { clampDateRange } from '../../lib/clamp-date-range'
 import { TEST_USER_ID, createIntegrationApp } from '../../test-utils/api-integration'
 import type { DashboardDependencies } from './dashboard.factory'
 import { createDashboardRouterWithDeps } from './dashboard.routes'
@@ -695,6 +696,55 @@ describe('Dashboard Integration', () => {
         TEST_USER_ID,
         { start_date: '2024-01-01', end_date: '2024-01-31' },
         'free'
+      )
+    })
+
+    it('returns complete dashboard data for pro tier', async () => {
+      const dashboard = {
+        summary: {
+          total_income: 500000,
+          total_expenses: 320000,
+          balance: 180000,
+          savings_rate: 0.36,
+          largest_category: null,
+          total_fixed: 150000,
+          total_variable: 170000,
+        },
+        category_breakdown: {
+          categories: [
+            { category_id: 'cat-1', category_name: 'Food', total: 120000, percentage: 0.375 },
+          ],
+          total: 320000,
+        },
+        expenses_timeline: {
+          data: [{ date: '2024-01-15', total: 50000 }],
+          total: 50000,
+        },
+      }
+
+      // Mock clampDateRange to return pro tier
+      vi.mocked(clampDateRange).mockResolvedValueOnce({
+        start_date: '2024-01-01',
+        end_date: '2024-01-31',
+        tier: 'pro',
+      })
+
+      mockGetDashboard.execute.mockResolvedValue(dashboard)
+
+      const res = await app.request('/dashboard?start_date=2024-01-01&end_date=2024-01-31', {
+        method: 'GET',
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.OK)
+
+      const body = (await res.json()) as { data: typeof dashboard }
+      expect(body.data.summary).toBeDefined()
+      expect(body.data.category_breakdown).toBeDefined()
+      expect(body.data.expenses_timeline).toBeDefined()
+      expect(mockGetDashboard.execute).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        { start_date: '2024-01-01', end_date: '2024-01-31' },
+        'pro'
       )
     })
   })

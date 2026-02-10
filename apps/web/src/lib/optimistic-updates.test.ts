@@ -450,6 +450,116 @@ describe('optimistic-updates', () => {
         expect(result!.installmentForecast!.data[2]!.month).toBe('2026-03')
       })
     })
+
+    describe('free user dashboard (null pro fields)', () => {
+      const freeTierDashboardData = createMockDashboardData({
+        incomeVsExpenses: null,
+        creditCardBreakdown: null,
+        savingsRate: null,
+        salaryTimeline: null,
+        installmentForecast: null,
+      })
+
+      it('correctly updates summary with free-tier data', () => {
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        expect(result?.summary.total_expenses).toBe(210000)
+        expect(result?.summary.balance).toBe(290000)
+        expect(result?.summary.savings_rate).toBe(58)
+      })
+
+      it('correctly updates expensesTimeline with free-tier data', () => {
+        const change = createExpenseChange({
+          date: '2026-01-15',
+          amount_cents: 20000,
+          operation: 'add',
+        })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        const bucket = result?.expensesTimeline.data.find((d) => d.date === '2026-01-15')
+        expect(bucket?.amount).toBe(120000)
+      })
+
+      it('correctly updates categoryBreakdown with free-tier data', () => {
+        const change = createExpenseChange({
+          category_id: 'cat-001',
+          amount_cents: 20000,
+          operation: 'add',
+        })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        const foodCategory = result?.categoryBreakdown.data.find((c) => c.category_id === 'cat-001')
+        expect(foodCategory?.amount).toBe(120000)
+        expect(result?.categoryBreakdown.total).toBe(220000)
+      })
+
+      it('correctly updates paymentBreakdown with free-tier data', () => {
+        const change = createExpenseChange({
+          payment_method: 'pix',
+          amount_cents: 25000,
+          operation: 'add',
+        })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        const pixMethod = result?.paymentBreakdown.data.find((p) => p.method === 'pix')
+        expect(pixMethod?.amount).toBe(175000)
+      })
+
+      it('preserves null for incomeVsExpenses', () => {
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        expect(result?.incomeVsExpenses).toBeNull()
+      })
+
+      it('preserves null for creditCardBreakdown', () => {
+        const change = createExpenseChange({
+          payment_method: 'credit_card',
+          credit_card_id: 'card-001',
+          amount_cents: 10000,
+          operation: 'add',
+        })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        expect(result?.creditCardBreakdown).toBeNull()
+      })
+
+      it('preserves null for savingsRate', () => {
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        expect(result?.savingsRate).toBeNull()
+      })
+
+      it('preserves null for salaryTimeline', () => {
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        expect(result?.salaryTimeline).toBeNull()
+      })
+
+      it('preserves null for installmentForecast', () => {
+        const change = createExpenseChange({
+          date: '2026-01-15',
+          amount_cents: 30000,
+          installment_total: 3,
+          operation: 'add',
+        })
+
+        const result = updateDashboardOptimistically(freeTierDashboardData, change, 'day')
+
+        expect(result?.installmentForecast).toBeNull()
+      })
+    })
   })
 
   describe('expenses list optimistic updates', () => {

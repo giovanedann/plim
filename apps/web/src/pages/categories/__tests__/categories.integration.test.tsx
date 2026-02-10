@@ -16,12 +16,15 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
 }))
 
+let mockIsPro = false
+
 vi.mock('@/hooks/use-plan-limits', () => ({
   usePlanLimits: () => ({
-    limits: PLAN_LIMITS.free,
-    isPro: false,
-    isAtLimit: (_feature: string, current: number) => current >= 5,
-    remaining: (_feature: string, current: number) => Math.max(0, 5 - current),
+    limits: mockIsPro ? PLAN_LIMITS.pro : PLAN_LIMITS.free,
+    isPro: mockIsPro,
+    isAtLimit: (_feature: string, current: number) => (mockIsPro ? false : current >= 5),
+    remaining: (_feature: string, current: number) =>
+      mockIsPro ? Number.POSITIVE_INFINITY : Math.max(0, 5 - current),
   }),
 }))
 
@@ -52,6 +55,7 @@ describe('CategoriesPage Integration', () => {
     user = userEvent.setup()
     vi.clearAllMocks()
     resetIdCounter()
+    mockIsPro = false
   })
 
   afterEach(() => {
@@ -231,6 +235,99 @@ describe('CategoriesPage Integration', () => {
 
       const systemButtons = systemCategoryCard.querySelectorAll('button')
       expect(systemButtons.length).toBe(0)
+    })
+  })
+
+  describe('pro user features', () => {
+    beforeEach(() => {
+      mockIsPro = true
+    })
+
+    it('does not show upgrade prompt for pro users', async () => {
+      const categories = Array.from({ length: 6 }, (_, i) =>
+        createMockCategory({
+          name: `Categoria ${i + 1}`,
+          user_id: '00000000-0000-4000-8000-000000000001',
+        })
+      )
+
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: categories })
+
+      render(<CategoriesPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Categoria 1')).toBeInTheDocument()
+      })
+
+      expect(screen.queryByText(/Limite de categorias atingido/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Vire Pro/i)).not.toBeInTheDocument()
+    })
+
+    it('does not disable create button for pro users', async () => {
+      const categories = Array.from({ length: 6 }, (_, i) =>
+        createMockCategory({
+          name: `Categoria ${i + 1}`,
+          user_id: '00000000-0000-4000-8000-000000000001',
+        })
+      )
+
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: categories })
+
+      render(<CategoriesPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Categoria 1')).toBeInTheDocument()
+      })
+
+      const createButtons = screen.getAllByText('Nova Categoria')
+      for (const button of createButtons) {
+        expect(button).not.toBeDisabled()
+      }
+    })
+
+    it('does not show pro upgrade tooltip for pro users', async () => {
+      const categories = Array.from({ length: 6 }, (_, i) =>
+        createMockCategory({
+          name: `Categoria ${i + 1}`,
+          user_id: '00000000-0000-4000-8000-000000000001',
+        })
+      )
+
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: categories })
+
+      render(<CategoriesPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Categoria 1')).toBeInTheDocument()
+      })
+
+      expect(
+        screen.queryByText(/Vire Pro pra criar categorias ilimitadas/i)
+      ).not.toBeInTheDocument()
+    })
+
+    it('allows pro users to open create modal with many categories', async () => {
+      const categories = Array.from({ length: 10 }, (_, i) =>
+        createMockCategory({
+          name: `Categoria ${i + 1}`,
+          user_id: '00000000-0000-4000-8000-000000000001',
+        })
+      )
+
+      vi.spyOn(categoryService, 'listCategories').mockResolvedValue({ data: categories })
+
+      render(<CategoriesPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Categoria 1')).toBeInTheDocument()
+      })
+
+      const createButtons = screen.getAllByText('Nova Categoria')
+      await user.click(createButtons[0]!)
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
     })
   })
 })
