@@ -12,6 +12,7 @@ import { GetSavingsRateUseCase } from './get-savings-rate.usecase'
 import { GetSummaryUseCase } from './get-summary.usecase'
 
 export interface DashboardDependencies {
+  supabase: import('@supabase/supabase-js').SupabaseClient
   repository: DashboardRepository
   getDashboard: GetDashboardUseCase
   getSummary: GetSummaryUseCase
@@ -36,6 +37,7 @@ export function createDashboardDependencies(
   const supabase = createSupabaseClientWithAuth(options.env, options.accessToken)
   const repository = new DashboardRepository(supabase)
   return {
+    supabase,
     repository,
     getDashboard: new GetDashboardUseCase(repository),
     getSummary: new GetSummaryUseCase(repository),

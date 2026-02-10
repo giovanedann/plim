@@ -4,6 +4,13 @@ import { TEST_USER_ID, createIntegrationApp } from '../../test-utils/api-integra
 import type { DashboardDependencies } from './dashboard.factory'
 import { createDashboardRouterWithDeps } from './dashboard.routes'
 
+vi.mock('../../lib/clamp-date-range', () => ({
+  clampDateRange: vi.fn(({ startDate, endDate }) => ({
+    start_date: startDate,
+    end_date: endDate,
+  })),
+}))
+
 // Mock use cases
 const mockGetDashboard = { execute: vi.fn() }
 const mockGetSummary = { execute: vi.fn() }
@@ -17,6 +24,7 @@ const mockGetSalaryTimeline = { execute: vi.fn() }
 const mockGetInstallmentForecast = { execute: vi.fn() }
 
 const mockDependencies = {
+  supabase: {},
   repository: {},
   getDashboard: mockGetDashboard,
   getSummary: mockGetSummary,
