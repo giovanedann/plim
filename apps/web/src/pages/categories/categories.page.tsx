@@ -90,7 +90,7 @@ export function CategoriesPage() {
               </Button>
             </span>
           </TooltipTrigger>
-          <TooltipContent>Limite de categorias atingido</TooltipContent>
+          <TooltipContent>Vire Pro pra criar categorias ilimitadas</TooltipContent>
         </Tooltip>
       </TooltipProvider>
     ) : (
@@ -119,6 +119,7 @@ export function CategoriesPage() {
           current={userCategories.length}
           limit={PLAN_LIMITS.free.categories.custom}
           featureLabel="categorias"
+          limitMessage={`Você só pode criar ${PLAN_LIMITS.free.categories.custom} categorias no plano grátis. Crie quantas quiser no Pro!`}
         />
       )}
 

@@ -51,7 +51,7 @@ export function CreditCardsPage() {
               </Button>
             </span>
           </TooltipTrigger>
-          <TooltipContent>Limite de cartões atingido</TooltipContent>
+          <TooltipContent>Vire Pro pra criar cartões ilimitados</TooltipContent>
         </Tooltip>
       </TooltipProvider>
     ) : (
@@ -80,6 +80,7 @@ export function CreditCardsPage() {
           current={creditCards.length}
           limit={PLAN_LIMITS.free.creditCards}
           featureLabel="cartões"
+          limitMessage={`Você só pode criar ${PLAN_LIMITS.free.creditCards} cartões no plano grátis. Crie quantos quiser no Pro!`}
         />
       )}
 

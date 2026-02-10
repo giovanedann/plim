@@ -6,12 +6,14 @@ interface UpgradePromptProps {
   current: number
   limit: number
   featureLabel: string
+  limitMessage: string
 }
 
 export function UpgradePrompt({
   current,
   limit,
   featureLabel,
+  limitMessage,
 }: UpgradePromptProps): React.JSX.Element {
   const percent = Math.round((current / limit) * 100)
   const atLimit = current >= limit
@@ -22,25 +24,23 @@ export function UpgradePrompt({
         <span className="text-muted-foreground">
           {current}/{limit} {featureLabel} usadas
         </span>
-        {atLimit && (
-          <Link
-            to="/upgrade"
-            className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300"
-          >
-            <Crown className="size-3" />
-            Seja Pro
-          </Link>
-        )}
+        <Link
+          to="/upgrade"
+          className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300"
+        >
+          <Crown className="size-3" />
+          Seja Pro
+        </Link>
       </div>
       <Progress value={percent} className="h-2" />
       {atLimit && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Limite atingido —{' '}
+        <p className="mt-2 text-sm text-muted-foreground">
+          {limitMessage}{' '}
           <Link
             to="/upgrade"
             className="font-medium text-amber-600 hover:underline dark:text-amber-400"
           >
-            Seja Pro
+            Vire Pro
           </Link>
         </p>
       )}

@@ -43,7 +43,7 @@ export function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>Disponível no plano Pro</TooltipContent>
+                  <TooltipContent>Vire Pro e veja trimestre e ano completo</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )
