@@ -1,4 +1,5 @@
 import { translateAuthError } from '@/lib/auth-errors'
+import { queryClient } from '@/lib/query-client'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
 import { create } from 'zustand'
@@ -158,8 +159,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      // Clear AI chat history for privacy
       useAIStore.getState().clearMessages()
+      queryClient.clear()
       set({ user: null, session: null })
     } finally {
       set({ isLoading: false })
