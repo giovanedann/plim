@@ -150,5 +150,21 @@ describe('CreateCreditCardUseCase', () => {
       expect(result).toEqual(createdCreditCard)
       expect(mockRepository.create).toHaveBeenCalled()
     })
+
+    it('creates credit card for pro user at any count', async () => {
+      const input: CreateCreditCard = {
+        name: 'Test',
+        color: 'black',
+        flag: 'visa',
+        bank: 'nubank',
+      }
+      mockRepository.countByUserId.mockResolvedValue(20)
+      mockRepository.create.mockResolvedValue(createdCreditCard)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result).toEqual(createdCreditCard)
+      expect(mockRepository.create).toHaveBeenCalled()
+    })
   })
 })

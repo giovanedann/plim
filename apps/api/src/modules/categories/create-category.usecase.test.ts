@@ -125,5 +125,17 @@ describe('CreateCategoryUseCase', () => {
       expect(result).toEqual(category)
       expect(mockRepository.create).toHaveBeenCalled()
     })
+
+    it('creates category for pro user at any count', async () => {
+      const input: CreateCategory = { name: 'Test', icon: null, color: null }
+      mockRepository.countByUserId.mockResolvedValue(50)
+      const category = createMockCategory({ name: 'Test' })
+      mockRepository.create.mockResolvedValue(category)
+
+      const result = await sut.execute('user-123', input)
+
+      expect(result).toEqual(category)
+      expect(mockRepository.create).toHaveBeenCalled()
+    })
   })
 })
