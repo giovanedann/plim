@@ -17,7 +17,7 @@ export function useProfile() {
 
   return {
     profile: query.data as Profile | undefined,
-    isLoading: query.isLoading,
+    isLoading: query.isPending,
     error: query.error,
   }
 }
