@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.middleware'
 import { errorHandler } from './middleware/error-handler.middleware'
 import { rateLimitMiddleware } from './middleware/rate-limit.middleware'
+import { requestLoggerMiddleware } from './middleware/request-logger.middleware'
 import { accountController } from './modules/account/account.controller'
 import { aiRouter } from './modules/ai/ai.routes'
 import { categoriesController } from './modules/categories/categories.controller'
@@ -35,6 +36,7 @@ app.use(
   })
 )
 app.onError(errorHandler)
+app.use('*', requestLoggerMiddleware)
 
 app.get('/', (c) => {
   return c.json({ message: 'Plim API', version: '0.0.1' })
