@@ -271,6 +271,9 @@ importers:
       vitest:
         specifier: ^3.0.4
         version: 3.2.4(@types/node@25.0.9)(jiti@1.21.7)(jsdom@26.1.0)(terser@5.46.0)(tsx@4.21.0)
+      workbox-window:
+        specifier: ^7.4.0
+        version: 7.4.0
 
   packages/shared:
     dependencies:

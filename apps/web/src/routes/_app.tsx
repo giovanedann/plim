@@ -1,3 +1,4 @@
+import { InstallPrompt } from '@/components/install-prompt'
 import { AppLayout } from '@/components/layouts/app'
 import { useAuthStore } from '@/stores/auth.store'
 import { Outlet, createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
@@ -38,6 +39,7 @@ function AppLayoutWrapper() {
   return (
     <AppLayout>
       <Outlet />
+      <InstallPrompt />
     </AppLayout>
   )
 }
