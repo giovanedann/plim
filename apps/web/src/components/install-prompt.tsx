@@ -7,8 +7,8 @@ import { useCallback, useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'plim:install-prompt-dismissed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000
-const PAGE_VIEW_THRESHOLD = 3
-const DELAY_MS = 30_000
+const PAGE_VIEW_THRESHOLD = 2
+const DELAY_MS = 5_000
 
 function getDismissedAt(): number | null {
   try {

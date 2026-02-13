@@ -13,8 +13,8 @@ vi.mock('@/hooks/use-install-prompt', () => ({
 const STORAGE_KEY = 'plim:install-prompt-dismissed'
 const SESSION_KEY = 'plim:page-views'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000
-const PAGE_VIEW_THRESHOLD = 3
-const DELAY_MS = 30_000
+const PAGE_VIEW_THRESHOLD = 2
+const DELAY_MS = 5_000
 
 function mockHook(overrides: Partial<ReturnType<typeof useInstallPrompt>> = {}): void {
   ;(useInstallPrompt as Mock).mockReturnValue({
@@ -62,7 +62,7 @@ describe('InstallPrompt', () => {
 
     it('does not render before PAGE_VIEW_THRESHOLD reached and before DELAY_MS', () => {
       vi.useFakeTimers()
-      sessionStorage.setItem(SESSION_KEY, '1')
+      sessionStorage.setItem(SESSION_KEY, '0')
       mockHook({ canPrompt: true })
 
       render(<InstallPrompt />)

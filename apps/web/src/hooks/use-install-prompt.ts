@@ -5,7 +5,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
-interface UseInstallPromptReturn {
+export interface UseInstallPromptReturn {
   canPrompt: boolean
   isInstalled: boolean
   isIOS: boolean
@@ -25,6 +25,20 @@ function getIsInstalled(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches
 }
 
+// Capture beforeinstallprompt at module level so we don't miss
+// events that fire before React mounts.
+let earlyPromptEvent: BeforeInstallPromptEvent | null = null
+if (typeof window !== 'undefined') {
+  window.addEventListener(
+    'beforeinstallprompt',
+    (e) => {
+      e.preventDefault()
+      earlyPromptEvent = e as BeforeInstallPromptEvent
+    },
+    { once: true }
+  )
+}
+
 export function useInstallPrompt(): UseInstallPromptReturn {
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null)
   const [canPrompt, setCanPrompt] = useState(false)
@@ -32,6 +46,13 @@ export function useInstallPrompt(): UseInstallPromptReturn {
   const isIOS = getIsIOS()
 
   useEffect(() => {
+    // Pick up event captured before React mounted
+    if (earlyPromptEvent) {
+      deferredPromptRef.current = earlyPromptEvent
+      earlyPromptEvent = null
+      setCanPrompt(true)
+    }
+
     function handleBeforeInstallPrompt(e: Event): void {
       e.preventDefault()
       deferredPromptRef.current = e as BeforeInstallPromptEvent

@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
+import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useProfile } from '@/hooks/use-profile'
 import { useSubscription } from '@/hooks/use-subscription'
 import { useAuthStore } from '@/stores/auth.store'
@@ -29,6 +30,7 @@ import {
   ChevronsUpDown,
   CreditCard,
   Crown,
+  Download,
   LayoutDashboard,
   LogOut,
   Receipt,
@@ -64,6 +66,7 @@ export function AppSidebar() {
   const { signOut, user } = useAuthStore()
   const { profile } = useProfile()
   const { isPro } = useSubscription()
+  const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt()
 
   const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url
   const displayName = profile?.name ?? user?.email?.split('@')[0]
@@ -163,6 +166,12 @@ export function AppSidebar() {
                     Plano
                   </Link>
                 </DropdownMenuItem>
+                {!isInstalled && (canPrompt || isIOS) && (
+                  <DropdownMenuItem onClick={() => promptInstall()}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Instalar app
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
