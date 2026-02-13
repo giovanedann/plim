@@ -43,6 +43,7 @@ coverage/
 # Dev files
 docs/
 .claude/sprints
+.claude/settings.local.json
 
 # Database backups (contain sensitive user data)
 backups/
