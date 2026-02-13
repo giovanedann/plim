@@ -8,6 +8,7 @@ import {
   OnboardingSection,
   PricingSection,
   SecuritySection,
+  TestimonialsSection,
 } from './components'
 
 export function LandingPage() {
@@ -27,6 +28,9 @@ export function LandingPage() {
 
         {/* Security */}
         <SecuritySection />
+
+        {/* Testimonials */}
+        <TestimonialsSection />
 
         {/* AI Disclaimer */}
         <AiDisclaimerSection />
