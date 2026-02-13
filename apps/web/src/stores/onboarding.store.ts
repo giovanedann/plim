@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -69,6 +70,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       complete: () => {
+        analytics.onboardingCompleted()
         set({
           isOpen: false,
           currentStep: 1,
@@ -85,6 +87,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       confirmSkip: () => {
+        analytics.onboardingSkipped(get().currentStep)
         set({
           isOpen: false,
           currentStep: 1,

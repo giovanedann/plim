@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useSubscription } from '@/hooks/use-subscription'
+import { analytics } from '@/lib/analytics'
 import type { PixPaymentResponse } from '@plim/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, Copy } from 'lucide-react'
@@ -69,6 +70,7 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
   useEffect(() => {
     if (isPro && open && !isApproved) {
       setIsApproved(true)
+      analytics.paymentCompleted()
       cleanup()
       queryClient.invalidateQueries({ queryKey: ['ai-usage'] })
       toast.success('Pagamento confirmado! Voce agora e Pro.')

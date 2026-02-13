@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { isErrorResponse } from '@/lib/api-client'
 import { queryKeys } from '@/lib/query-config'
 import { aiService } from '@/services'
@@ -27,6 +28,7 @@ export function useAIChat(): UseAIChatReturn {
       setError(null)
 
       addMessage({ role: 'user', content })
+      analytics.aiMessageSent(content.some((p) => p.type === 'image') ? 'image' : 'text')
 
       const allMessages = [
         ...messages.map((m) => ({ role: m.role, content: m.content })),

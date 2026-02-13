@@ -13,6 +13,10 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
 }))
 
+vi.mock('@/hooks/use-feature-flag', () => ({
+  useFeatureFlag: () => true,
+}))
+
 vi.mock('@/hooks/use-ai-chat', () => ({
   useAIChat: () => ({
     sendMessage: vi.fn(),

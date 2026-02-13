@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSubscription } from '@/hooks/use-subscription'
+import { analytics } from '@/lib/analytics'
 import { isErrorResponse } from '@/lib/api-client'
 import { paymentService } from '@/services/payment.service'
 import type { PixPaymentResponse } from '@plim/shared'
@@ -19,7 +20,7 @@ import {
   Sparkles,
   Tags,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { PixPaymentDialog } from './components/pix-payment-dialog'
 
@@ -47,10 +48,15 @@ export function UpgradePage(): React.JSX.Element {
   const [isPixDialogOpen, setIsPixDialogOpen] = useState(false)
   const [isCreatingPix, setIsCreatingPix] = useState(false)
 
+  useEffect(() => {
+    analytics.upgradePageViewed()
+  }, [])
+
   const showProStatus = isPro && subscription?.mp_payment_status !== 'cancelled'
   const showFreeCard = !isPro || subscription?.mp_payment_status === 'cancelled'
 
   async function handlePixPayment(): Promise<void> {
+    analytics.paymentInitiated()
     setIsCreatingPix(true)
     const response = await paymentService.createPixPayment()
     setIsCreatingPix(false)

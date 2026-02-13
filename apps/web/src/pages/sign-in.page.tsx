@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { analytics } from '@/lib/analytics'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link } from '@tanstack/react-router'
 import { Eye, EyeOff } from 'lucide-react'
@@ -22,6 +23,7 @@ export function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      analytics.signIn('google')
       await signInWithGoogle()
     } catch (err) {
       console.error('Sign in error:', err)
@@ -34,6 +36,7 @@ export function SignInPage() {
 
     try {
       await signInWithEmail(email, password)
+      analytics.signIn('email')
     } catch {
       // Error is handled by the store
     }

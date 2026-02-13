@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { analytics } from '@/lib/analytics'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link } from '@tanstack/react-router'
 import { Check, Eye, EyeOff, X } from 'lucide-react'
@@ -52,6 +53,7 @@ export function SignUpPage() {
 
   const handleGoogleSignUp = async () => {
     try {
+      analytics.signUp('google')
       await signInWithGoogle()
     } catch (err) {
       console.error('Sign up error:', err)
@@ -75,6 +77,7 @@ export function SignUpPage() {
 
     try {
       await signUpWithEmail(email, password, displayName || undefined)
+      analytics.signUp('email')
       setSuccess(true)
     } catch {
       // Error is handled by the store
