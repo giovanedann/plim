@@ -1,16 +1,13 @@
-import {
-  type Content,
-  type FunctionDeclaration,
-  type FunctionDeclarationSchema,
-  type GenerateContentResult,
-  GoogleGenerativeAI,
-  type Part,
-  type Schema,
-  SchemaType,
-} from '@google/generative-ai'
+import { type GoogleGenAI, Type } from '@google/genai'
+import type {
+  Content,
+  FunctionDeclaration,
+  GenerateContentResponse,
+  Part,
+  Schema,
+} from '@google/genai'
 import type {
   AIClient,
-  AudioContentPart,
   ChatInput,
   ChatMessage,
   ChatOutput,
@@ -18,45 +15,50 @@ import type {
   EmbeddingOutput,
   FunctionCall,
   FunctionDefinition,
-  ImageContentPart,
   JsonSchema,
 } from './ai-client.types'
 
 const DEFAULT_MODEL = 'gemini-2.5-flash'
-const EMBEDDING_MODEL = 'text-embedding-004'
+const EMBEDDING_MODEL = 'gemini-embedding-001'
+const EMBEDDING_DIMENSIONS = 768
 
-/**
- * Gemini implementation of AIClient
- * Wraps the Google Generative AI SDK with our clean types
- */
 export class GeminiClient implements AIClient {
-  private readonly genAI: GoogleGenerativeAI
+  private readonly genAI: GoogleGenAI
   private readonly modelName: string
 
-  constructor(apiKey: string, modelName?: string) {
-    this.genAI = new GoogleGenerativeAI(apiKey)
+  constructor(genAI: GoogleGenAI, modelName?: string) {
+    this.genAI = genAI
     this.modelName = modelName ?? DEFAULT_MODEL
   }
 
   async chat(input: ChatInput): Promise<ChatOutput> {
-    const model = this.genAI.getGenerativeModel({
+    const result = await this.genAI.models.generateContent({
       model: this.modelName,
-      systemInstruction: input.systemPrompt,
-      tools: input.functions
-        ? [{ functionDeclarations: this.convertFunctions(input.functions) }]
-        : undefined,
+      contents: this.convertMessages(input.messages),
+      config: {
+        systemInstruction: input.systemPrompt,
+        tools: input.functions
+          ? [{ functionDeclarations: this.convertFunctions(input.functions) }]
+          : undefined,
+      },
     })
-
-    const contents = this.convertMessages(input.messages)
-    const result = await model.generateContent({ contents })
 
     return this.parseResponse(result)
   }
 
   async generateEmbedding(text: string): Promise<EmbeddingOutput> {
-    const model = this.genAI.getGenerativeModel({ model: EMBEDDING_MODEL })
-    const result = await model.embedContent(text)
-    return { embedding: result.embedding.values }
+    const result = await this.genAI.models.embedContent({
+      model: EMBEDDING_MODEL,
+      contents: text,
+      config: { outputDimensionality: EMBEDDING_DIMENSIONS },
+    })
+
+    const values = result.embeddings?.[0]?.values
+    if (!values) {
+      throw new Error('Embedding response missing values')
+    }
+
+    return { embedding: values }
   }
 
   private convertMessages(messages: ChatMessage[]): Content[] {
@@ -71,27 +73,8 @@ export class GeminiClient implements AIClient {
       case 'text':
         return { text: part.text }
       case 'image':
-        return this.convertImagePart(part)
       case 'audio':
-        return this.convertAudioPart(part)
-    }
-  }
-
-  private convertImagePart(part: ImageContentPart): Part {
-    return {
-      inlineData: {
-        mimeType: part.mimeType,
-        data: part.data,
-      },
-    }
-  }
-
-  private convertAudioPart(part: AudioContentPart): Part {
-    return {
-      inlineData: {
-        mimeType: part.mimeType,
-        data: part.data,
-      },
+        return { inlineData: { mimeType: part.mimeType, data: part.data } }
     }
   }
 
@@ -99,71 +82,34 @@ export class GeminiClient implements AIClient {
     return functions.map((fn) => ({
       name: fn.name,
       description: fn.description,
-      parameters: this.convertToFunctionDeclarationSchema(fn.parameters),
+      parameters: this.convertToSchema(fn.parameters),
     }))
   }
 
-  private convertToFunctionDeclarationSchema(schema: JsonSchema): FunctionDeclarationSchema {
-    const properties: Record<string, Schema> = {}
-
-    if (schema.properties) {
-      for (const [key, value] of Object.entries(schema.properties)) {
-        properties[key] = this.convertToSchema(value)
-      }
-    }
-
-    return {
-      type: SchemaType.OBJECT,
-      properties,
-      description: schema.description,
-      required: schema.required,
-    }
-  }
-
   private convertToSchema(schema: JsonSchema): Schema {
-    const base = {
+    const base: Schema = {
       description: schema.description,
       nullable: schema.nullable,
     }
 
     switch (schema.type) {
       case 'string':
-        if (schema.enum) {
-          return {
-            ...base,
-            type: SchemaType.STRING,
-            format: 'enum' as const,
-            enum: schema.enum,
-          }
-        }
-        return {
-          ...base,
-          type: SchemaType.STRING,
-        }
+        return { ...base, type: Type.STRING, ...(schema.enum ? { enum: schema.enum } : {}) }
 
       case 'number':
-        return {
-          ...base,
-          type: SchemaType.NUMBER,
-        }
+        return { ...base, type: Type.NUMBER }
 
       case 'integer':
-        return {
-          ...base,
-          type: SchemaType.INTEGER,
-        }
+        return { ...base, type: Type.INTEGER }
 
       case 'boolean':
-        return {
-          ...base,
-          type: SchemaType.BOOLEAN,
-        }
+        return { ...base, type: Type.BOOLEAN }
 
       case 'array':
         return {
           ...base,
-          type: SchemaType.ARRAY,
-          items: schema.items ? this.convertToSchema(schema.items) : { type: SchemaType.STRING },
+          type: Type.ARRAY,
+          items: schema.items ? this.convertToSchema(schema.items) : { type: Type.STRING },
         }
 
       case 'object': {
@@ -173,56 +119,35 @@ export class GeminiClient implements AIClient {
             properties[key] = this.convertToSchema(value)
           }
         }
-        return {
-          ...base,
-          type: SchemaType.OBJECT,
-          properties,
-          required: schema.required,
-        }
+        return { ...base, type: Type.OBJECT, properties, required: schema.required }
       }
 
       default:
-        return {
-          ...base,
-          type: SchemaType.STRING,
-        }
+        return { ...base, type: Type.STRING }
     }
   }
 
-  private parseResponse(result: GenerateContentResult): ChatOutput {
-    const response = result.response
-    const candidate = response.candidates?.[0]
-
-    if (!candidate?.content?.parts) {
-      return {
-        text: null,
-        functionCall: null,
-        tokensUsed: this.getTokenCount(result),
-      }
-    }
-
-    const parts = candidate.content.parts
-    const functionCallPart = parts.find((part) => 'functionCall' in part)
-    const textPart = parts.find((part) => 'text' in part)
-
+  private parseResponse(result: GenerateContentResponse): ChatOutput {
+    const functionCalls = result.functionCalls
     let functionCall: FunctionCall | null = null
-    if (functionCallPart && 'functionCall' in functionCallPart && functionCallPart.functionCall) {
+
+    if (functionCalls?.[0]) {
       functionCall = {
-        name: functionCallPart.functionCall.name,
-        args: (functionCallPart.functionCall.args ?? {}) as Record<string, unknown>,
+        name: functionCalls[0].name ?? '',
+        args: (functionCalls[0].args ?? {}) as Record<string, unknown>,
       }
     }
+
+    const usage = result.usageMetadata
+    const inputTokens = usage?.promptTokenCount ?? 0
+    const outputTokens = usage?.candidatesTokenCount ?? 0
 
     return {
-      text: textPart && 'text' in textPart ? (textPart.text ?? null) : null,
+      text: functionCall ? null : (result.text ?? null),
       functionCall,
-      tokensUsed: this.getTokenCount(result),
+      tokensUsed: inputTokens + outputTokens,
+      inputTokens,
+      outputTokens,
     }
-  }
-
-  private getTokenCount(result: GenerateContentResult): number {
-    const usage = result.response.usageMetadata
-    if (!usage) return 0
-    return (usage.promptTokenCount ?? 0) + (usage.candidatesTokenCount ?? 0)
   }
 }

@@ -77,6 +77,8 @@ export interface ChatOutput {
   text: string | null
   functionCall: FunctionCall | null
   tokensUsed: number
+  inputTokens: number
+  outputTokens: number
 }
 
 /**

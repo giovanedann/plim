@@ -81,6 +81,7 @@ export async function executeQuery(
   }
 
   const { sql, description } = parseResult.data
+  console.info('[ExecuteQuery] Generated SQL:', { sql: sql.slice(0, 200), description })
 
   const securityCheck = validateSqlSecurity(sql, userId)
   if (!securityCheck.valid) {
@@ -91,7 +92,7 @@ export async function executeQuery(
     }
   }
 
-  const finalSql = sql.replace(/\{userId\}/g, userId)
+  const finalSql = sql.trim().replace(/\{userId\}/g, userId)
 
   try {
     const { data, error } = await supabase.rpc('execute_readonly_sql', {

@@ -1,5 +1,7 @@
+import { GoogleGenAI } from '@google/genai'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
+import { createServerPostHog } from '../../lib/posthog'
 import { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import { ExpensesRepository } from '../expenses/expenses.repository'
 import { AIRepository } from './ai.repository'
@@ -15,6 +17,7 @@ export interface AIDependencies {
   checkUsageLimit: CheckUsageLimitUseCase
   getUsageInfo: GetUsageInfoUseCase
   chat: ChatUseCase
+  flushPostHog: () => Promise<void>
 }
 
 interface CreateDependenciesOptions {
@@ -31,7 +34,10 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
     throw new Error('GEMINI_API_KEY is not configured')
   }
 
-  const aiClient = new GeminiClient(geminiApiKey)
+  const genAI = new GoogleGenAI({ apiKey: geminiApiKey })
+  const aiClient = new GeminiClient(genAI)
+
+  const posthog = createServerPostHog(options.env)
 
   const expensesRepository = new ExpensesRepository(supabase)
   const createExpenseUseCase = new CreateExpenseUseCase(expensesRepository)
@@ -42,7 +48,14 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
     supabase,
     createExpenseUseCase,
     expensesRepository,
+    posthog,
   })
+
+  const flushPostHog = async (): Promise<void> => {
+    if (posthog) {
+      await posthog.flush()
+    }
+  }
 
   return {
     repository,
@@ -51,5 +64,6 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
     checkUsageLimit: new CheckUsageLimitUseCase(repository),
     getUsageInfo: new GetUsageInfoUseCase(repository),
     chat: chatUseCase,
+    flushPostHog,
   }
 }

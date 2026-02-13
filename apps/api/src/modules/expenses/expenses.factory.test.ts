@@ -40,6 +40,8 @@ function createMockEnv(): Bindings {
     MERCADO_PAGO_ACCESS_TOKEN: 'test-mp-token',
     MERCADO_PAGO_WEBHOOK_SECRET: 'test-mp-webhook-secret',
     API_BASE_URL: 'https://api.test.plim.app.br',
+    POSTHOG_API_KEY: '',
+    POSTHOG_HOST: '',
   }
 }
 

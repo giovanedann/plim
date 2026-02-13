@@ -1,9 +1,10 @@
 import type { Category, CreditCard } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { PostHog } from 'posthog-node'
 import type { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../expenses/expenses.repository'
 import type { AIRepository, IntentCacheEntry } from './ai.repository'
-import type { AIClient, ChatMessage, ChatOutput } from './client'
+import type { AIClient, ChatMessage, ChatOutput, ContentPart } from './client'
 import { type FunctionExecutionResult, aiFunctionDefinitions, executeFunction } from './functions'
 import { buildSystemPrompt } from './system-prompt'
 
@@ -35,6 +36,7 @@ export interface ChatUseCaseDependencies {
   supabase: SupabaseClient
   createExpenseUseCase: CreateExpenseUseCase
   expensesRepository: ExpensesRepository
+  posthog?: PostHog | null
 }
 
 export class ChatUseCase {
@@ -83,10 +85,17 @@ export class ChatUseCase {
     const context = await this.buildUserContext(userId)
     const systemPrompt = buildSystemPrompt(context)
 
+    const chatStartMs = Date.now()
     const response = await this.deps.aiClient.chat({
       messages: input.messages,
       systemPrompt,
       functions: aiFunctionDefinitions,
+    })
+    this.captureAIGeneration(userId, 'gemini-2.5-flash', {
+      messages: input.messages,
+      systemPrompt,
+      response,
+      startMs: chatStartMs,
     })
 
     if (response.functionCall) {
@@ -369,6 +378,104 @@ Format this data as a natural response to the user's question.`
       locale: profileResult.data?.locale ?? 'pt-BR',
       currentDate: new Date().toISOString().slice(0, 10),
     }
+  }
+
+  private captureAIGeneration(
+    userId: string,
+    model: string,
+    opts: {
+      messages: ChatMessage[]
+      systemPrompt?: string
+      response: ChatOutput
+      startMs: number
+    }
+  ): void {
+    const posthog = this.deps.posthog
+    if (!posthog) return
+
+    const { messages, systemPrompt, response, startMs } = opts
+
+    posthog.capture({
+      distinctId: userId,
+      event: '$ai_generation',
+      properties: {
+        $ai_trace_id: crypto.randomUUID(),
+        $ai_provider: 'google',
+        $ai_model: model,
+        $ai_input_tokens: response.inputTokens,
+        $ai_output_tokens: response.outputTokens,
+        $ai_total_tokens: response.tokensUsed,
+        $ai_latency: (Date.now() - startMs) / 1000,
+        $ai_http_status: 200,
+        $ai_base_url: 'https://generativelanguage.googleapis.com',
+        $ai_input: this.formatInputForPostHog(messages, systemPrompt),
+        $ai_output_choices: this.formatOutputForPostHog(response),
+      },
+    })
+  }
+
+  private formatInputForPostHog(
+    messages: ChatMessage[],
+    systemPrompt?: string
+  ): Record<string, string>[] {
+    const input: Record<string, string>[] = []
+
+    if (systemPrompt) {
+      input.push({ role: 'system', content: systemPrompt })
+    }
+
+    for (const msg of messages) {
+      input.push({
+        role: msg.role,
+        content: this.contentPartsToText(msg.content),
+      })
+    }
+
+    return input
+  }
+
+  private formatOutputForPostHog(response: ChatOutput): Record<string, unknown>[] {
+    if (response.functionCall) {
+      return [
+        {
+          message: {
+            role: 'assistant',
+            tool_calls: [
+              {
+                type: 'function',
+                function: {
+                  name: response.functionCall.name,
+                  arguments: JSON.stringify(response.functionCall.args),
+                },
+              },
+            ],
+          },
+          finish_reason: 'tool_calls',
+        },
+      ]
+    }
+
+    return [
+      {
+        message: { role: 'assistant', content: response.text ?? '' },
+        finish_reason: 'stop',
+      },
+    ]
+  }
+
+  private contentPartsToText(parts: ContentPart[]): string {
+    return parts
+      .map((part) => {
+        switch (part.type) {
+          case 'text':
+            return part.text
+          case 'image':
+            return '[image]'
+          case 'audio':
+            return '[audio]'
+        }
+      })
+      .join(' ')
   }
 
   private formatFunctionResult(

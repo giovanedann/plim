@@ -141,6 +141,8 @@ export interface ChatOutput {
   text: string | null
   functionCall: { name: string; args: Record<string, unknown> } | null
   tokensUsed: number
+  inputTokens: number
+  outputTokens: number
 }
 
 export function createMockChatOutput(overrides: Partial<ChatOutput> = {}): ChatOutput {
@@ -148,6 +150,8 @@ export function createMockChatOutput(overrides: Partial<ChatOutput> = {}): ChatO
     text: 'AI response text',
     functionCall: null,
     tokensUsed: 150,
+    inputTokens: 100,
+    outputTokens: 50,
     ...overrides,
   }
 }

@@ -24,6 +24,7 @@ export function createAIRouter(): Hono<AIEnv> {
       })
       c.set('aiDeps', deps)
       await next()
+      c.executionCtx.waitUntil(deps.flushPostHog())
     } catch (error) {
       if (error instanceof Error && error.message.includes('GEMINI_API_KEY')) {
         throw new AppError(
