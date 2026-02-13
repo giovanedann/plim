@@ -20,7 +20,7 @@ export const queryConfig = {
     dashboard: MINUTE * 2,
   },
   gcTime: {
-    default: MINUTE * 30,
+    default: MINUTE * 60 * 24,
   },
 } as const
 
