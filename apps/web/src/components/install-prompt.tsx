@@ -3,78 +3,32 @@ import { Card } from '@/components/ui/card'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Share, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 const STORAGE_KEY = 'plim:install-prompt-dismissed'
-const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000
-const PAGE_VIEW_THRESHOLD = 2
-const DELAY_MS = 5_000
-
-function getDismissedAt(): number | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    return Number(raw)
-  } catch {
-    return null
-  }
-}
-
-function saveDismissedAt(): void {
-  localStorage.setItem(STORAGE_KEY, String(Date.now()))
-}
 
 function isDismissed(): boolean {
-  const dismissedAt = getDismissedAt()
-  if (dismissedAt === null) return false
-  return Date.now() - dismissedAt < DISMISS_DURATION_MS
-}
-
-function getPageViews(): number {
   try {
-    const raw = sessionStorage.getItem('plim:page-views')
-    return raw ? Number(raw) : 0
+    return localStorage.getItem(STORAGE_KEY) === 'true'
   } catch {
-    return 0
+    return false
   }
-}
-
-function incrementPageViews(): number {
-  const count = getPageViews() + 1
-  try {
-    sessionStorage.setItem('plim:page-views', String(count))
-  } catch {
-    /* storage full */
-  }
-  return count
 }
 
 export function InstallPrompt(): React.ReactElement | null {
   const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt()
-  const [visible, setVisible] = useState(false)
+  const [dismissed, setDismissed] = useState(isDismissed)
   const [showIOSOverlay, setShowIOSOverlay] = useState(false)
 
-  useEffect(() => {
-    if (isInstalled || isDismissed()) return
-    if (!canPrompt && !isIOS) return
-
-    const pageViews = incrementPageViews()
-
-    if (pageViews >= PAGE_VIEW_THRESHOLD) {
-      setVisible(true)
-      return
-    }
-
-    const timer = setTimeout(() => {
-      setVisible(true)
-    }, DELAY_MS)
-
-    return () => clearTimeout(timer)
-  }, [canPrompt, isIOS, isInstalled])
+  const visible = !isInstalled && !dismissed && (canPrompt || isIOS)
 
   const handleDismiss = useCallback((): void => {
-    saveDismissedAt()
-    setVisible(false)
+    try {
+      localStorage.setItem(STORAGE_KEY, 'true')
+    } catch {
+      /* storage full */
+    }
+    setDismissed(true)
     setShowIOSOverlay(false)
   }, [])
 
