@@ -305,7 +305,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       )
 
-      const capturedError = sut.mock.calls[0][0] as Error
+      const capturedError = sut.mock.calls[0]![0] as Error
       expect(capturedError).toBeInstanceOf(Error)
       expect(capturedError.message).toBe('Test error')
     })
@@ -319,7 +319,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       )
 
-      const context = sut.mock.calls[0][1] as {
+      const context = sut.mock.calls[0]![1] as {
         contexts: { react: { componentStack: string } }
       }
       expect(context.contexts.react.componentStack).toBeDefined()
