@@ -1,5 +1,6 @@
 import { ConsentBanner } from '@/components/consent-banner'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { InstallPrompt } from '@/components/install-prompt'
 import { OfflineIndicator } from '@/components/offline-indicator'
 import { PostHogProvider } from '@/components/posthog-provider'
 import { PWAUpdatePrompt } from '@/components/pwa-update-prompt'
@@ -27,6 +28,7 @@ function RootLayout() {
       </ErrorBoundary>
       <Toaster richColors position="top-right" />
       <ConsentBanner />
+      <InstallPrompt />
       <OfflineIndicator />
       <PWAUpdatePrompt />
     </PostHogProvider>

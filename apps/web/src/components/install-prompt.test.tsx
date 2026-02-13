@@ -1,4 +1,5 @@
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
+import { useInstallPromptStore } from '@/stores/install-prompt.store'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,8 +10,6 @@ const mockPromptInstall = vi.fn()
 vi.mock('@/hooks/use-install-prompt', () => ({
   useInstallPrompt: vi.fn(),
 }))
-
-const STORAGE_KEY = 'plim:install-prompt-dismissed'
 
 function mockHook(overrides: Partial<ReturnType<typeof useInstallPrompt>> = {}): void {
   ;(useInstallPrompt as Mock).mockReturnValue({
@@ -25,12 +24,14 @@ function mockHook(overrides: Partial<ReturnType<typeof useInstallPrompt>> = {}):
 describe('InstallPrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    localStorage.clear()
+    useInstallPromptStore.setState({
+      dismissed: false,
+      showIOSOverlay: false,
+    })
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-    localStorage.clear()
   })
 
   describe('visibility conditions', () => {
@@ -66,8 +67,8 @@ describe('InstallPrompt', () => {
       expect(screen.getByText('Instalar o Plim')).toBeInTheDocument()
     })
 
-    it('does not render when dismissed', () => {
-      localStorage.setItem(STORAGE_KEY, 'true')
+    it('does not render when dismissed via store', () => {
+      useInstallPromptStore.setState({ dismissed: true })
       mockHook({ canPrompt: true })
 
       render(<InstallPrompt />)
@@ -111,10 +112,21 @@ describe('InstallPrompt', () => {
       expect(screen.getByText(/Compartilhar/)).toBeInTheDocument()
       expect(screen.getByText(/Adicionar a Tela de Inicio/)).toBeInTheDocument()
     })
+
+    it('opens overlay via store when install is clicked on iOS', async () => {
+      mockHook({ canPrompt: false, isIOS: true })
+      const user = userEvent.setup()
+
+      render(<InstallPrompt />)
+
+      await user.click(screen.getByRole('button', { name: 'Instalar' }))
+
+      expect(useInstallPromptStore.getState().showIOSOverlay).toBe(true)
+    })
   })
 
   describe('dismiss behavior', () => {
-    it('persists dismissal to localStorage', async () => {
+    it('sets dismissed in store when close button is clicked', async () => {
       mockHook({ canPrompt: true })
       const user = userEvent.setup()
 
@@ -122,7 +134,7 @@ describe('InstallPrompt', () => {
 
       await user.click(screen.getByRole('button', { name: 'Fechar' }))
 
-      expect(localStorage.getItem(STORAGE_KEY)).toBe('true')
+      expect(useInstallPromptStore.getState().dismissed).toBe(true)
     })
 
     it('hides banner after dismissal', async () => {

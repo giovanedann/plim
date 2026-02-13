@@ -1,3 +1,4 @@
+import { useInstallPromptStore } from '@/stores/install-prompt.store'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -5,6 +6,7 @@ import { AppSidebar } from './app-sidebar'
 
 // Mock values
 const mockSignOut = vi.fn()
+const mockPromptInstall = vi.fn()
 const mockUseLocation = vi.fn(() => ({ pathname: '/dashboard' }))
 const mockProfile = {
   id: 'profile-123',
@@ -61,6 +63,17 @@ vi.mock('@/stores/auth.store', () => ({
     signOut: mockSignOut,
     isInitialized: true,
   }),
+}))
+
+const mockInstallPromptHook = {
+  canPrompt: false,
+  isInstalled: false,
+  isIOS: false,
+  promptInstall: mockPromptInstall,
+}
+
+vi.mock('@/hooks/use-install-prompt', () => ({
+  useInstallPrompt: () => mockInstallPromptHook,
 }))
 
 // Mock shadcn components
@@ -121,6 +134,11 @@ describe('AppSidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseLocation.mockReturnValue({ pathname: '/dashboard' })
+    mockInstallPromptHook.canPrompt = false
+    mockInstallPromptHook.isInstalled = false
+    mockInstallPromptHook.isIOS = false
+    mockInstallPromptHook.promptInstall = mockPromptInstall
+    useInstallPromptStore.setState({ dismissed: false, showIOSOverlay: false })
   })
 
   describe('navigation rendering', () => {
@@ -326,6 +344,57 @@ describe('AppSidebar', () => {
       expect(mainNav).toBeInTheDocument()
       expect(mainNav?.textContent).toContain('Dashboard')
       expect(mainNav?.textContent).toContain('Despesas')
+    })
+  })
+
+  describe('install app action', () => {
+    it('shows install option when canPrompt is true', () => {
+      mockInstallPromptHook.canPrompt = true
+
+      render(<AppSidebar />)
+
+      expect(screen.getByText('Instalar app')).toBeInTheDocument()
+    })
+
+    it('shows install option when isIOS is true', () => {
+      mockInstallPromptHook.isIOS = true
+
+      render(<AppSidebar />)
+
+      expect(screen.getByText('Instalar app')).toBeInTheDocument()
+    })
+
+    it('hides install option when already installed', () => {
+      mockInstallPromptHook.isInstalled = true
+      mockInstallPromptHook.canPrompt = true
+
+      render(<AppSidebar />)
+
+      expect(screen.queryByText('Instalar app')).not.toBeInTheDocument()
+    })
+
+    it('calls promptInstall on non-iOS devices', async () => {
+      mockInstallPromptHook.canPrompt = true
+      mockInstallPromptHook.isIOS = false
+      const user = userEvent.setup()
+
+      render(<AppSidebar />)
+
+      await user.click(screen.getByText('Instalar app'))
+
+      expect(mockPromptInstall).toHaveBeenCalledTimes(1)
+    })
+
+    it('opens iOS overlay via store on iOS devices', async () => {
+      mockInstallPromptHook.isIOS = true
+      const user = userEvent.setup()
+
+      render(<AppSidebar />)
+
+      await user.click(screen.getByText('Instalar app'))
+
+      expect(useInstallPromptStore.getState().showIOSOverlay).toBe(true)
+      expect(mockPromptInstall).not.toHaveBeenCalled()
     })
   })
 

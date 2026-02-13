@@ -25,6 +25,7 @@ import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useProfile } from '@/hooks/use-profile'
 import { useSubscription } from '@/hooks/use-subscription'
 import { useAuthStore } from '@/stores/auth.store'
+import { useInstallPromptStore } from '@/stores/install-prompt.store'
 import { Link, useLocation } from '@tanstack/react-router'
 import {
   ChevronsUpDown,
@@ -67,6 +68,7 @@ export function AppSidebar() {
   const { profile } = useProfile()
   const { isPro } = useSubscription()
   const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt()
+  const openIOSOverlay = useInstallPromptStore((s) => s.openIOSOverlay)
 
   const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url
   const displayName = profile?.name ?? user?.email?.split('@')[0]
@@ -167,7 +169,7 @@ export function AppSidebar() {
                   </Link>
                 </DropdownMenuItem>
                 {!isInstalled && (canPrompt || isIOS) && (
-                  <DropdownMenuItem onClick={() => promptInstall()}>
+                  <DropdownMenuItem onClick={() => (isIOS ? openIOSOverlay() : promptInstall())}>
                     <Download className="mr-2 h-4 w-4" />
                     Instalar app
                   </DropdownMenuItem>

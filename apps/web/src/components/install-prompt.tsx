@@ -1,44 +1,28 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
+import { useInstallPromptStore } from '@/stores/install-prompt.store'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Share, X } from 'lucide-react'
-import { useCallback, useState } from 'react'
-
-const STORAGE_KEY = 'plim:install-prompt-dismissed'
-
-function isDismissed(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'true'
-  } catch {
-    return false
-  }
-}
+import { useCallback } from 'react'
 
 export function InstallPrompt(): React.ReactElement | null {
   const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt()
-  const [dismissed, setDismissed] = useState(isDismissed)
-  const [showIOSOverlay, setShowIOSOverlay] = useState(false)
+  const { dismissed, showIOSOverlay, dismiss, openIOSOverlay } = useInstallPromptStore()
 
   const visible = !isInstalled && !dismissed && (canPrompt || isIOS)
 
   const handleDismiss = useCallback((): void => {
-    try {
-      localStorage.setItem(STORAGE_KEY, 'true')
-    } catch {
-      /* storage full */
-    }
-    setDismissed(true)
-    setShowIOSOverlay(false)
-  }, [])
+    dismiss()
+  }, [dismiss])
 
   const handleInstall = useCallback(async (): Promise<void> => {
     if (isIOS) {
-      setShowIOSOverlay(true)
+      openIOSOverlay()
       return
     }
     await promptInstall()
-  }, [isIOS, promptInstall])
+  }, [isIOS, promptInstall, openIOSOverlay])
 
   if (isInstalled) return null
 
@@ -51,7 +35,7 @@ export function InstallPrompt(): React.ReactElement | null {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed bottom-4 left-4 right-4 z-[60] sm:left-auto sm:right-4 sm:max-w-sm"
+            className="fixed bottom-4 left-4 right-4 z-[60] sm:left-1/2 sm:right-auto sm:max-w-sm sm:-translate-x-1/2"
           >
             <Card className="flex items-center gap-3 p-4 shadow-lg">
               <Download className="h-5 w-5 shrink-0 text-primary" />
