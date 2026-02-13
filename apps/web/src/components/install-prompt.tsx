@@ -97,7 +97,7 @@ export function InstallPrompt(): React.ReactElement | null {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-4 sm:max-w-sm"
+            className="fixed bottom-4 left-4 right-4 z-[60] sm:left-auto sm:right-4 sm:max-w-sm"
           >
             <Card className="flex items-center gap-3 p-4 shadow-lg">
               <Download className="h-5 w-5 shrink-0 text-primary" />
@@ -132,7 +132,7 @@ export function InstallPrompt(): React.ReactElement | null {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+            className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4"
             onClick={handleDismiss}
           >
             <motion.div

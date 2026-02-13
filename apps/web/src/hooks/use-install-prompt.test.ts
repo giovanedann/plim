@@ -5,7 +5,7 @@ import { useInstallPrompt } from './use-install-prompt'
 describe('useInstallPrompt', () => {
   let displayModeChangeHandler: ((event: MediaQueryListEvent) => void) | null = null
   let displayModeMatches = false
-  let originalOntouchendDescriptor: PropertyDescriptor | undefined
+  const savedOntouchendDescriptors: { obj: object; desc: PropertyDescriptor }[] = []
 
   function createMockMatchMedia(standaloneMatches: boolean): typeof window.matchMedia {
     return vi.fn().mockImplementation((query: string) => ({
@@ -55,26 +55,27 @@ describe('useInstallPrompt', () => {
       writable: true,
     })
 
-    // jsdom defines ontouchend on Document.prototype, which makes
-    // 'ontouchend' in document === true. Save and remove it so tests
-    // default to a non-touch environment.
-    const proto = Object.getPrototypeOf(document) as Record<string, unknown>
-    originalOntouchendDescriptor = Object.getOwnPropertyDescriptor(proto, 'ontouchend')
-    if (originalOntouchendDescriptor) {
-      Reflect.deleteProperty(proto, 'ontouchend')
-    }
-    if ('ontouchend' in document) {
-      Reflect.deleteProperty(document, 'ontouchend')
+    // jsdom defines ontouchend on multiple levels of the prototype chain.
+    // Walk the full chain and remove it from every level so
+    // 'ontouchend' in document === false in tests.
+    savedOntouchendDescriptors.length = 0
+    let obj: object | null = document
+    while (obj) {
+      const desc = Object.getOwnPropertyDescriptor(obj, 'ontouchend')
+      if (desc) {
+        savedOntouchendDescriptors.push({ obj, desc })
+        Reflect.deleteProperty(obj, 'ontouchend')
+      }
+      obj = Object.getPrototypeOf(obj)
     }
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
 
-    // Restore ontouchend on Document.prototype if it was removed
-    if (originalOntouchendDescriptor) {
-      const proto = Object.getPrototypeOf(document) as Record<string, unknown>
-      Object.defineProperty(proto, 'ontouchend', originalOntouchendDescriptor)
+    // Restore ontouchend on all prototype levels
+    for (const { obj, desc } of savedOntouchendDescriptors) {
+      Object.defineProperty(obj, 'ontouchend', desc)
     }
   })
 

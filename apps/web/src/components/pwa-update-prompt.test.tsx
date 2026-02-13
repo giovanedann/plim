@@ -81,14 +81,14 @@ describe('PWAUpdatePrompt', () => {
   })
 
   describe('positioning', () => {
-    it('has fixed positioning with bottom-right placement and z-50', () => {
+    it('has fixed positioning with bottom-right placement above AI chat', () => {
       mockNeedRefresh = true
 
       const { container } = render(<PWAUpdatePrompt />)
 
       const fixedEl = container.querySelector('.fixed')
       expect(fixedEl).toBeInTheDocument()
-      expect(fixedEl).toHaveClass('bottom-4', 'right-4', 'z-50')
+      expect(fixedEl).toHaveClass('bottom-4', 'right-4', 'z-[60]')
     })
   })
 

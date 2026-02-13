@@ -27,7 +27,7 @@ export function PWAUpdatePrompt(): React.ReactElement | null {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed bottom-4 right-4 z-50"
+          className="fixed bottom-4 right-4 z-[60]"
         >
           <Card className="flex items-center gap-3 p-4 shadow-lg">
             <RefreshCw className="h-5 w-5 shrink-0 text-primary" />
