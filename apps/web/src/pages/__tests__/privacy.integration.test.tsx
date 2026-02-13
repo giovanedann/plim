@@ -50,7 +50,7 @@ describe('PrivacyPage Integration', () => {
     it('shows last updated date', () => {
       render(<PrivacyPage />, { wrapper: TestWrapper })
 
-      expect(screen.getByText(/Última atualização: 27 de janeiro de 2026/i)).toBeInTheDocument()
+      expect(screen.getByText(/Última atualização: 12 de fevereiro de 2026/i)).toBeInTheDocument()
     })
   })
 
@@ -100,7 +100,7 @@ describe('PrivacyPage Integration', () => {
     it('renders cookies section', () => {
       render(<PrivacyPage />, { wrapper: TestWrapper })
 
-      expect(screen.getByText(/8. Cookies/i)).toBeInTheDocument()
+      expect(screen.getByText(/8. Cookies e Analytics/i)).toBeInTheDocument()
     })
 
     it('renders minors section', () => {
@@ -237,9 +237,7 @@ describe('PrivacyPage Integration', () => {
     it('clarifies no tracking cookies', () => {
       render(<PrivacyPage />, { wrapper: TestWrapper })
 
-      // Text may be split across elements, check for key phrases
-      expect(screen.getByText(/cookies de rastreamento/i)).toBeInTheDocument()
-      expect(screen.getByText(/analytics de terceiros/i)).toBeInTheDocument()
+      expect(screen.getByText(/cookies de publicidade ou rastreamento/i)).toBeInTheDocument()
     })
   })
 

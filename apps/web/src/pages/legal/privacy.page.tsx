@@ -6,7 +6,7 @@ export function PrivacyPage() {
       <article className="prose prose-slate dark:prose-invert max-w-none">
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Política de Privacidade</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Última atualização: 27 de janeiro de 2026
+          Última atualização: 12 de fevereiro de 2026
         </p>
 
         <section className="mt-12">
@@ -52,6 +52,10 @@ export function PrivacyPage() {
             <li>Preferências de tema (claro/escuro)</li>
             <li>Configuração de moeda e localização</li>
             <li>Informações de sessão para autenticação</li>
+            <li>
+              Dados anonimizados de uso do aplicativo, como páginas visitadas e funcionalidades
+              utilizadas (somente com seu consentimento explícito)
+            </li>
           </ul>
         </section>
 
@@ -66,6 +70,10 @@ export function PrivacyPage() {
             <li>Personalizar sua experiência no aplicativo</li>
             <li>Gerar relatórios e análises financeiras para você</li>
             <li>Enviar comunicações importantes sobre o serviço</li>
+            <li>
+              Melhorar o produto com base em dados de uso agregados e anonimizados (analytics),
+              apenas com seu consentimento
+            </li>
           </ul>
           <p className="mt-4 leading-relaxed text-muted-foreground">
             <strong>Não utilizamos seus dados para:</strong>
@@ -116,8 +124,8 @@ export function PrivacyPage() {
             <li>Quando exigido por lei ou ordem judicial em território brasileiro</li>
             <li>Para proteger nossos direitos legais ou segurança do serviço</li>
             <li>
-              Com prestadores de serviço essenciais (como Supabase para hospedagem), sob rigorosos
-              contratos de confidencialidade
+              Com prestadores de serviço essenciais (como Supabase para hospedagem e PostHog para
+              analytics), sob rigorosos contratos de confidencialidade
             </li>
           </ul>
         </section>
@@ -174,17 +182,28 @@ export function PrivacyPage() {
         </section>
 
         <section className="mt-12">
-          <h2 className="text-xl font-semibold md:text-2xl">8. Cookies</h2>
+          <h2 className="text-xl font-semibold md:text-2xl">8. Cookies e Analytics</h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            Utilizamos apenas cookies essenciais para:
+            Utilizamos cookies essenciais para:
           </p>
           <ul className="mt-4 list-disc space-y-2 pl-6 text-muted-foreground">
             <li>Manter sua sessão de autenticação ativa</li>
             <li>Armazenar sua preferência de tema (claro/escuro)</li>
           </ul>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            <strong>Não utilizamos</strong> cookies de rastreamento, analytics de terceiros ou
-            publicidade.
+            Utilizamos o <strong>PostHog</strong> como ferramenta de analytics para entender como o
+            aplicativo é usado e melhorar sua experiência. Os dados coletados são anonimizados e
+            incluem apenas informações de navegação (páginas visitadas, funcionalidades utilizadas)
+            — <strong>nunca seus dados financeiros pessoais</strong>.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Esta coleta <strong>só ocorre com seu consentimento explícito</strong>. Ao acessar o
+            Plim pela primeira vez, você verá um banner solicitando sua autorização. Você pode
+            aceitar ou recusar a qualquer momento, e sua escolha é respeitada imediatamente.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            <strong>Não utilizamos</strong> cookies de publicidade ou rastreamento para fins
+            comerciais.
           </p>
         </section>
 
