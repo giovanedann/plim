@@ -1,19 +1,21 @@
-import * as Sentry from '@sentry/react'
+import { logger } from '@/lib/logger'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './app'
 import './index.css'
 
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN
+if (logger) {
+  window.addEventListener('error', (event) => {
+    logger?.error('Uncaught error', {
+      message: event.error?.message,
+      stack: event.error?.stack,
+    })
+  })
 
-if (sentryDsn) {
-  Sentry.init({
-    dsn: sentryDsn,
-    environment: import.meta.env.MODE,
-    integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
-    tracesSampleRate: 0.1,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0,
+  window.addEventListener('unhandledrejection', (event) => {
+    logger?.error('Unhandled promise rejection', {
+      reason: String(event.reason),
+    })
   })
 }
 

@@ -1,10 +1,15 @@
-import * as Sentry from '@sentry/react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErrorBoundary } from './error-boundary'
 
-vi.mock('@sentry/react')
+const mockLoggerError = vi.fn()
+
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    error: (...args: unknown[]) => mockLoggerError(...args),
+  },
+}))
 
 // Component that throws an error
 function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
@@ -283,59 +288,55 @@ describe('ErrorBoundary', () => {
     })
   })
 
-  describe('sentry integration', () => {
-    it('calls Sentry.captureException when an error is caught', () => {
-      const sut = vi.mocked(Sentry.captureException)
-
+  describe('betterstack logging', () => {
+    it('calls logger.error when an error is caught', () => {
       render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
       )
 
-      expect(sut).toHaveBeenCalledTimes(1)
+      expect(mockLoggerError).toHaveBeenCalledTimes(1)
     })
 
-    it('passes the error object to Sentry.captureException', () => {
-      const sut = vi.mocked(Sentry.captureException)
-
+    it('passes error message and stack to logger.error', () => {
       render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
       )
 
-      const capturedError = sut.mock.calls[0]![0] as Error
-      expect(capturedError).toBeInstanceOf(Error)
-      expect(capturedError.message).toBe('Test error')
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        'ErrorBoundary caught an error',
+        expect.objectContaining({
+          message: 'Test error',
+          stack: expect.stringContaining('ThrowError'),
+        })
+      )
     })
 
-    it('includes component stack in the Sentry context', () => {
-      const sut = vi.mocked(Sentry.captureException)
-
+    it('includes componentStack in logger.error context', () => {
       render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
       )
 
-      const context = sut.mock.calls[0]![1] as {
-        contexts: { react: { componentStack: string } }
+      const context = mockLoggerError.mock.calls[0]![1] as {
+        componentStack: string
       }
-      expect(context.contexts.react.componentStack).toBeDefined()
-      expect(typeof context.contexts.react.componentStack).toBe('string')
+      expect(context.componentStack).toBeDefined()
+      expect(typeof context.componentStack).toBe('string')
     })
 
-    it('does not call Sentry.captureException when no error occurs', () => {
-      const sut = vi.mocked(Sentry.captureException)
-
+    it('does not call logger.error when no error occurs', () => {
       render(
         <ErrorBoundary>
           <ThrowError shouldThrow={false} />
         </ErrorBoundary>
       )
 
-      expect(sut).not.toHaveBeenCalled()
+      expect(mockLoggerError).not.toHaveBeenCalled()
     })
   })
 })
