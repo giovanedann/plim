@@ -1,4 +1,5 @@
 import { type ApiError, ERROR_CODES, HTTP_STATUS, type HttpErrorStatus } from '@plim/shared'
+import * as Sentry from '@sentry/cloudflare'
 import type { ErrorHandler } from 'hono'
 import { ZodError } from 'zod'
 import type { Env } from '../types'
@@ -42,6 +43,7 @@ export const errorHandler: ErrorHandler<Env> = (err, c) => {
     )
   }
 
+  Sentry.captureException(err)
   console.error('Unhandled error:', err)
 
   return c.json<{ error: ApiError }>(

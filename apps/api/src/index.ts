@@ -1,5 +1,7 @@
+import { withSentry } from '@sentry/cloudflare'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import type { Bindings } from './lib/env'
 import { authMiddleware } from './middleware/auth.middleware'
 import { errorHandler } from './middleware/error-handler.middleware'
 import { rateLimitMiddleware } from './middleware/rate-limit.middleware'
@@ -63,4 +65,9 @@ app.route('/api/v1/webhooks', webhookRouter)
 
 app.route('/api/v1', api)
 
-export default app
+export default withSentry(
+  (env: Bindings) => ({
+    dsn: env.SENTRY_DSN,
+  }),
+  app
+)
