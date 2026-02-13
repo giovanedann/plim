@@ -25,15 +25,14 @@ describe('requestLoggerMiddleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    vi.mocked(Logtail).mockImplementation(
-      () =>
-        ({
-          info: mockInfo,
-          warn: mockWarn,
-          error: mockError,
-          flush: mockFlush,
-        }) as unknown as Logtail
-    )
+    const mockInstance = {
+      info: mockInfo,
+      warn: mockWarn,
+      error: mockError,
+      flush: mockFlush,
+      withExecutionContext: vi.fn().mockReturnThis(),
+    }
+    vi.mocked(Logtail).mockImplementation(() => mockInstance as unknown as Logtail)
 
     sut = createTestApp()
   })

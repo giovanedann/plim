@@ -45,13 +45,20 @@ export const errorHandler: ErrorHandler<Env> = (err, c) => {
 
   const sourceToken = c.env?.BETTERSTACK_SOURCE_TOKEN
   if (sourceToken) {
-    const logger = new Logtail(sourceToken)
+    const baseLogger = new Logtail(sourceToken)
+    let logger: Pick<Logtail, 'error'> = baseLogger
+    try {
+      logger = baseLogger.withExecutionContext(c.executionCtx)
+    } catch {
+      logger = baseLogger
+    }
     logger.error('Unhandled API error', {
       message: err.message,
       stack: err.stack,
     })
+    const flushPromise = baseLogger.flush()
     try {
-      c.executionCtx.waitUntil(logger.flush())
+      c.executionCtx.waitUntil(flushPromise)
     } catch {
       // executionCtx is unavailable outside Cloudflare Workers (e.g. tests)
     }

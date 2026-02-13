@@ -26,9 +26,12 @@ describe('errorHandler', () => {
     vi.clearAllMocks()
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    vi.mocked(Logtail).mockImplementation(
-      () => ({ error: mockError, flush: mockFlush }) as unknown as Logtail
-    )
+    const mockInstance = {
+      error: mockError,
+      flush: mockFlush,
+      withExecutionContext: vi.fn().mockReturnThis(),
+    }
+    vi.mocked(Logtail).mockImplementation(() => mockInstance as unknown as Logtail)
 
     sut = createTestApp()
   })

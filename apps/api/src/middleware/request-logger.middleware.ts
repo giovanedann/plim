@@ -18,7 +18,14 @@ export const requestLoggerMiddleware: MiddlewareHandler<Env> = async (c, next) =
   const path = c.req.path
   const userId = c.get('userId' as never) as string | undefined
 
-  const logger = new Logtail(sourceToken)
+  const baseLogger = new Logtail(sourceToken)
+
+  let logger: Pick<Logtail, 'info' | 'warn' | 'error'> = baseLogger
+  try {
+    logger = baseLogger.withExecutionContext(c.executionCtx)
+  } catch {
+    logger = baseLogger
+  }
 
   const logData = {
     method,
@@ -36,7 +43,7 @@ export const requestLoggerMiddleware: MiddlewareHandler<Env> = async (c, next) =
     logger.info('request', logData)
   }
 
-  const flushPromise = logger.flush()
+  const flushPromise = baseLogger.flush()
   try {
     c.executionCtx.waitUntil(flushPromise)
   } catch {
