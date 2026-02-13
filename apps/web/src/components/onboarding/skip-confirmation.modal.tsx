@@ -47,7 +47,7 @@ export function SkipConfirmationModal({ isOpen, onConfirm, onCancel }: SkipConfi
           animate={backdropAnimation.animate}
           exit={backdropAnimation.exit}
           transition={backdropAnimation.transition}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={onCancel}
           // biome-ignore lint/a11y/useSemanticElements: motion.div needed for animations
           role="dialog"

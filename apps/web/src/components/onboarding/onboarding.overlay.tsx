@@ -146,7 +146,7 @@ export function OnboardingOverlay({
           animate={overlayAnimation.animate}
           exit={overlayAnimation.exit}
           transition={overlayAnimation.transition}
-          className="fixed inset-0 z-50 flex flex-col bg-background"
+          className="fixed inset-0 z-[70] flex flex-col bg-background"
         >
           <div className="flex-1 flex items-center justify-center overflow-y-auto">
             <AnimatePresence mode="wait">
