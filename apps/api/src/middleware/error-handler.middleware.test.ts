@@ -1,9 +1,12 @@
 import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
+import * as Sentry from '@sentry/cloudflare'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import type { Env } from '../types'
 import { AppError, errorHandler } from './error-handler.middleware'
+
+vi.mock('@sentry/cloudflare')
 
 type ErrorResponse = { error: { code: string; message: string; details?: unknown } }
 
@@ -172,6 +175,50 @@ describe('errorHandler', () => {
       await sut.request('/test', { method: 'GET' })
 
       expect(console.error).toHaveBeenCalledWith('Unhandled error:', error)
+    })
+  })
+
+  describe('sentry integration', () => {
+    it('calls Sentry.captureException for unhandled errors', async () => {
+      sut.get('/test', () => {
+        throw new Error('unhandled failure')
+      })
+
+      await sut.request('/test', { method: 'GET' })
+
+      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledOnce()
+    })
+
+    it('passes the error object to Sentry.captureException', async () => {
+      const error = new Error('crash')
+      sut.get('/test', () => {
+        throw error
+      })
+
+      await sut.request('/test', { method: 'GET' })
+
+      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(error)
+    })
+
+    it('does not call Sentry.captureException for AppError', async () => {
+      sut.get('/test', () => {
+        throw new AppError(ERROR_CODES.NOT_FOUND, 'Not found', HTTP_STATUS.NOT_FOUND)
+      })
+
+      await sut.request('/test', { method: 'GET' })
+
+      expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled()
+    })
+
+    it('does not call Sentry.captureException for ZodError', async () => {
+      const schema = z.object({ name: z.string().min(1) })
+      sut.get('/test', (): never => {
+        throw schema.parse({ name: '' })
+      })
+
+      await sut.request('/test', { method: 'GET' })
+
+      expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled()
     })
   })
 })

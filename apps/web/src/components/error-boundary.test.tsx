@@ -1,7 +1,10 @@
+import * as Sentry from '@sentry/react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErrorBoundary } from './error-boundary'
+
+vi.mock('@sentry/react')
 
 // Component that throws an error
 function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
@@ -277,6 +280,62 @@ describe('ErrorBoundary', () => {
       const error = errorCall?.[1] as Error
       expect(error.stack).toBeDefined()
       expect(error.stack).toContain('ThrowError')
+    })
+  })
+
+  describe('sentry integration', () => {
+    it('calls Sentry.captureException when an error is caught', () => {
+      const sut = vi.mocked(Sentry.captureException)
+
+      render(
+        <ErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </ErrorBoundary>
+      )
+
+      expect(sut).toHaveBeenCalledTimes(1)
+    })
+
+    it('passes the error object to Sentry.captureException', () => {
+      const sut = vi.mocked(Sentry.captureException)
+
+      render(
+        <ErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </ErrorBoundary>
+      )
+
+      const capturedError = sut.mock.calls[0][0] as Error
+      expect(capturedError).toBeInstanceOf(Error)
+      expect(capturedError.message).toBe('Test error')
+    })
+
+    it('includes component stack in the Sentry context', () => {
+      const sut = vi.mocked(Sentry.captureException)
+
+      render(
+        <ErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </ErrorBoundary>
+      )
+
+      const context = sut.mock.calls[0][1] as {
+        contexts: { react: { componentStack: string } }
+      }
+      expect(context.contexts.react.componentStack).toBeDefined()
+      expect(typeof context.contexts.react.componentStack).toBe('string')
+    })
+
+    it('does not call Sentry.captureException when no error occurs', () => {
+      const sut = vi.mocked(Sentry.captureException)
+
+      render(
+        <ErrorBoundary>
+          <ThrowError shouldThrow={false} />
+        </ErrorBoundary>
+      )
+
+      expect(sut).not.toHaveBeenCalled()
     })
   })
 })
