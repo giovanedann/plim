@@ -15,6 +15,7 @@ export type Bindings = {
   API_BASE_URL: string
   POSTHOG_API_KEY: string
   POSTHOG_HOST: string
+  SENTRY_DSN: string
 }
 
 /**

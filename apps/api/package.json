@@ -16,6 +16,7 @@
     "@google/genai": "^1.41.0",
     "@hono/standard-validator": "^0.2.2",
     "@plim/shared": "workspace:*",
+    "@sentry/cloudflare": "^10.38.0",
     "@supabase/supabase-js": "^2.93.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.1",
