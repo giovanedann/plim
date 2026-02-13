@@ -13,6 +13,8 @@ export type Bindings = {
   MERCADO_PAGO_ACCESS_TOKEN: string
   MERCADO_PAGO_WEBHOOK_SECRET: string
   API_BASE_URL: string
+  POSTHOG_API_KEY: string
+  POSTHOG_HOST: string
 }
 
 /**
