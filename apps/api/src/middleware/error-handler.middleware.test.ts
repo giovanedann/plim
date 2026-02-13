@@ -1,16 +1,19 @@
+import { Logtail } from '@logtail/edge'
 import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
-import * as Sentry from '@sentry/cloudflare'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import type { Env } from '../types'
 import { AppError, errorHandler } from './error-handler.middleware'
 
-vi.mock('@sentry/cloudflare')
+vi.mock('@logtail/edge')
 
 type ErrorResponse = { error: { code: string; message: string; details?: unknown } }
 
-function createTestApp() {
+const mockError = vi.fn()
+const mockFlush = vi.fn().mockResolvedValue(undefined)
+
+function createTestApp(): Hono<Env> {
   const app = new Hono<Env>()
   app.onError(errorHandler)
   return app
@@ -22,6 +25,11 @@ describe('errorHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    vi.mocked(Logtail).mockImplementation(
+      () => ({ error: mockError, flush: mockFlush }) as unknown as Logtail
+    )
+
     sut = createTestApp()
   })
 
@@ -178,47 +186,65 @@ describe('errorHandler', () => {
     })
   })
 
-  describe('sentry integration', () => {
-    it('calls Sentry.captureException for unhandled errors', async () => {
-      sut.get('/test', () => {
+  describe('betterstack logging', () => {
+    it('calls logger.error for unhandled errors', async () => {
+      sut.get('/test', (c) => {
+        c.env = { ...c.env, BETTERSTACK_SOURCE_TOKEN: 'test-token' } as typeof c.env
         throw new Error('unhandled failure')
       })
 
       await sut.request('/test', { method: 'GET' })
 
-      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledOnce()
+      expect(mockError).toHaveBeenCalledOnce()
     })
 
-    it('passes the error object to Sentry.captureException', async () => {
+    it('passes error details to logger', async () => {
       const error = new Error('crash')
-      sut.get('/test', () => {
+      sut.get('/test', (c) => {
+        c.env = { ...c.env, BETTERSTACK_SOURCE_TOKEN: 'test-token' } as typeof c.env
         throw error
       })
 
       await sut.request('/test', { method: 'GET' })
 
-      expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(error)
+      expect(mockError).toHaveBeenCalledWith('Unhandled API error', {
+        message: 'crash',
+        stack: error.stack,
+      })
     })
 
-    it('does not call Sentry.captureException for AppError', async () => {
-      sut.get('/test', () => {
+    it('does not log AppError to BetterStack', async () => {
+      sut.get('/test', (c) => {
+        c.env = { ...c.env, BETTERSTACK_SOURCE_TOKEN: 'test-token' } as typeof c.env
         throw new AppError(ERROR_CODES.NOT_FOUND, 'Not found', HTTP_STATUS.NOT_FOUND)
       })
 
       await sut.request('/test', { method: 'GET' })
 
-      expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled()
+      expect(mockError).not.toHaveBeenCalled()
     })
 
-    it('does not call Sentry.captureException for ZodError', async () => {
+    it('does not log ZodError to BetterStack', async () => {
       const schema = z.object({ name: z.string().min(1) })
-      sut.get('/test', (): never => {
+      sut.get('/test', (c): never => {
+        c.env = { ...c.env, BETTERSTACK_SOURCE_TOKEN: 'test-token' } as typeof c.env
         throw schema.parse({ name: '' })
       })
 
       await sut.request('/test', { method: 'GET' })
 
-      expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled()
+      expect(mockError).not.toHaveBeenCalled()
+    })
+
+    it('does not create logger when source token is missing', async () => {
+      sut.get('/test', (c) => {
+        c.env = { ...c.env, BETTERSTACK_SOURCE_TOKEN: '' } as typeof c.env
+        throw new Error('no token')
+      })
+
+      await sut.request('/test', { method: 'GET' })
+
+      expect(vi.mocked(Logtail)).not.toHaveBeenCalled()
     })
   })
 })

@@ -1,5 +1,5 @@
+import { Logtail } from '@logtail/edge'
 import { type ApiError, ERROR_CODES, HTTP_STATUS, type HttpErrorStatus } from '@plim/shared'
-import * as Sentry from '@sentry/cloudflare'
 import type { ErrorHandler } from 'hono'
 import { ZodError } from 'zod'
 import type { Env } from '../types'
@@ -43,7 +43,19 @@ export const errorHandler: ErrorHandler<Env> = (err, c) => {
     )
   }
 
-  Sentry.captureException(err)
+  const sourceToken = c.env?.BETTERSTACK_SOURCE_TOKEN
+  if (sourceToken) {
+    const logger = new Logtail(sourceToken)
+    logger.error('Unhandled API error', {
+      message: err.message,
+      stack: err.stack,
+    })
+    try {
+      c.executionCtx.waitUntil(logger.flush())
+    } catch {
+      // executionCtx is unavailable outside Cloudflare Workers (e.g. tests)
+    }
+  }
   console.error('Unhandled error:', err)
 
   return c.json<{ error: ApiError }>(

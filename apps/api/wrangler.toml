@@ -7,7 +7,7 @@ compatibility_date = "2025-01-13"
 # SUPABASE_PUBLISHABLE_KEY = ""
 # UPSTASH_REDIS_REST_URL = ""
 # UPSTASH_REDIS_REST_TOKEN = ""
-# SENTRY_DSN = ""
+# BETTERSTACK_SOURCE_TOKEN = ""
 
 routes = [
   { pattern = "api.plim.app.br", zone_name = "plim.app.br", custom_domain = true }

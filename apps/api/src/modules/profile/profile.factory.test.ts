@@ -35,7 +35,7 @@ function createMockEnv(): Bindings {
     API_BASE_URL: 'https://api.test.plim.app.br',
     POSTHOG_API_KEY: '',
     POSTHOG_HOST: '',
-    SENTRY_DSN: '',
+    BETTERSTACK_SOURCE_TOKEN: '',
   }
 }
 
