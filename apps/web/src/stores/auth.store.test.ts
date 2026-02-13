@@ -1,6 +1,13 @@
 import type { Session, User } from '@supabase/supabase-js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('idb-keyval', () => ({
+  del: vi.fn().mockResolvedValue(undefined),
+}))
+
+const mockCachesDelete = vi.fn().mockResolvedValue(true)
+vi.stubGlobal('caches', { delete: mockCachesDelete })
+
 // Mock the supabase module
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -19,6 +26,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import { supabase } from '@/lib/supabase'
+import { del } from 'idb-keyval'
 import { useAuthStore } from './auth.store'
 
 describe('useAuthStore', () => {
@@ -652,6 +660,30 @@ describe('useAuthStore', () => {
       // Assert
       expect(loadingDuringCall).toBe(true)
       expect(useAuthStore.getState().isLoading).toBe(false)
+    })
+
+    it('clears persisted IndexedDB cache on success', async () => {
+      // Arrange
+      vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
+      const sut = useAuthStore.getState()
+
+      // Act
+      await sut.signOut()
+
+      // Assert
+      expect(del).toHaveBeenCalledWith('plim-react-query-cache')
+    })
+
+    it('clears Cache Storage api-cache on success', async () => {
+      // Arrange
+      vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
+      const sut = useAuthStore.getState()
+
+      // Act
+      await sut.signOut()
+
+      // Assert
+      expect(mockCachesDelete).toHaveBeenCalledWith('api-cache')
     })
 
     it('still clears user and session when supabase returns error', async () => {

@@ -2,6 +2,7 @@ import { translateAuthError } from '@/lib/auth-errors'
 import { queryClient } from '@/lib/query-client'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
+import { del } from 'idb-keyval'
 import { create } from 'zustand'
 import { useAIStore } from './ai.store'
 
@@ -161,6 +162,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error
       useAIStore.getState().clearMessages()
       queryClient.clear()
+      await del('plim-react-query-cache')
+      await caches.delete('api-cache')
       set({ user: null, session: null })
     } finally {
       set({ isLoading: false })
