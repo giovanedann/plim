@@ -6,11 +6,14 @@ import { PWAUpdatePrompt } from './pwa-update-prompt'
 const mockUpdateServiceWorker = vi.fn()
 const mockRegistrationUpdate = vi.fn()
 let mockNeedRefresh = false
+let mockRegistration: { update: ReturnType<typeof vi.fn> } | null = {
+  update: mockRegistrationUpdate,
+}
 
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: (options?: { onRegisteredSW?: (swUrl: string, registration: any) => void }) => {
     if (options?.onRegisteredSW) {
-      options.onRegisteredSW('/sw.js', { update: mockRegistrationUpdate })
+      options.onRegisteredSW('/sw.js', mockRegistration)
     }
     return {
       needRefresh: [mockNeedRefresh, vi.fn()],
@@ -23,6 +26,7 @@ describe('PWAUpdatePrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNeedRefresh = false
+    mockRegistration = { update: mockRegistrationUpdate }
   })
 
   afterEach(() => {
@@ -93,24 +97,64 @@ describe('PWAUpdatePrompt', () => {
   })
 
   describe('service worker registration', () => {
+    it('calls registration.update() immediately on registration', () => {
+      mockNeedRefresh = false
+
+      render(<PWAUpdatePrompt />)
+
+      expect(mockRegistrationUpdate).toHaveBeenCalledTimes(1)
+    })
+
     it('sets up SW update interval via onRegisteredSW callback', () => {
       vi.useFakeTimers()
       mockNeedRefresh = false
 
       render(<PWAUpdatePrompt />)
 
-      expect(mockRegistrationUpdate).not.toHaveBeenCalled()
+      expect(mockRegistrationUpdate).toHaveBeenCalledTimes(1)
 
       const ONE_HOUR_MS = 60 * 60 * 1000
       vi.advanceTimersByTime(ONE_HOUR_MS)
 
-      expect(mockRegistrationUpdate).toHaveBeenCalledTimes(1)
+      expect(mockRegistrationUpdate).toHaveBeenCalledTimes(2)
 
       vi.advanceTimersByTime(ONE_HOUR_MS)
 
-      expect(mockRegistrationUpdate).toHaveBeenCalledTimes(2)
+      expect(mockRegistrationUpdate).toHaveBeenCalledTimes(3)
 
       vi.useRealTimers()
+    })
+
+    it('checks for updates when page becomes visible', () => {
+      mockNeedRefresh = false
+
+      render(<PWAUpdatePrompt />)
+
+      const callsAfterRender = mockRegistrationUpdate.mock.calls.length
+
+      Object.defineProperty(document, 'visibilityState', {
+        value: 'hidden',
+        writable: true,
+      })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      expect(mockRegistrationUpdate.mock.calls.length).toBe(callsAfterRender)
+
+      Object.defineProperty(document, 'visibilityState', {
+        value: 'visible',
+        writable: true,
+      })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      expect(mockRegistrationUpdate.mock.calls.length).toBeGreaterThan(callsAfterRender)
+    })
+
+    it('does not call registration.update() when registration is null', () => {
+      mockRegistration = null
+
+      render(<PWAUpdatePrompt />)
+
+      expect(mockRegistrationUpdate).not.toHaveBeenCalled()
     })
   })
 })

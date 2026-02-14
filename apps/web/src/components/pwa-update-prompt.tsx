@@ -13,9 +13,18 @@ export function PWAUpdatePrompt(): React.ReactElement | null {
   } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
       if (!registration) return
+
+      registration.update()
+
       setInterval(() => {
         registration.update()
       }, SW_UPDATE_INTERVAL_MS)
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          registration.update()
+        }
+      })
     },
   })
 
