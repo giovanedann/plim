@@ -1,6 +1,7 @@
 import { AIChatButton, AIChatDrawer } from '@/components/ai'
 import { OnboardingOverlay } from '@/components/onboarding'
 import { RenewalReminderModal } from '@/components/renewal-reminder-modal'
+import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useAIUsage } from '@/hooks/use-ai-usage'
 import { useProfile } from '@/hooks/use-profile'
@@ -71,6 +72,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <AIChatButton />
       <AIChatDrawer />
+
+      <TutorialOverlay />
     </SidebarProvider>
   )
 }
