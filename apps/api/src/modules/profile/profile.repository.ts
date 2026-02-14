@@ -8,7 +8,7 @@ export class ProfileRepository {
     const { data, error } = await this.supabase
       .from('profile')
       .select(
-        'user_id, name, email, avatar_url, currency, locale, is_onboarded, created_at, updated_at'
+        'user_id, name, email, avatar_url, currency, locale, is_onboarded, referred_by, created_at, updated_at'
       )
       .eq('user_id', userId)
       .single()
@@ -27,7 +27,7 @@ export class ProfileRepository {
       })
       .eq('user_id', userId)
       .select(
-        'user_id, name, email, avatar_url, currency, locale, is_onboarded, created_at, updated_at'
+        'user_id, name, email, avatar_url, currency, locale, is_onboarded, referred_by, created_at, updated_at'
       )
       .single()
 

@@ -64,6 +64,7 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
     currency: 'BRL',
     locale: 'pt-BR',
     is_onboarded: true,
+    referred_by: null,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),
     ...overrides,

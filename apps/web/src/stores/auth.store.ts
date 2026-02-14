@@ -16,7 +16,12 @@ interface AuthState {
   setSession: (session: Session | null) => void
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    displayName?: string,
+    referredBy?: string
+  ) => Promise<void>
   resetPassword: (email: string) => Promise<void>
   verifyRecoveryOtp: (email: string, token: string) => Promise<void>
   updatePassword: (newPassword: string) => Promise<void>
@@ -80,15 +85,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signUpWithEmail: async (email: string, password: string, displayName?: string) => {
+  signUpWithEmail: async (
+    email: string,
+    password: string,
+    displayName?: string,
+    referredBy?: string
+  ) => {
     set({ isLoading: true, error: null })
     try {
+      const metadata: Record<string, string> = {}
+      if (displayName) metadata.name = displayName
+      if (referredBy) metadata.referred_by = referredBy
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: displayName ? { name: displayName } : undefined,
+          data: Object.keys(metadata).length > 0 ? metadata : undefined,
         },
       })
       if (error) throw error

@@ -363,6 +363,50 @@ describe('useAuthStore', () => {
       })
     })
 
+    it('calls supabase signUp with referredBy in metadata', async () => {
+      // Arrange
+      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+        data: { user: mockUser, session: mockSession },
+        error: null,
+      })
+      const sut = useAuthStore.getState()
+
+      // Act
+      await sut.signUpWithEmail('test@example.com', 'password123', 'John Doe', 'Friend')
+
+      // Assert
+      expect(supabase.auth.signUp).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password123',
+        options: {
+          emailRedirectTo: expect.stringContaining('/auth/callback'),
+          data: { name: 'John Doe', referred_by: 'Friend' },
+        },
+      })
+    })
+
+    it('calls supabase signUp with only referredBy when no displayName', async () => {
+      // Arrange
+      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+        data: { user: mockUser, session: mockSession },
+        error: null,
+      })
+      const sut = useAuthStore.getState()
+
+      // Act
+      await sut.signUpWithEmail('test@example.com', 'password123', undefined, 'Friend')
+
+      // Assert
+      expect(supabase.auth.signUp).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password123',
+        options: {
+          emailRedirectTo: expect.stringContaining('/auth/callback'),
+          data: { referred_by: 'Friend' },
+        },
+      })
+    })
+
     it('sets isLoading to true during operation', async () => {
       // Arrange
       let loadingDuringCall = false

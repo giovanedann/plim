@@ -268,7 +268,12 @@ describe('SignUpPage Integration', () => {
       await user.click(screen.getByRole('button', { name: /Criar conta/i }))
 
       await waitFor(() => {
-        expect(signUpSpy).toHaveBeenCalledWith('john@example.com', 'ValidPass123!', 'John Doe')
+        expect(signUpSpy).toHaveBeenCalledWith(
+          'john@example.com',
+          'ValidPass123!',
+          'John Doe',
+          undefined
+        )
       })
     })
   })

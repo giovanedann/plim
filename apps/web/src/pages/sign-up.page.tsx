@@ -34,6 +34,7 @@ export function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [referredBy, setReferredBy] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
@@ -76,7 +77,7 @@ export function SignUpPage() {
     }
 
     try {
-      await signUpWithEmail(email, password, displayName || undefined)
+      await signUpWithEmail(email, password, displayName || undefined, referredBy || undefined)
       analytics.signUp('email')
       setSuccess(true)
     } catch {
@@ -218,6 +219,20 @@ export function SignUpPage() {
                   label={passwordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
                 />
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="referredBy">Quem te indicou?</Label>
+              <Input
+                id="referredBy"
+                type="text"
+                placeholder="Nome ou email de quem te indicou"
+                value={referredBy}
+                onChange={(e) => setReferredBy(e.target.value)}
+                disabled={isLoading}
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground">Opcional</p>
             </div>
 
             {(localError || error) && (

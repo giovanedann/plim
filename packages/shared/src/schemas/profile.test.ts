@@ -12,6 +12,7 @@ describe('profileSchema', () => {
     currency: 'BRL',
     locale: 'pt-BR',
     is_onboarded: true,
+    referred_by: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   }
@@ -118,6 +119,36 @@ describe('profileSchema', () => {
     }
   })
 
+  it('applies default referred_by (null) when not provided', () => {
+    const { referred_by: _, ...profileWithoutReferredBy } = validProfile
+
+    const result = sut.safeParse(profileWithoutReferredBy)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.referred_by).toBeNull()
+    }
+  })
+
+  it('accepts profile with referred_by value', () => {
+    const profile = { ...validProfile, referred_by: 'Friend Name' }
+
+    const result = sut.safeParse(profile)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.referred_by).toBe('Friend Name')
+    }
+  })
+
+  it('rejects profile with referred_by exceeding 100 characters', () => {
+    const profile = { ...validProfile, referred_by: 'a'.repeat(101) }
+
+    const result = sut.safeParse(profile)
+
+    expect(result.success).toBe(false)
+  })
+
   it('accepts different currency values (USD)', () => {
     const profile = { ...validProfile, currency: 'USD' }
 
@@ -214,6 +245,15 @@ describe('updateProfileSchema', () => {
 
   it('accepts empty object (no updates)', () => {
     const result = sut.safeParse({})
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual({})
+    }
+  })
+
+  it('strips unknown fields like referred_by', () => {
+    const result = sut.safeParse({ referred_by: 'Someone' })
 
     expect(result.success).toBe(true)
     if (result.success) {

@@ -8,6 +8,7 @@ export const profileSchema = z.object({
   currency: z.string().default('BRL'),
   locale: z.string().default('pt-BR'),
   is_onboarded: z.boolean().default(false),
+  referred_by: z.string().max(100).nullable().default(null),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
 })
