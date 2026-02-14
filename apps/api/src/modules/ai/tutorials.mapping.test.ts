@@ -66,6 +66,14 @@ describe('matchTutorialIntent', () => {
     it('maps "onde cadastro um cartao" to setup-credit-card', () => {
       expect(matchTutorialIntent('onde cadastro um cartao')).toBe('setup-credit-card')
     })
+
+    it('maps "como registro meus cartoes" to setup-credit-card', () => {
+      expect(matchTutorialIntent('Como registro meus cartoes')).toBe('setup-credit-card')
+    })
+
+    it('maps "como cadastro meus cartões" to setup-credit-card', () => {
+      expect(matchTutorialIntent('como cadastro meus cartões')).toBe('setup-credit-card')
+    })
   })
 
   describe('view-dashboard tutorial', () => {

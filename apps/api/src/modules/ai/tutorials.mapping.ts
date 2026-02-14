@@ -15,24 +15,24 @@ const TUTORIAL_MAPPINGS: TutorialMapping[] = [
   {
     id: 'setup-credit-card',
     patterns: [
-      /como\s+.*(cartao|cartão)/i,
-      /onde\s+(cadastro|adiciono|configuro)\s+(um\s+)?(cartao|cartão)/i,
+      /como\s+.*(cartao|cartão|cartoes|cartões)/i,
+      /onde\s+(cadastro|adiciono|configuro)\s+(um\s+|os\s+|meus\s+)?(cartao|cartão|cartoes|cartões)/i,
     ],
   },
   {
     id: 'add-expense',
     patterns: [
-      /como\s+(adiciono|crio|cadastro|registro|lanc).*(despesa|gasto)/i,
-      /como\s+(faco|faço)\s+para\s+(adicion|cri|registr).*(despesa|gasto)/i,
-      /como\s+(adicionar|criar|cadastrar|registrar|lancar|lançar)\s+(uma\s+)?(despesa|gasto)/i,
-      /onde\s+(adiciono|crio|cadastro)\s+(uma\s+)?(despesa|gasto)/i,
+      /como\s+(adiciono|crio|cadastro|registro|lanc).*(despesa|despesas|gasto|gastos)/i,
+      /como\s+(faco|faço)\s+para\s+(adicion|cri|registr).*(despesa|despesas|gasto|gastos)/i,
+      /como\s+(adicionar|criar|cadastrar|registrar|lancar|lançar)\s+(uma\s+|as\s+|minhas\s+)?(despesa|despesas|gasto|gastos)/i,
+      /onde\s+(adiciono|crio|cadastro)\s+(uma\s+|as\s+|minhas\s+)?(despesa|despesas|gasto|gastos)/i,
     ],
   },
   {
     id: 'manage-categories',
     patterns: [
-      /como\s+(gerencio|edito|altero|mudo|configuro|personalizo|vejo|uso|crio|registro|cadastro|adiciono).*(categoria)/i,
-      /como\s+(faco|faço)\s+para\s+(gerenci|edit|alter|ver|usa|cri|registr|cadastr|adicion).*(categoria)/i,
+      /como\s+(gerencio|edito|altero|mudo|configuro|personalizo|vejo|uso|crio|registro|cadastro|adiciono).*(categoria|categorias)/i,
+      /como\s+(faco|faço)\s+para\s+(gerenci|edit|alter|ver|usa|cri|registr|cadastr|adicion).*(categoria|categorias)/i,
       /como\s+(gerenciar|editar|alterar|mudar|configurar|personalizar|ver|usar|criar|registrar|cadastrar|adicionar)\s+(as\s+|uma\s+|minhas\s+)?categoria/i,
       /onde\s+(fica|estao|ficam|encontro|adiciono|crio|cadastro)\s+(as\s+|uma\s+|minhas\s+)?categoria/i,
     ],
@@ -40,10 +40,10 @@ const TUTORIAL_MAPPINGS: TutorialMapping[] = [
   {
     id: 'view-dashboard',
     patterns: [
-      /como\s+(vejo|uso|acesso|encontro).*(dashboard|painel|relatorio|relatório|grafico|gráfico)/i,
-      /como\s+(faco|faço)\s+para\s+(ver|usar|acess).*(dashboard|painel|relatorio|relatório)/i,
-      /como\s+(ver|usar|acessar)\s+(o\s+)?(meu\s+)?(dashboard|painel|relatorio|relatório)/i,
-      /onde\s+(fica|esta|está)\s+(o\s+)?(dashboard|painel)/i,
+      /como\s+(vejo|uso|acesso|encontro).*(dashboard|painel|relatorio|relatório|relatorios|relatórios|grafico|gráfico|graficos|gráficos)/i,
+      /como\s+(faco|faço)\s+para\s+(ver|usar|acess).*(dashboard|painel|relatorio|relatório|relatorios|relatórios)/i,
+      /como\s+(ver|usar|acessar)\s+(o\s+)?(meu\s+)?(dashboard|painel|relatorio|relatório|relatorios|relatórios)/i,
+      /onde\s+(fica|esta|está|ficam|estao|estão)\s+(o\s+|os\s+)?(dashboard|painel|relatorio|relatório|relatorios|relatórios)/i,
     ],
   },
   {
