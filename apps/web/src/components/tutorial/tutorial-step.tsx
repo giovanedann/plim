@@ -39,8 +39,15 @@ function computeCardPosition(elementId: string): Position | null {
 }
 
 export function TutorialStepCard(): React.ReactNode {
-  const { activeTutorial, currentStep, nextStep, prevStep, exitTutorial, completeTutorial } =
-    useTutorialStore()
+  const {
+    activeTutorial,
+    currentStep,
+    nextStep,
+    prevStep,
+    exitTutorial,
+    completeTutorial,
+    setTutorialsDisabled,
+  } = useTutorialStore()
   const [position, setPosition] = useState<Position | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -83,6 +90,11 @@ export function TutorialStepCard(): React.ReactNode {
     }
   }
 
+  const handleDisableTutorials = (): void => {
+    setTutorialsDisabled(true)
+    exitTutorial()
+  }
+
   return (
     <Card
       ref={cardRef}
@@ -116,27 +128,47 @@ export function TutorialStepCard(): React.ReactNode {
         <p className="text-sm text-muted-foreground">{step.description}</p>
       </CardContent>
 
-      <CardFooter className="flex justify-between pt-0">
-        {!isFirstStep ? (
-          <Button variant="outline" size="sm" onClick={prevStep} data-testid="tutorial-prev-button">
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            Anterior
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={exitTutorial}
-            data-testid="tutorial-skip-button"
-          >
-            Pular
-          </Button>
-        )}
+      <CardFooter className="flex flex-col gap-3 pt-0">
+        <div className="flex w-full justify-between">
+          {!isFirstStep ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={prevStep}
+              data-testid="tutorial-prev-button"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Anterior
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exitTutorial}
+              data-testid="tutorial-skip-button"
+            >
+              Pular
+            </Button>
+          )}
 
-        <Button size="sm" onClick={handleNext} data-testid="tutorial-next-button">
-          {isLastStep ? 'Concluir' : 'Próximo'}
-          {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
-        </Button>
+          <Button size="sm" onClick={handleNext} data-testid="tutorial-next-button">
+            {isLastStep ? 'Concluir' : 'Próximo'}
+            {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
+          </Button>
+        </div>
+
+        <label
+          className="flex w-full cursor-pointer items-center gap-2 border-t border-border pt-2"
+          data-testid="tutorial-disable-checkbox-label"
+        >
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 rounded border-border accent-primary"
+            data-testid="tutorial-disable-checkbox"
+            onChange={handleDisableTutorials}
+          />
+          <span className="text-xs text-muted-foreground">Não mostrar tutoriais novamente</span>
+        </label>
       </CardFooter>
     </Card>
   )

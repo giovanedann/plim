@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { type Tutorial, useTutorialStore } from './tutorial.store'
+import { type Tutorial, registerTutorials, useTutorialStore } from './tutorial.store'
 
 vi.mock('zustand/middleware', () => ({
   persist: (fn: unknown) => fn,
@@ -23,6 +23,7 @@ describe('useTutorialStore', () => {
     activeTutorial: null,
     currentStep: 0,
     completedTutorials: [],
+    tutorialsDisabled: false,
   }
 
   beforeEach(() => {
@@ -68,6 +69,16 @@ describe('useTutorialStore', () => {
 
       const state = useTutorialStore.getState()
       expect(state.currentStep).toBe(0)
+    })
+
+    it('does nothing when tutorials are disabled', () => {
+      useTutorialStore.setState({ tutorialsDisabled: true })
+      const sut = useTutorialStore.getState()
+
+      sut.startTutorial(mockTutorial)
+
+      const state = useTutorialStore.getState()
+      expect(state.activeTutorial).toBeNull()
     })
   })
 
@@ -168,16 +179,50 @@ describe('useTutorialStore', () => {
     })
   })
 
+  describe('startTutorialById', () => {
+    it('does nothing when tutorials are disabled', () => {
+      registerTutorials([mockTutorial])
+      useTutorialStore.setState({ tutorialsDisabled: true })
+      const sut = useTutorialStore.getState()
+
+      sut.startTutorialById('add-expense')
+
+      const state = useTutorialStore.getState()
+      expect(state.activeTutorial).toBeNull()
+    })
+  })
+
+  describe('setTutorialsDisabled', () => {
+    it('sets tutorialsDisabled to true', () => {
+      const sut = useTutorialStore.getState()
+
+      sut.setTutorialsDisabled(true)
+
+      expect(useTutorialStore.getState().tutorialsDisabled).toBe(true)
+    })
+
+    it('sets tutorialsDisabled to false', () => {
+      useTutorialStore.setState({ tutorialsDisabled: true })
+      const sut = useTutorialStore.getState()
+
+      sut.setTutorialsDisabled(false)
+
+      expect(useTutorialStore.getState().tutorialsDisabled).toBe(false)
+    })
+  })
+
   describe('persistence', () => {
-    it('only persists completedTutorials', () => {
+    it('only persists completedTutorials and tutorialsDisabled', () => {
       useTutorialStore.setState({
         activeTutorial: mockTutorial,
         currentStep: 3,
         completedTutorials: ['add-expense'],
+        tutorialsDisabled: true,
       })
 
       const state = useTutorialStore.getState()
       expect(state.completedTutorials).toEqual(['add-expense'])
+      expect(state.tutorialsDisabled).toBe(true)
       expect(state.activeTutorial).toEqual(mockTutorial)
       expect(state.currentStep).toBe(3)
     })

@@ -172,4 +172,36 @@ describe('TutorialStepCard', () => {
     expect(state.activeTutorial).toBeNull()
     expect(state.completedTutorials).toContain('add-expense')
   })
+
+  it('renders disable tutorials checkbox', () => {
+    setupStoreAndDom(0)
+
+    render(<TutorialStepCard />)
+
+    expect(screen.getByTestId('tutorial-disable-checkbox')).toBeInTheDocument()
+    expect(screen.getByText('Não mostrar tutoriais novamente')).toBeInTheDocument()
+  })
+
+  it('calls setTutorialsDisabled and exits tutorial when checkbox is checked', async () => {
+    setupStoreAndDom(0)
+    const user = userEvent.setup()
+
+    render(<TutorialStepCard />)
+
+    await user.click(screen.getByTestId('tutorial-disable-checkbox'))
+
+    const state = useTutorialStore.getState()
+    expect(state.tutorialsDisabled).toBe(true)
+    expect(state.activeTutorial).toBeNull()
+  })
+
+  it('does not start tutorial when tutorials are disabled', () => {
+    setupStoreAndDom(0)
+    useTutorialStore.setState({ tutorialsDisabled: true, activeTutorial: null })
+
+    const state = useTutorialStore.getState()
+    state.startTutorial(mockTutorial)
+
+    expect(useTutorialStore.getState().activeTutorial).toBeNull()
+  })
 })

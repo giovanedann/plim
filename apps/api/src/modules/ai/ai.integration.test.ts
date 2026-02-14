@@ -380,6 +380,74 @@ describe('AI Integration', () => {
       )
     })
 
+    it('returns show_tutorial action with correct tutorial_id', async () => {
+      const usageInfo = createMockAIUsageResponse()
+      mockCheckUsageLimit.execute.mockResolvedValue({
+        allowed: true,
+        usageInfo,
+        requestType: 'text',
+      })
+      mockChat.execute.mockResolvedValue({
+        message: 'Vou te mostrar como adicionar uma despesa!',
+        action: { type: 'show_tutorial', data: { tutorial_id: 'add-expense' } },
+        tokensUsed: 120,
+      })
+      const updatedUsageInfo = createMockAIUsageResponse({
+        text: { used: 6, limit: 30, remaining: 24 },
+      })
+      mockGetUsageInfo.execute.mockResolvedValue(updatedUsageInfo)
+
+      const res = await app.request('/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'user', content: [{ type: 'text', text: 'Como adiciono uma despesa?' }] },
+          ],
+        }),
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.OK)
+      const body = (await res.json()) as { data: AIChatResponse }
+      expect(body.data.action).toEqual({
+        type: 'show_tutorial',
+        data: { tutorial_id: 'add-expense' },
+      })
+      expect(body.data.message).toBe('Vou te mostrar como adicionar uma despesa!')
+    })
+
+    it('returns show_tutorial action for manage-categories tutorial', async () => {
+      const usageInfo = createMockAIUsageResponse()
+      mockCheckUsageLimit.execute.mockResolvedValue({
+        allowed: true,
+        usageInfo,
+        requestType: 'text',
+      })
+      mockChat.execute.mockResolvedValue({
+        message: 'Vou te mostrar como gerenciar categorias!',
+        action: { type: 'show_tutorial', data: { tutorial_id: 'manage-categories' } },
+        tokensUsed: 110,
+      })
+      mockGetUsageInfo.execute.mockResolvedValue(usageInfo)
+
+      const res = await app.request('/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'user', content: [{ type: 'text', text: 'Como gerencio categorias?' }] },
+          ],
+        }),
+      })
+
+      expect(res.status).toBe(HTTP_STATUS.OK)
+      const body = (await res.json()) as { data: AIChatResponse }
+      expect(body.data.action).toEqual({
+        type: 'show_tutorial',
+        data: { tutorial_id: 'manage-categories' },
+      })
+    })
+
     it('returns updated usage info after chat', async () => {
       const initialUsageInfo = createMockAIUsageResponse({
         text: { used: 5, limit: 30, remaining: 25 },

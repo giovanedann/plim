@@ -16,8 +16,15 @@ vi.mock('@/services', () => ({
   },
 }))
 
+const mockStartTutorialById = vi.fn()
+
 vi.mock('@/stores', () => ({
   useAIStore: vi.fn(),
+  useTutorialStore: {
+    getState: () => ({
+      startTutorialById: mockStartTutorialById,
+    }),
+  },
 }))
 
 vi.mock('sonner', () => ({
@@ -310,6 +317,72 @@ describe('useAIChat', () => {
       })
 
       expect(result.current.isLoading).toBe(false)
+    })
+  })
+
+  describe('show_tutorial action', () => {
+    it('calls startTutorialById when response has show_tutorial action', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Vou te mostrar como adicionar uma despesa!',
+        action: { type: 'show_tutorial', data: { tutorial_id: 'add-expense' } },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Como adiciono uma despesa?' }])
+      })
+
+      expect(mockStartTutorialById).toHaveBeenCalledWith('add-expense')
+    })
+
+    it('does not create expense when tutorial action is returned', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Vou te mostrar como adicionar uma despesa!',
+        action: { type: 'show_tutorial', data: { tutorial_id: 'add-expense' } },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Como adiciono uma despesa?' }])
+      })
+
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
+    it('does not call startTutorialById for non-tutorial actions', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Despesa criada',
+        action: { type: 'expense_created', data: { id: 'exp-1' } },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Almoço R$35' }])
+      })
+
+      expect(mockStartTutorialById).not.toHaveBeenCalled()
+    })
+
+    it('does not call startTutorialById when action has no data', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Não entendi o que quer dizer.',
+        action: undefined,
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Hello' }])
+      })
+
+      expect(mockStartTutorialById).not.toHaveBeenCalled()
     })
   })
 

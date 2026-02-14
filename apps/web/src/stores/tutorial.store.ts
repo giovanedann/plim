@@ -32,6 +32,7 @@ interface TutorialState {
   activeTutorial: Tutorial | null
   currentStep: number
   completedTutorials: string[]
+  tutorialsDisabled: boolean
 
   startTutorial: (tutorial: Tutorial) => void
   startTutorialById: (id: string) => void
@@ -39,6 +40,7 @@ interface TutorialState {
   prevStep: () => void
   exitTutorial: () => void
   completeTutorial: () => void
+  setTutorialsDisabled: (disabled: boolean) => void
 }
 
 export const useTutorialStore = create<TutorialState>()(
@@ -47,8 +49,10 @@ export const useTutorialStore = create<TutorialState>()(
       activeTutorial: null,
       currentStep: 0,
       completedTutorials: [],
+      tutorialsDisabled: false,
 
       startTutorial: (tutorial) => {
+        if (get().tutorialsDisabled) return
         set({
           activeTutorial: tutorial,
           currentStep: 0,
@@ -56,6 +60,7 @@ export const useTutorialStore = create<TutorialState>()(
       },
 
       startTutorialById: (id) => {
+        if (get().tutorialsDisabled) return
         const tutorial = getTutorialById(id)
         if (!tutorial) return
 
@@ -101,11 +106,16 @@ export const useTutorialStore = create<TutorialState>()(
             : [...completedTutorials, activeTutorial.id],
         })
       },
+
+      setTutorialsDisabled: (disabled) => {
+        set({ tutorialsDisabled: disabled })
+      },
     }),
     {
       name: 'tutorial-storage',
       partialize: (state) => ({
         completedTutorials: state.completedTutorials,
+        tutorialsDisabled: state.tutorialsDisabled,
       }),
     }
   )
