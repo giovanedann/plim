@@ -24,7 +24,7 @@ export interface FunctionExecutionResult {
   success: boolean
   message: string
   data?: unknown
-  actionType: 'expense_created' | 'query_result' | 'forecast_result' | 'error'
+  actionType: 'expense_created' | 'query_result' | 'forecast_result' | 'show_tutorial' | 'error'
 }
 
 export async function executeFunction(
@@ -40,12 +40,47 @@ export async function executeFunction(
       return executeForecastSpending(functionCall.args, context)
     case 'execute_query':
       return executeQuery(functionCall.args, context.userId, context.supabase)
+    case 'show_tutorial':
+      return executeShowTutorial(functionCall.args)
     default:
       return {
         success: false,
         message: `Função desconhecida: ${functionCall.name}`,
         actionType: 'error',
       }
+  }
+}
+
+const VALID_TUTORIAL_IDS = [
+  'add-expense',
+  'manage-categories',
+  'setup-credit-card',
+  'view-dashboard',
+]
+
+const TUTORIAL_MESSAGES: Record<string, string> = {
+  'add-expense': 'Vou te mostrar como adicionar uma despesa!',
+  'manage-categories': 'Vou te mostrar como gerenciar suas categorias!',
+  'setup-credit-card': 'Vou te mostrar como configurar um cartão de crédito!',
+  'view-dashboard': 'Vou te mostrar como usar o dashboard!',
+}
+
+function executeShowTutorial(args: Record<string, unknown>): FunctionExecutionResult {
+  const tutorialId = args.tutorial_id as string
+
+  if (!tutorialId || !VALID_TUTORIAL_IDS.includes(tutorialId)) {
+    return {
+      success: false,
+      message: 'Tutorial não encontrado.',
+      actionType: 'error',
+    }
+  }
+
+  return {
+    success: true,
+    message: TUTORIAL_MESSAGES[tutorialId] ?? 'Vou te mostrar como fazer isso!',
+    data: { tutorial_id: tutorialId },
+    actionType: 'show_tutorial',
   }
 }
 

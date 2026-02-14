@@ -50,7 +50,7 @@ export interface CachedResponse {
   request_type: 'text' | 'voice' | 'image'
   response_message: string
   response_action: {
-    type: 'expense_created' | 'query_result' | 'forecast_result' | 'help'
+    type: 'expense_created' | 'query_result' | 'forecast_result' | 'show_tutorial' | 'help'
     data?: unknown
   } | null
   tokens_saved: number

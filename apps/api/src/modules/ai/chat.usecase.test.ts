@@ -409,6 +409,73 @@ describe('ChatUseCase', () => {
     })
   })
 
+  describe('show_tutorial function calling', () => {
+    it('handles show_tutorial function call and returns tutorial action', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+
+      const aiResponse: ChatOutput = createMockChatOutput({
+        text: null,
+        functionCall: {
+          name: 'show_tutorial',
+          args: { tutorial_id: 'add-expense' },
+        },
+        tokensUsed: 50,
+      })
+      mockAIClient.chat.mockResolvedValue(aiResponse)
+
+      const input: ChatUseCaseInput = {
+        messages: [
+          { role: 'user', content: [{ type: 'text', text: 'Como adiciono uma despesa?' }] },
+        ],
+        requestType: 'text',
+      }
+
+      const result = await sut.execute(userId, input)
+
+      expect(result.action?.type).toBe('show_tutorial')
+      expect(result.action?.data).toEqual({ tutorial_id: 'add-expense' })
+      expect(result.message).toContain('despesa')
+    })
+
+    it('includes show_tutorial in available functions passed to AI', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIClient.chat.mockResolvedValue(
+        createMockChatOutput({ text: 'Response', tokensUsed: 50 })
+      )
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
+        requestType: 'text',
+      }
+
+      await sut.execute(userId, input)
+
+      const chatCall = mockAIClient.chat.mock.calls[0]![0]
+      const functionNames = chatCall.functions.map((f: { name: string }) => f.name)
+      expect(functionNames).toContain('show_tutorial')
+    })
+
+    it('includes help detection instructions in system prompt', async () => {
+      mockAIRepository.getCachedResponse.mockResolvedValue(null)
+      mockAIClient.chat.mockResolvedValue(
+        createMockChatOutput({ text: 'Response', tokensUsed: 50 })
+      )
+
+      const input: ChatUseCaseInput = {
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
+        requestType: 'text',
+      }
+
+      await sut.execute(userId, input)
+
+      const chatCall = mockAIClient.chat.mock.calls[0]![0]
+      const systemPrompt = chatCall.systemPrompt as string
+      expect(systemPrompt).toContain('show_tutorial')
+      expect(systemPrompt).toContain('Help Detection')
+      expect(systemPrompt).toContain('como adiciono')
+    })
+  })
+
   describe('usage logging', () => {
     it('logs correct request type for text', async () => {
       mockAIRepository.getCachedResponse.mockResolvedValue(null)

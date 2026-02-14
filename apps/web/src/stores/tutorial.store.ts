@@ -16,12 +16,25 @@ export interface Tutorial {
   steps: TutorialStep[]
 }
 
+type TutorialRegistry = Map<string, Tutorial>
+
+let tutorialRegistry: TutorialRegistry = new Map()
+
+export function registerTutorials(tutorials: Tutorial[]): void {
+  tutorialRegistry = new Map(tutorials.map((t) => [t.id, t]))
+}
+
+export function getTutorialById(id: string): Tutorial | undefined {
+  return tutorialRegistry.get(id)
+}
+
 interface TutorialState {
   activeTutorial: Tutorial | null
   currentStep: number
   completedTutorials: string[]
 
   startTutorial: (tutorial: Tutorial) => void
+  startTutorialById: (id: string) => void
   nextStep: () => void
   prevStep: () => void
   exitTutorial: () => void
@@ -36,6 +49,16 @@ export const useTutorialStore = create<TutorialState>()(
       completedTutorials: [],
 
       startTutorial: (tutorial) => {
+        set({
+          activeTutorial: tutorial,
+          currentStep: 0,
+        })
+      },
+
+      startTutorialById: (id) => {
+        const tutorial = getTutorialById(id)
+        if (!tutorial) return
+
         set({
           activeTutorial: tutorial,
           currentStep: 0,

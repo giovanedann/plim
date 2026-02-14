@@ -59,7 +59,7 @@ export const aiChatResponseSchema = z.object({
   message: z.string(),
   action: z
     .object({
-      type: z.enum(['expense_created', 'query_result', 'forecast_result', 'help']),
+      type: z.enum(['expense_created', 'query_result', 'forecast_result', 'show_tutorial', 'help']),
       data: z.unknown().optional(),
     })
     .optional(),

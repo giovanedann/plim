@@ -7,7 +7,7 @@ import {
 } from '@/lib/optimistic-updates'
 import { queryKeys } from '@/lib/query-config'
 import { aiService } from '@/services'
-import { useAIStore } from '@/stores'
+import { useAIStore, useTutorialStore } from '@/stores'
 import type { Category, ContentPart, CreditCard, Expense } from '@plim/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
@@ -87,6 +87,12 @@ export function useAIChat(): UseAIChatReturn {
 
       setPulsing(true)
       setTimeout(() => setPulsing(false), 1000)
+
+      if (action?.type === 'show_tutorial' && action.data) {
+        const { tutorial_id } = action.data as { tutorial_id: string }
+        const { startTutorialById } = useTutorialStore.getState()
+        startTutorialById(tutorial_id)
+      }
 
       if (action?.type === 'expense_created' && action.data) {
         const expense = action.data as Expense

@@ -24,7 +24,7 @@ export interface ChatUseCaseInput {
 export interface ChatUseCaseOutput {
   message: string
   action?: {
-    type: 'expense_created' | 'query_result' | 'forecast_result' | 'help'
+    type: 'expense_created' | 'query_result' | 'forecast_result' | 'show_tutorial' | 'help'
     data?: unknown
   }
   tokensUsed: number

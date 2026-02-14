@@ -732,6 +732,63 @@ describe('executeFunction', () => {
     })
   })
 
+  describe('show_tutorial', () => {
+    it('returns tutorial data for valid tutorial_id', async () => {
+      const result = await executeFunction(
+        {
+          name: 'show_tutorial',
+          args: { tutorial_id: 'add-expense' },
+        },
+        context
+      )
+
+      expect(result.success).toBe(true)
+      expect(result.actionType).toBe('show_tutorial')
+      expect(result.data).toEqual({ tutorial_id: 'add-expense' })
+      expect(result.message).toContain('despesa')
+    })
+
+    it('returns tutorial data for manage-categories', async () => {
+      const result = await executeFunction(
+        {
+          name: 'show_tutorial',
+          args: { tutorial_id: 'manage-categories' },
+        },
+        context
+      )
+
+      expect(result.success).toBe(true)
+      expect(result.actionType).toBe('show_tutorial')
+      expect(result.data).toEqual({ tutorial_id: 'manage-categories' })
+    })
+
+    it('returns error for invalid tutorial_id', async () => {
+      const result = await executeFunction(
+        {
+          name: 'show_tutorial',
+          args: { tutorial_id: 'nonexistent-tutorial' },
+        },
+        context
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.actionType).toBe('error')
+    })
+
+    it('returns error when tutorial_id is missing', async () => {
+      const result = await executeFunction(
+        {
+          name: 'show_tutorial',
+          args: {},
+        },
+        context
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.actionType).toBe('error')
+    })
+  })
+
   describe('unknown function', () => {
     it('returns error for unknown function name', async () => {
       const result = await executeFunction(

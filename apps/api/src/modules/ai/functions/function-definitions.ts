@@ -113,6 +113,20 @@ const executeQueryParameters: JsonSchema = {
   required: ['sql', 'description'],
 }
 
+const showTutorialParameters: JsonSchema = {
+  type: 'object',
+  description:
+    'Show an interactive tutorial that guides the user through UI steps. Use when user asks HOW to do something (e.g., "como adiciono uma despesa?", "onde fica o dashboard?")',
+  properties: {
+    tutorial_id: {
+      type: 'string',
+      description: 'Tutorial identifier',
+      enum: ['add-expense', 'manage-categories', 'setup-credit-card', 'view-dashboard'],
+    },
+  },
+  required: ['tutorial_id'],
+}
+
 export const aiFunctionDefinitions: FunctionDefinition[] = [
   {
     name: 'create_expense',
@@ -134,6 +148,12 @@ export const aiFunctionDefinitions: FunctionDefinition[] = [
     description: 'SQL for GROUP BY, aggregations, JOINs',
     parameters: executeQueryParameters,
   },
+  {
+    name: 'show_tutorial',
+    description:
+      'Show interactive UI tutorial when user asks HOW to do something (not when requesting an action)',
+    parameters: showTutorialParameters,
+  },
 ]
 
 export {
@@ -141,4 +161,5 @@ export {
   queryExpensesParameters,
   forecastSpendingParameters,
   executeQueryParameters,
+  showTutorialParameters,
 }
