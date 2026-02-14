@@ -1,9 +1,14 @@
 import { analytics } from '@/lib/analytics'
 import { isErrorResponse } from '@/lib/api-client'
+import {
+  type ExpenseChange,
+  addExpensesToCache,
+  applyOptimisticDashboardUpdate,
+} from '@/lib/optimistic-updates'
 import { queryKeys } from '@/lib/query-config'
 import { aiService } from '@/services'
 import { useAIStore } from '@/stores'
-import type { ContentPart } from '@plim/shared'
+import type { Category, ContentPart, CreditCard, Expense } from '@plim/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
@@ -83,12 +88,36 @@ export function useAIChat(): UseAIChatReturn {
       setPulsing(true)
       setTimeout(() => setPulsing(false), 1000)
 
-      if (action?.type === 'expense_created') {
-        // Invalidate expense and dashboard queries so they refetch
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: queryKeys.expenses() }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }),
-        ])
+      if (action?.type === 'expense_created' && action.data) {
+        const expense = action.data as Expense
+
+        const categories = queryClient.getQueryData<Category[]>(queryKeys.categories)
+        const creditCards = queryClient.getQueryData<CreditCard[]>(queryKeys.creditCards)
+        const category = categories?.find((c) => c.id === expense.category_id)
+        const creditCard = creditCards?.find((c) => c.id === expense.credit_card_id)
+
+        const change: ExpenseChange = {
+          amount_cents: expense.amount_cents,
+          category_id: expense.category_id,
+          category_name: category?.name,
+          category_color: category?.color,
+          category_icon: category?.icon,
+          payment_method: expense.payment_method,
+          credit_card_id: expense.credit_card_id,
+          credit_card_name: creditCard?.name,
+          credit_card_color: creditCard?.color,
+          credit_card_bank: creditCard?.bank,
+          credit_card_flag: creditCard?.flag,
+          date: expense.date,
+          installment_total: expense.installment_total ?? undefined,
+          operation: 'add',
+        }
+
+        applyOptimisticDashboardUpdate(queryClient, change)
+        addExpensesToCache(queryClient, expense)
+
+        queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
 
         toast.success('Despesa criada com sucesso!', {
           description: 'Sua despesa foi registrada.',

@@ -47,15 +47,7 @@ export default defineConfig({
           },
           {
             urlPattern: /^https:\/\/api\.plim\.app\.br\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 5,
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24,
-              },
-            },
+            handler: 'NetworkOnly',
           },
           {
             urlPattern: /^https:\/\/pub-.*\.r2\.dev\/.*/i,
