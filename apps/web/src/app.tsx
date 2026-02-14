@@ -1,3 +1,4 @@
+import '@/config/tutorials'
 import { ThemeProvider } from '@/components/theme-provider'
 import { queryClient } from '@/lib/query-client'
 import { idbPersister } from '@/lib/query-persister'
