@@ -167,7 +167,7 @@ export function AppSidebar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/upgrade">
+                  <Link to="/upgrade" data-tutorial-id="sidebar-nav-upgrade">
                     <Crown className="mr-2 h-4 w-4" />
                     Plano
                   </Link>

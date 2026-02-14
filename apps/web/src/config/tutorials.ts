@@ -8,35 +8,29 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         elementId: 'sidebar-nav-expenses',
-        title: 'Acesse a página de despesas',
+        title: 'Página de Despesas',
         description: 'Clique em "Despesas" no menu lateral para acessar a página de despesas.',
         action: 'navigate',
+        navigateTo: '/expenses',
       },
       {
         elementId: 'expense-add-button',
-        title: 'Clique em adicionar',
-        description: 'Clique no botão "Adicionar despesa" para abrir o formulário de criação.',
+        title: 'Criar uma despesa',
+        description:
+          'Use este botão para registrar uma nova despesa. Preencha o valor, categoria e método de pagamento.',
         action: 'click',
       },
       {
-        elementId: 'expense-filters',
-        title: 'Use os filtros',
-        description:
-          'Você pode filtrar suas despesas por mês, categoria ou método de pagamento para encontrar o que procura.',
-        action: 'observe',
-      },
-      {
         elementId: 'expense-list',
-        title: 'Veja suas despesas',
+        title: 'Editar ou excluir',
         description:
-          'Aqui ficam listadas todas as suas despesas. Você pode clicar em uma despesa para editar ou excluir.',
+          'Clique em qualquer despesa da lista para editar ou excluir. Você pode alterar valor, categoria e outros detalhes.',
         action: 'observe',
       },
       {
-        elementId: 'expense-monthly-total',
-        title: 'Acompanhe seu total mensal',
-        description:
-          'Aqui você vê o total gasto no mês atual e a comparação com seu salário cadastrado.',
+        elementId: 'sidebar-nav-expenses',
+        title: 'Pronto!',
+        description: 'Agora é só registrar suas despesas e acompanhar seus gastos por aqui!',
         action: 'observe',
       },
     ],
@@ -48,36 +42,30 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         elementId: 'sidebar-nav-categories',
-        title: 'Acesse a página de categorias',
+        title: 'Página de Categorias',
         description: 'Clique em "Categorias" no menu lateral para gerenciar suas categorias.',
         action: 'navigate',
-      },
-      {
-        elementId: 'category-list',
-        title: 'Veja suas categorias',
-        description:
-          'Aqui ficam listadas todas as suas categorias. Você pode clicar em uma para editar.',
-        action: 'observe',
+        navigateTo: '/categories',
       },
       {
         elementId: 'category-add-button',
-        title: 'Crie uma nova categoria',
+        title: 'Criar uma categoria',
         description:
-          'Clique no botão "Adicionar" para criar uma nova categoria com nome, ícone e cor personalizados.',
+          'Use este botão para criar uma nova categoria com nome, ícone e cor personalizados.',
         action: 'click',
       },
       {
         elementId: 'category-list',
-        title: 'Edite ou exclua categorias',
+        title: 'Editar ou excluir',
         description:
-          'Clique em uma categoria existente para editar seu nome, ícone ou cor. Você também pode excluí-la.',
+          'Clique em qualquer categoria para editar seu nome, ícone ou cor. Você também pode excluí-la pelo menu de opções.',
         action: 'observe',
       },
       {
-        elementId: 'sidebar-nav-expenses',
-        title: 'Use nas despesas',
+        elementId: 'sidebar-nav-categories',
+        title: 'Pronto!',
         description:
-          'Suas categorias aparecem ao criar ou editar uma despesa. Organize suas finanças do seu jeito!',
+          'Agora é só usar suas categorias personalizadas quando for registrar uma despesa!',
         action: 'observe',
       },
     ],
@@ -89,29 +77,29 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         elementId: 'sidebar-nav-credit-cards',
-        title: 'Acesse a página de cartões',
-        description: 'Clique em "Cartões de Crédito" no menu lateral para gerenciar seus cartões.',
+        title: 'Página de Cartões',
+        description: 'Clique em "Cartões" no menu lateral para gerenciar seus cartões de crédito.',
         action: 'navigate',
+        navigateTo: '/credit-cards',
+      },
+      {
+        elementId: 'credit-card-add-button',
+        title: 'Criar um cartão',
+        description:
+          'Use este botão para cadastrar um novo cartão. Preencha o nome, bandeira e datas de vencimento e fechamento.',
+        action: 'click',
+      },
+      {
+        elementId: 'credit-card-list',
+        title: 'Editar ou excluir',
+        description:
+          'Clique no menu (\u22EE) de qualquer cartão para editar seus dados ou excluí-lo.',
+        action: 'observe',
       },
       {
         elementId: 'sidebar-nav-credit-cards',
-        title: 'Adicione um cartão',
-        description:
-          'Na página de cartões, clique em "Adicionar cartão" e preencha o nome, data de vencimento e data de fechamento.',
-        action: 'observe',
-      },
-      {
-        elementId: 'sidebar-nav-expenses',
-        title: 'Use o cartão nas despesas',
-        description:
-          'Ao criar uma despesa, selecione "Cartão de crédito" como método de pagamento e escolha seu cartão.',
-        action: 'observe',
-      },
-      {
-        elementId: 'expense-add-button',
-        title: 'Parcele suas compras',
-        description:
-          'Ao adicionar uma despesa com cartão de crédito, você pode definir o número de parcelas. O Plim calcula automaticamente!',
+        title: 'Pronto!',
+        description: 'Agora é só usar esse cartão quando for registrar uma despesa!',
         action: 'observe',
       },
     ],
@@ -123,36 +111,95 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         elementId: 'sidebar-nav-dashboard',
-        title: 'Acesse o dashboard',
+        title: 'Página do Dashboard',
         description: 'Clique em "Dashboard" no menu lateral para ver sua visão geral financeira.',
         action: 'navigate',
+        navigateTo: '/dashboard',
       },
       {
         elementId: 'dashboard-summary-cards',
         title: 'Resumo financeiro',
         description:
-          'Os cards de resumo mostram seus gastos totais, salário e saldo do mês atual de forma rápida.',
+          'Estes cards mostram seus gastos totais, receita e saldo do mês atual de forma rápida.',
         action: 'observe',
       },
       {
         elementId: 'dashboard-charts',
-        title: 'Gráficos de gastos',
+        title: 'Gráficos e análises',
         description:
-          'Os gráficos mostram seus gastos por categoria, método de pagamento e evolução mensal.',
+          'Os gráficos mostram seus gastos por categoria, método de pagamento e a evolução ao longo dos meses.',
         action: 'observe',
       },
       {
-        elementId: 'dashboard-charts',
-        title: 'Tendências e comparações',
+        elementId: 'sidebar-nav-dashboard',
+        title: 'Pronto!',
         description:
-          'Acompanhe a evolução dos seus gastos ao longo dos meses e identifique padrões.',
+          'Use o dashboard para acompanhar suas finanças e identificar padrões nos seus gastos!',
+        action: 'observe',
+      },
+    ],
+  },
+  {
+    id: 'profile-settings',
+    title: 'Como editar seu perfil',
+    description: 'Aprenda a alterar sua foto, nome e preferências',
+    steps: [
+      {
+        elementId: 'profile-settings-form',
+        title: 'Suas informações',
+        description:
+          'Aqui você encontra seus dados pessoais e preferências como moeda e idioma. Clique no ícone de lápis para editar.',
+        action: 'observe',
+        navigateTo: '/profile',
+      },
+      {
+        elementId: 'profile-avatar-section',
+        title: 'Foto de perfil',
+        description:
+          'Clique no ícone da câmera para alterar sua foto de perfil. Você pode enviar uma imagem JPG, PNG ou WebP.',
+        action: 'click',
+      },
+      {
+        elementId: 'profile-data-export',
+        title: 'Exportar dados',
+        description:
+          'Baixe uma cópia dos seus dados a qualquer momento em formato CSV. Você pode exportar despesas, categorias e mais.',
         action: 'observe',
       },
       {
-        elementId: 'dashboard-summary-cards',
-        title: 'Filtre por período',
+        elementId: 'profile-settings-form',
+        title: 'Pronto!',
         description:
-          'Use o seletor de mês para navegar entre diferentes períodos e comparar seus gastos.',
+          'Agora é só personalizar seu perfil e manter suas informações sempre atualizadas!',
+        action: 'observe',
+      },
+    ],
+  },
+  {
+    id: 'view-upgrade',
+    title: 'Como assinar o plano Pro',
+    description: 'Conheça os benefícios do plano Pro e como assinar',
+    steps: [
+      {
+        elementId: 'upgrade-plan-card',
+        title: 'Plano Pro',
+        description:
+          'Aqui você vê os detalhes do plano Pro e todos os benefícios inclusos: categorias ilimitadas, mais IA e dashboard completo.',
+        action: 'observe',
+        navigateTo: '/upgrade',
+      },
+      {
+        elementId: 'upgrade-payment-button',
+        title: 'Pagar com PIX',
+        description:
+          'Clique neste botão para gerar um QR Code PIX. O pagamento é único, válido por 30 dias, sem renovação automática.',
+        action: 'click',
+      },
+      {
+        elementId: 'upgrade-plan-card',
+        title: 'Pronto!',
+        description:
+          'Após o pagamento, seus benefícios Pro são ativados automaticamente. Aproveite!',
         action: 'observe',
       },
     ],

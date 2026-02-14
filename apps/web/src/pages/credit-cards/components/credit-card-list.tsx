@@ -43,7 +43,10 @@ export function CreditCardList({ creditCards, onEdit, onDelete }: CreditCardList
   }
 
   return (
-    <div className="grid justify-center gap-4 sm:grid-cols-2 sm:justify-start xl:grid-cols-3">
+    <div
+      className="grid justify-center gap-4 sm:grid-cols-2 sm:justify-start xl:grid-cols-3"
+      data-tutorial-id="credit-card-list"
+    >
       {creditCards.map((card, index) => (
         <motion.div
           key={card.id}

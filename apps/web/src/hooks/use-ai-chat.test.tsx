@@ -18,14 +18,23 @@ vi.mock('@/services', () => ({
 
 const mockStartTutorialById = vi.fn()
 
-vi.mock('@/stores', () => ({
-  useAIStore: vi.fn(),
-  useTutorialStore: {
+const mockCloseDrawer = vi.fn()
+
+vi.mock('@/stores', () => {
+  const useAIStore = Object.assign(vi.fn(), {
     getState: () => ({
-      startTutorialById: mockStartTutorialById,
+      closeDrawer: mockCloseDrawer,
     }),
-  },
-}))
+  })
+  return {
+    useAIStore,
+    useTutorialStore: {
+      getState: () => ({
+        startTutorialById: mockStartTutorialById,
+      }),
+    },
+  }
+})
 
 vi.mock('sonner', () => ({
   toast: {

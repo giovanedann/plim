@@ -56,13 +56,17 @@ const VALID_TUTORIAL_IDS = [
   'manage-categories',
   'setup-credit-card',
   'view-dashboard',
+  'profile-settings',
+  'view-upgrade',
 ]
 
-const TUTORIAL_MESSAGES: Record<string, string> = {
+export const TUTORIAL_MESSAGES: Record<string, string> = {
   'add-expense': 'Vou te mostrar como adicionar uma despesa!',
   'manage-categories': 'Vou te mostrar como gerenciar suas categorias!',
   'setup-credit-card': 'Vou te mostrar como configurar um cartão de crédito!',
   'view-dashboard': 'Vou te mostrar como usar o dashboard!',
+  'profile-settings': 'Vou te mostrar como editar seu perfil!',
+  'view-upgrade': 'Vou te mostrar como assinar o plano Pro!',
 }
 
 function executeShowTutorial(args: Record<string, unknown>): FunctionExecutionResult {

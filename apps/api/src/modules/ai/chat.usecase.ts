@@ -5,8 +5,14 @@ import type { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../expenses/expenses.repository'
 import type { AIRepository, IntentCacheEntry } from './ai.repository'
 import type { AIClient, ChatMessage, ChatOutput, ContentPart } from './client'
-import { type FunctionExecutionResult, aiFunctionDefinitions, executeFunction } from './functions'
+import {
+  type FunctionExecutionResult,
+  TUTORIAL_MESSAGES,
+  aiFunctionDefinitions,
+  executeFunction,
+} from './functions'
 import { buildSystemPrompt } from './system-prompt'
+import { matchTutorialIntent } from './tutorials.mapping'
 
 interface UserContext {
   categories: Category[]
@@ -46,6 +52,21 @@ export class ChatUseCase {
     // Extract text content for cache key
     const messageText = this.extractMessageText(input.messages)
     const cacheKey = this.deps.aiRepository.generateCacheKey(messageText)
+
+    // Pre-check: if message matches a tutorial intent, bypass AI and cache
+    const tutorialId = matchTutorialIntent(messageText)
+    if (tutorialId) {
+      await this.deps.aiRepository.logUsage(userId, input.requestType, 'show_tutorial_intent', 0)
+
+      return {
+        message: TUTORIAL_MESSAGES[tutorialId] ?? 'Vou te mostrar como fazer isso!',
+        action: {
+          type: 'show_tutorial',
+          data: { tutorial_id: tutorialId },
+        },
+        tokensUsed: 0,
+      }
+    }
 
     // Check cache first (only for text requests to avoid caching audio/image responses)
     if (input.requestType === 'text') {

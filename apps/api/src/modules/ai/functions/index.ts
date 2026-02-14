@@ -8,6 +8,7 @@ export {
 
 export {
   executeFunction,
+  TUTORIAL_MESSAGES,
   type FunctionExecutionContext,
   type FunctionExecutionResult,
 } from './execute-function'

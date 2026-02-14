@@ -14,7 +14,24 @@ interface SpotlightProps {
 }
 
 const SPOTLIGHT_PADDING = 8
-const TRANSITION_DURATION_MS = 300
+const TRANSITION_DURATION_MS = 400
+const TRANSITION_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
+const ELEMENT_POLL_INTERVAL_MS = 100
+const ELEMENT_POLL_MAX_ATTEMPTS = 20
+const SETTLE_DURATION_MS = 600
+
+const GLOW_KEYFRAMES = `
+@keyframes spotlight-glow-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.01);
+  }
+}
+`
 
 function getClipPath(rect: SpotlightRect): string {
   const { top, left, width, height } = rect
@@ -29,6 +46,15 @@ function getClipPath(rect: SpotlightRect): string {
     ${right}px ${top}px,
     ${left}px ${top}px
   )`
+}
+
+function findVisibleElement(elementId: string): Element | null {
+  const elements = document.querySelectorAll(`[data-tutorial-id="${elementId}"]`)
+  for (const el of elements) {
+    const rect = el.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) return el
+  }
+  return null
 }
 
 function computeRect(element: Element, padding: number): SpotlightRect {
@@ -46,9 +72,10 @@ export function Spotlight({
   padding = SPOTLIGHT_PADDING,
 }: SpotlightProps): React.ReactNode {
   const [rect, setRect] = useState<SpotlightRect | null>(null)
-  const [isTransitioning, setIsTransitioning] = useState(false)
   const prefersReducedMotion = useReducedMotion()
-  const previousElementIdRef = useRef<string | undefined>(undefined)
+  const styleInjectedRef = useRef(false)
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const rafRef = useRef<number | null>(null)
 
   const updatePosition = useCallback((): void => {
     if (!elementId) {
@@ -56,7 +83,7 @@ export function Spotlight({
       return
     }
 
-    const element = document.querySelector(`[data-tutorial-id="${elementId}"]`)
+    const element = findVisibleElement(elementId)
     if (!element) {
       setRect(null)
       return
@@ -66,21 +93,58 @@ export function Spotlight({
   }, [elementId, padding])
 
   useEffect(() => {
-    if (previousElementIdRef.current !== undefined && previousElementIdRef.current !== elementId) {
-      if (!prefersReducedMotion) {
-        setIsTransitioning(true)
-        const timer = setTimeout(() => {
-          setIsTransitioning(false)
-        }, TRANSITION_DURATION_MS)
-        return () => clearTimeout(timer)
+    if (!elementId) {
+      setRect(null)
+      return
+    }
+
+    // Track element position during animations (e.g. sidebar slide-in)
+    const startSettle = (): void => {
+      const startTime = Date.now()
+      const tick = (): void => {
+        const el = findVisibleElement(elementId)
+        if (el) setRect(computeRect(el, padding))
+        if (Date.now() - startTime < SETTLE_DURATION_MS) {
+          rafRef.current = requestAnimationFrame(tick)
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    const element = findVisibleElement(elementId)
+    if (element) {
+      setRect(computeRect(element, padding))
+      startSettle()
+    } else {
+      // Element not in DOM yet (e.g. after navigation) — poll until it appears
+      setRect(null)
+      let attempts = 0
+
+      const poll = (): void => {
+        attempts++
+        const el = findVisibleElement(elementId)
+        if (el) {
+          setRect(computeRect(el, padding))
+          startSettle()
+        } else if (attempts < ELEMENT_POLL_MAX_ATTEMPTS) {
+          pollTimerRef.current = setTimeout(poll, ELEMENT_POLL_INTERVAL_MS)
+        }
+      }
+
+      pollTimerRef.current = setTimeout(poll, ELEMENT_POLL_INTERVAL_MS)
+    }
+
+    return () => {
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current)
+        pollTimerRef.current = null
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
       }
     }
-    previousElementIdRef.current = elementId
-  }, [elementId, prefersReducedMotion])
-
-  useEffect(() => {
-    updatePosition()
-  }, [updatePosition])
+  }, [elementId, padding])
 
   useEffect(() => {
     const handleResize = (): void => {
@@ -96,26 +160,65 @@ export function Spotlight({
     }
   }, [updatePosition])
 
+  useEffect(() => {
+    if (styleInjectedRef.current) return
+
+    const styleElement = document.createElement('style')
+    styleElement.setAttribute('data-spotlight-keyframes', '')
+    styleElement.textContent = GLOW_KEYFRAMES
+    document.head.appendChild(styleElement)
+    styleInjectedRef.current = true
+
+    return () => {
+      styleElement.remove()
+      styleInjectedRef.current = false
+    }
+  }, [])
+
   if (!elementId || !rect) {
     return null
   }
 
   const clipPath = getClipPath(rect)
-  const transitionStyle =
-    prefersReducedMotion || !isTransitioning
-      ? undefined
-      : `clip-path ${TRANSITION_DURATION_MS}ms ease-in-out`
+  const overlayTransition = prefersReducedMotion
+    ? undefined
+    : `clip-path ${TRANSITION_DURATION_MS}ms ${TRANSITION_EASING}`
+
+  const glowTransition = prefersReducedMotion
+    ? undefined
+    : `all ${TRANSITION_DURATION_MS}ms ${TRANSITION_EASING}`
+
+  const glowAnimation = prefersReducedMotion
+    ? undefined
+    : 'spotlight-glow-pulse 2s ease-in-out infinite'
 
   return (
-    <div
-      data-testid="spotlight-overlay"
-      className="fixed inset-0 z-[60] pointer-events-none"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        clipPath,
-        transition: transitionStyle,
-      }}
-      aria-hidden="true"
-    />
+    <>
+      <div
+        data-testid="spotlight-overlay"
+        className="fixed inset-0 z-[60] pointer-events-none"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          clipPath,
+          transition: overlayTransition,
+        }}
+        aria-hidden="true"
+      />
+      <div
+        data-testid="spotlight-glow"
+        className="fixed z-[61] pointer-events-none"
+        style={{
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+          borderRadius: 8,
+          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.3)',
+          transition: glowTransition,
+          animation: glowAnimation,
+        }}
+        aria-hidden="true"
+      />
+    </>
   )
 }

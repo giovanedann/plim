@@ -89,7 +89,10 @@ export function UpgradePage(): React.JSX.Element {
         <p className="text-sm text-muted-foreground">Gerencie seu plano</p>
       </div>
 
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 lg:px-6">
+      <div
+        className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 lg:px-6"
+        data-tutorial-id="upgrade-plan-card"
+      >
         {showProStatus && (
           <>
             {isPro && isExpiringSoon && subscription?.payment_method === 'pix' && (
@@ -219,7 +222,12 @@ export function UpgradePage(): React.JSX.Element {
                 ))}
               </ul>
 
-              <Button onClick={handlePixPayment} disabled={isCreatingPix} className="w-full">
+              <Button
+                onClick={handlePixPayment}
+                disabled={isCreatingPix}
+                className="w-full"
+                data-tutorial-id="upgrade-payment-button"
+              >
                 <QrCode className="mr-2 size-4" />
                 {isCreatingPix ? 'Gerando QR Code...' : 'Pagar com PIX'}
               </Button>

@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
 export interface TutorialStep {
   elementId: string
@@ -7,6 +6,7 @@ export interface TutorialStep {
   description: string
   action?: 'click' | 'navigate' | 'observe'
   nextCondition?: 'click' | 'auto' | 'manual'
+  navigateTo?: string
 }
 
 export interface Tutorial {
@@ -31,92 +31,56 @@ export function getTutorialById(id: string): Tutorial | undefined {
 interface TutorialState {
   activeTutorial: Tutorial | null
   currentStep: number
-  completedTutorials: string[]
-  tutorialsDisabled: boolean
 
   startTutorial: (tutorial: Tutorial) => void
   startTutorialById: (id: string) => void
   nextStep: () => void
   prevStep: () => void
   exitTutorial: () => void
-  completeTutorial: () => void
-  setTutorialsDisabled: (disabled: boolean) => void
 }
 
-export const useTutorialStore = create<TutorialState>()(
-  persist(
-    (set, get) => ({
+export const useTutorialStore = create<TutorialState>()((set, get) => ({
+  activeTutorial: null,
+  currentStep: 0,
+
+  startTutorial: (tutorial) => {
+    set({
+      activeTutorial: tutorial,
+      currentStep: 0,
+    })
+  },
+
+  startTutorialById: (id) => {
+    const tutorial = getTutorialById(id)
+    if (!tutorial) return
+
+    set({
+      activeTutorial: tutorial,
+      currentStep: 0,
+    })
+  },
+
+  nextStep: () => {
+    const { activeTutorial, currentStep } = get()
+    if (!activeTutorial) return
+
+    const lastStepIndex = activeTutorial.steps.length - 1
+    if (currentStep < lastStepIndex) {
+      set({ currentStep: currentStep + 1 })
+    }
+  },
+
+  prevStep: () => {
+    const { currentStep } = get()
+    if (currentStep > 0) {
+      set({ currentStep: currentStep - 1 })
+    }
+  },
+
+  exitTutorial: () => {
+    set({
       activeTutorial: null,
       currentStep: 0,
-      completedTutorials: [],
-      tutorialsDisabled: false,
-
-      startTutorial: (tutorial) => {
-        if (get().tutorialsDisabled) return
-        set({
-          activeTutorial: tutorial,
-          currentStep: 0,
-        })
-      },
-
-      startTutorialById: (id) => {
-        if (get().tutorialsDisabled) return
-        const tutorial = getTutorialById(id)
-        if (!tutorial) return
-
-        set({
-          activeTutorial: tutorial,
-          currentStep: 0,
-        })
-      },
-
-      nextStep: () => {
-        const { activeTutorial, currentStep } = get()
-        if (!activeTutorial) return
-
-        const lastStepIndex = activeTutorial.steps.length - 1
-        if (currentStep < lastStepIndex) {
-          set({ currentStep: currentStep + 1 })
-        }
-      },
-
-      prevStep: () => {
-        const { currentStep } = get()
-        if (currentStep > 0) {
-          set({ currentStep: currentStep - 1 })
-        }
-      },
-
-      exitTutorial: () => {
-        set({
-          activeTutorial: null,
-          currentStep: 0,
-        })
-      },
-
-      completeTutorial: () => {
-        const { activeTutorial, completedTutorials } = get()
-        if (!activeTutorial) return
-
-        set({
-          activeTutorial: null,
-          currentStep: 0,
-          completedTutorials: completedTutorials.includes(activeTutorial.id)
-            ? completedTutorials
-            : [...completedTutorials, activeTutorial.id],
-        })
-      },
-
-      setTutorialsDisabled: (disabled) => {
-        set({ tutorialsDisabled: disabled })
-      },
-    }),
-    {
-      name: 'tutorial-storage',
-      partialize: (state) => ({
-        completedTutorials: state.completedTutorials,
-        tutorialsDisabled: state.tutorialsDisabled,
-      }),
-    }
-  )
-)
+    })
+  },
+}))

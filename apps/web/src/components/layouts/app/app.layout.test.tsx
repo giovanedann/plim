@@ -45,6 +45,10 @@ vi.mock('@/components/ui/sidebar', () => ({
   SidebarInset: ({ children }: PropsWithChildren) => (
     <div data-testid="sidebar-inset">{children}</div>
   ),
+  useSidebar: () => ({
+    isMobile: false,
+    setOpenMobile: vi.fn(),
+  }),
 }))
 
 // Mock layout components

@@ -3,6 +3,8 @@ export type TutorialId =
   | 'manage-categories'
   | 'setup-credit-card'
   | 'view-dashboard'
+  | 'profile-settings'
+  | 'view-upgrade'
 
 interface TutorialMapping {
   id: TutorialId
@@ -29,10 +31,10 @@ const TUTORIAL_MAPPINGS: TutorialMapping[] = [
   {
     id: 'manage-categories',
     patterns: [
-      /como\s+(gerencio|edito|altero|mudo|configuro|personalizo).*(categoria)/i,
-      /como\s+(faco|faço)\s+para\s+(gerenci|edit|alter).*(categoria)/i,
-      /como\s+(gerenciar|editar|alterar|mudar|configurar|personalizar)\s+(as\s+|uma\s+)?categoria/i,
-      /onde\s+(fica|estao|ficam|encontro)\s+(as\s+)?categoria/i,
+      /como\s+(gerencio|edito|altero|mudo|configuro|personalizo|vejo|uso|crio|registro|cadastro|adiciono).*(categoria)/i,
+      /como\s+(faco|faço)\s+para\s+(gerenci|edit|alter|ver|usa|cri|registr|cadastr|adicion).*(categoria)/i,
+      /como\s+(gerenciar|editar|alterar|mudar|configurar|personalizar|ver|usar|criar|registrar|cadastrar|adicionar)\s+(as\s+|uma\s+|minhas\s+)?categoria/i,
+      /onde\s+(fica|estao|ficam|encontro|adiciono|crio|cadastro)\s+(as\s+|uma\s+|minhas\s+)?categoria/i,
     ],
   },
   {
@@ -42,6 +44,26 @@ const TUTORIAL_MAPPINGS: TutorialMapping[] = [
       /como\s+(faco|faço)\s+para\s+(ver|usar|acess).*(dashboard|painel|relatorio|relatório)/i,
       /como\s+(ver|usar|acessar)\s+(o\s+)?(meu\s+)?(dashboard|painel|relatorio|relatório)/i,
       /onde\s+(fica|esta|está)\s+(o\s+)?(dashboard|painel)/i,
+    ],
+  },
+  {
+    id: 'profile-settings',
+    patterns: [
+      /como\s+(mudo|altero|troco|configuro|edito).*(perfil|foto|avatar|nome)/i,
+      /como\s+(faco|faço)\s+para\s+(mudar|alterar|trocar|editar).*(perfil|foto|avatar|nome)/i,
+      /como\s+(mudar|alterar|trocar|configurar|editar)\s+(o\s+|meu\s+|minha\s+)?(perfil|foto|avatar|nome)/i,
+      /onde\s+(fica|esta|está|altero|mudo)\s+(o\s+|meu\s+|minha\s+)?(perfil|configuracoes|configurações)/i,
+    ],
+  },
+  {
+    id: 'view-upgrade',
+    patterns: [
+      /como\s+(assino|contrato|compro|ativo|pago).*(pro|premium|plano)/i,
+      /como\s+(faco|faço)\s+para\s+(assin|contrat|compr|ativ|pag).*(pro|premium|plano)/i,
+      /como\s+(assinar|contratar|comprar|ativar|pagar)\s+(o\s+)?(pro|premium|plano)/i,
+      /onde\s+(fica|esta|está|assino|pago)\s+(o\s+)?(pro|premium|plano|upgrade)/i,
+      /como\s+(faco|faço)\s+(upgrade|pro)/i,
+      /quero\s+(ser|virar|ficar)\s+(pro|premium)/i,
     ],
   },
 ]

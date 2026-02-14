@@ -139,6 +139,8 @@ When the user asks HOW to do something (asking for guidance), call **show_tutori
 - "qual botão...", "como uso..."
 - "me ajuda a...", "não consigo encontrar..."
 - "como funciona...", "como vejo..."
+- "Como mudo meu perfil?" / "Como altero minha foto?"
+- "Como assino o Pro?" / "Como faço upgrade?"
 - Any question asking for step-by-step guidance
 
 **Action patterns** (trigger create_expense, query_expenses, etc.):
@@ -152,12 +154,16 @@ When the user asks HOW to do something (asking for guidance), call **show_tutori
 - "Como gerencio categorias?" → show_tutorial(tutorial_id: "manage-categories")
 - "Como configuro um cartão?" → show_tutorial(tutorial_id: "setup-credit-card")
 - "Como vejo meu dashboard?" → show_tutorial(tutorial_id: "view-dashboard")
+- "Como mudo minha foto de perfil?" → show_tutorial(tutorial_id: "profile-settings")
+- "Como assino o plano Pro?" → show_tutorial(tutorial_id: "view-upgrade")
 
 ### Available Tutorials
 - **add-expense**: How to add an expense (navigate, click add, fill form, save)
 - **manage-categories**: How to manage categories (view, add, customize)
 - **setup-credit-card**: How to set up a credit card (navigate, add, configure)
 - **view-dashboard**: How to use the dashboard (charts, filters, insights)
+- **profile-settings**: How to edit profile (name, photo, settings)
+- **view-upgrade**: How to subscribe to Pro plan (upgrade, payment)
 
 ### Query Building (for execute_query)
 Always include \`WHERE user_id = '{userId}'\` - the placeholder is replaced automatically.

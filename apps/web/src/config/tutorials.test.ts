@@ -6,6 +6,8 @@ const EXPECTED_TUTORIAL_IDS = [
   'manage-categories',
   'setup-credit-card',
   'view-dashboard',
+  'profile-settings',
+  'view-upgrade',
 ]
 
 const VALID_ELEMENT_IDS = [
@@ -14,15 +16,22 @@ const VALID_ELEMENT_IDS = [
   'sidebar-nav-categories',
   'sidebar-nav-credit-cards',
   'sidebar-nav-profile',
+  'sidebar-nav-upgrade',
   'expense-add-button',
   'expense-list',
   'expense-filters',
   'expense-monthly-total',
   'category-add-button',
   'category-list',
+  'credit-card-add-button',
+  'credit-card-list',
   'dashboard-summary-cards',
   'dashboard-charts',
   'profile-settings-form',
+  'profile-avatar-section',
+  'profile-data-export',
+  'upgrade-plan-card',
+  'upgrade-payment-button',
 ]
 
 describe('tutorials config', () => {

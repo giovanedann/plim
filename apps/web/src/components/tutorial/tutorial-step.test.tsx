@@ -44,7 +44,6 @@ function setupStoreAndDom(step = 0): void {
   useTutorialStore.setState({
     activeTutorial: mockTutorial,
     currentStep: step,
-    completedTutorials: [],
   })
 }
 
@@ -55,7 +54,6 @@ describe('TutorialStepCard', () => {
     useTutorialStore.setState({
       activeTutorial: null,
       currentStep: 0,
-      completedTutorials: [],
     })
   })
 
@@ -160,7 +158,7 @@ describe('TutorialStepCard', () => {
     expect(screen.getByTestId('tutorial-next-button')).toHaveTextContent('Concluir')
   })
 
-  it('calls completeTutorial on last step next click', async () => {
+  it('exits tutorial on last step next click', async () => {
     setupStoreAndDom(4)
     const user = userEvent.setup()
 
@@ -170,38 +168,6 @@ describe('TutorialStepCard', () => {
 
     const state = useTutorialStore.getState()
     expect(state.activeTutorial).toBeNull()
-    expect(state.completedTutorials).toContain('add-expense')
-  })
-
-  it('renders disable tutorials checkbox', () => {
-    setupStoreAndDom(0)
-
-    render(<TutorialStepCard />)
-
-    expect(screen.getByTestId('tutorial-disable-checkbox')).toBeInTheDocument()
-    expect(screen.getByText('Não mostrar tutoriais novamente')).toBeInTheDocument()
-  })
-
-  it('calls setTutorialsDisabled and exits tutorial when checkbox is checked', async () => {
-    setupStoreAndDom(0)
-    const user = userEvent.setup()
-
-    render(<TutorialStepCard />)
-
-    await user.click(screen.getByTestId('tutorial-disable-checkbox'))
-
-    const state = useTutorialStore.getState()
-    expect(state.tutorialsDisabled).toBe(true)
-    expect(state.activeTutorial).toBeNull()
-  })
-
-  it('does not start tutorial when tutorials are disabled', () => {
-    setupStoreAndDom(0)
-    useTutorialStore.setState({ tutorialsDisabled: true, activeTutorial: null })
-
-    const state = useTutorialStore.getState()
-    state.startTutorial(mockTutorial)
-
-    expect(useTutorialStore.getState().activeTutorial).toBeNull()
+    expect(state.currentStep).toBe(0)
   })
 })

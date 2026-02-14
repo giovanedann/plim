@@ -49,7 +49,7 @@ function ExportButton({ table, label }: ExportButtonProps) {
 
 export function DataExportSection() {
   return (
-    <Card>
+    <Card data-tutorial-id="profile-data-export">
       <CardHeader>
         <CardTitle>Exportar Dados</CardTitle>
         <CardDescription>

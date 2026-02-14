@@ -32,6 +32,26 @@ describe('matchTutorialIntent', () => {
     it('maps "como editar uma categoria" to manage-categories', () => {
       expect(matchTutorialIntent('como editar uma categoria')).toBe('manage-categories')
     })
+
+    it('maps "como vejo minhas categorias" to manage-categories', () => {
+      expect(matchTutorialIntent('como vejo minhas categorias')).toBe('manage-categories')
+    })
+
+    it('maps "como registro uma categoria" to manage-categories', () => {
+      expect(matchTutorialIntent('como registro uma categoria')).toBe('manage-categories')
+    })
+
+    it('maps "como crio uma categoria" to manage-categories', () => {
+      expect(matchTutorialIntent('como crio uma categoria')).toBe('manage-categories')
+    })
+
+    it('maps "como cadastrar uma categoria" to manage-categories', () => {
+      expect(matchTutorialIntent('como cadastrar uma categoria')).toBe('manage-categories')
+    })
+
+    it('maps "como faço para criar uma categoria" to manage-categories', () => {
+      expect(matchTutorialIntent('como faço para criar uma categoria')).toBe('manage-categories')
+    })
   })
 
   describe('setup-credit-card tutorial', () => {
@@ -59,6 +79,42 @@ describe('matchTutorialIntent', () => {
 
     it('maps "onde fica o dashboard" to view-dashboard', () => {
       expect(matchTutorialIntent('onde fica o dashboard')).toBe('view-dashboard')
+    })
+  })
+
+  describe('profile-settings tutorial', () => {
+    it('maps "como mudo minha foto de perfil" to profile-settings', () => {
+      expect(matchTutorialIntent('como mudo minha foto de perfil')).toBe('profile-settings')
+    })
+
+    it('maps "como altero meu perfil" to profile-settings', () => {
+      expect(matchTutorialIntent('como altero meu perfil')).toBe('profile-settings')
+    })
+
+    it('maps "onde fica meu perfil" to profile-settings', () => {
+      expect(matchTutorialIntent('onde fica meu perfil')).toBe('profile-settings')
+    })
+
+    it('maps "como editar meu nome" to profile-settings', () => {
+      expect(matchTutorialIntent('como editar meu nome')).toBe('profile-settings')
+    })
+  })
+
+  describe('view-upgrade tutorial', () => {
+    it('maps "como assino o plano pro" to view-upgrade', () => {
+      expect(matchTutorialIntent('como assino o plano pro')).toBe('view-upgrade')
+    })
+
+    it('maps "como faço upgrade" to view-upgrade', () => {
+      expect(matchTutorialIntent('como faço upgrade')).toBe('view-upgrade')
+    })
+
+    it('maps "onde fica o plano pro" to view-upgrade', () => {
+      expect(matchTutorialIntent('onde fica o plano pro')).toBe('view-upgrade')
+    })
+
+    it('maps "quero ser pro" to view-upgrade', () => {
+      expect(matchTutorialIntent('quero ser pro')).toBe('view-upgrade')
     })
   })
 

@@ -55,7 +55,11 @@ export function CreditCardsPage() {
         </Tooltip>
       </TooltipProvider>
     ) : (
-      <Button onClick={openCreateModal} className={className}>
+      <Button
+        onClick={openCreateModal}
+        className={className}
+        data-tutorial-id="credit-card-add-button"
+      >
         <Plus className="mr-2 h-4 w-4" />
         Novo Cartão
       </Button>

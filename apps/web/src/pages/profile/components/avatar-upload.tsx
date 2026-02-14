@@ -70,7 +70,7 @@ export function AvatarUpload({
   const displayUrl = previewUrl ?? avatarUrl
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4" data-tutorial-id="profile-avatar-section">
       <div className="relative">
         <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-muted bg-muted">
           {displayUrl ? (

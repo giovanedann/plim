@@ -78,7 +78,7 @@ describe('Spotlight', () => {
     render(<Spotlight elementId="test-element" />)
 
     const overlay = screen.getByTestId('spotlight-overlay')
-    expect(overlay.style.backgroundColor).toBe('rgba(0, 0, 0, 0.6)')
+    expect(overlay.style.backgroundColor).toBe('rgba(0, 0, 0, 0.8)')
   })
 
   it('applies CSS transition class when moving between elements', () => {
@@ -91,7 +91,7 @@ describe('Spotlight', () => {
 
     const overlay = screen.getByTestId('spotlight-overlay')
     expect(overlay.style.transition).toContain('clip-path')
-    expect(overlay.style.transition).toContain('ease-in-out')
+    expect(overlay.style.transition).toContain('cubic-bezier')
   })
 
   it('handles missing element gracefully', () => {

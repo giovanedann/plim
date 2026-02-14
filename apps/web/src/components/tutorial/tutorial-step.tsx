@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTutorialStore } from '@/stores'
+import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -9,8 +10,17 @@ interface Position {
   left: number
 }
 
+function findVisibleElement(elementId: string): Element | null {
+  const elements = document.querySelectorAll(`[data-tutorial-id="${elementId}"]`)
+  for (const el of elements) {
+    const rect = el.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) return el
+  }
+  return null
+}
+
 function computeCardPosition(elementId: string): Position | null {
-  const element = document.querySelector(`[data-tutorial-id="${elementId}"]`)
+  const element = findVisibleElement(elementId)
   if (!element) return null
 
   const rect = element.getBoundingClientRect()
@@ -38,18 +48,17 @@ function computeCardPosition(elementId: string): Position | null {
   return { top, left }
 }
 
+const ELEMENT_POLL_INTERVAL_MS = 100
+const ELEMENT_POLL_MAX_ATTEMPTS = 20
+const SETTLE_DURATION_MS = 600
+
 export function TutorialStepCard(): React.ReactNode {
-  const {
-    activeTutorial,
-    currentStep,
-    nextStep,
-    prevStep,
-    exitTutorial,
-    completeTutorial,
-    setTutorialsDisabled,
-  } = useTutorialStore()
+  const { activeTutorial, currentStep, nextStep, prevStep, exitTutorial } = useTutorialStore()
+  const navigate = useNavigate()
   const [position, setPosition] = useState<Position | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const rafRef = useRef<number | null>(null)
 
   const step = activeTutorial?.steps[currentStep]
   const totalSteps = activeTutorial?.steps.length ?? 0
@@ -62,8 +71,48 @@ export function TutorialStepCard(): React.ReactNode {
       return
     }
 
+    // Auto-navigate when step has navigateTo and element is not in DOM
+    const element = findVisibleElement(step.elementId)
+    if (!element && step.navigateTo) {
+      navigate({ to: step.navigateTo })
+    }
+
+    // Track element position during animations (e.g. sidebar slide-in)
+    const startSettle = (): void => {
+      const startTime = Date.now()
+      const tick = (): void => {
+        const pos = computeCardPosition(step.elementId)
+        if (pos) setPosition(pos)
+        if (Date.now() - startTime < SETTLE_DURATION_MS) {
+          rafRef.current = requestAnimationFrame(tick)
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    // Try to find the element immediately
     const pos = computeCardPosition(step.elementId)
-    setPosition(pos)
+    if (pos) {
+      setPosition(pos)
+      startSettle()
+    } else {
+      // Element not in DOM yet (e.g. after navigation) — poll until it appears
+      setPosition(null)
+      let attempts = 0
+
+      const poll = (): void => {
+        attempts++
+        const found = computeCardPosition(step.elementId)
+        if (found) {
+          setPosition(found)
+          startSettle()
+        } else if (attempts < ELEMENT_POLL_MAX_ATTEMPTS) {
+          pollTimerRef.current = setTimeout(poll, ELEMENT_POLL_INTERVAL_MS)
+        }
+      }
+
+      pollTimerRef.current = setTimeout(poll, ELEMENT_POLL_INTERVAL_MS)
+    }
 
     const handleResize = (): void => {
       setPosition(computeCardPosition(step.elementId))
@@ -75,8 +124,16 @@ export function TutorialStepCard(): React.ReactNode {
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('scroll', handleResize, true)
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current)
+        pollTimerRef.current = null
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
     }
-  }, [step])
+  }, [step, navigate])
 
   if (!activeTutorial || !step || !position) {
     return null
@@ -84,22 +141,21 @@ export function TutorialStepCard(): React.ReactNode {
 
   const handleNext = (): void => {
     if (isLastStep) {
-      completeTutorial()
+      exitTutorial()
     } else {
+      const nextStepData = activeTutorial?.steps[currentStep + 1]
+      if (step.navigateTo && nextStepData && nextStepData.elementId !== step.elementId) {
+        navigate({ to: step.navigateTo })
+      }
       nextStep()
     }
-  }
-
-  const handleDisableTutorials = (): void => {
-    setTutorialsDisabled(true)
-    exitTutorial()
   }
 
   return (
     <Card
       ref={cardRef}
       data-testid="tutorial-step-card"
-      className="fixed z-[70] w-80 shadow-lg"
+      className="fixed z-[70] w-80 shadow-lg pointer-events-auto"
       style={{
         top: position.top,
         left: position.left,
@@ -128,47 +184,27 @@ export function TutorialStepCard(): React.ReactNode {
         <p className="text-sm text-muted-foreground">{step.description}</p>
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-3 pt-0">
-        <div className="flex w-full justify-between">
-          {!isFirstStep ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={prevStep}
-              data-testid="tutorial-prev-button"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Anterior
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={exitTutorial}
-              data-testid="tutorial-skip-button"
-            >
-              Pular
-            </Button>
-          )}
-
-          <Button size="sm" onClick={handleNext} data-testid="tutorial-next-button">
-            {isLastStep ? 'Concluir' : 'Próximo'}
-            {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
+      <CardFooter className="flex justify-between pt-0">
+        {!isFirstStep ? (
+          <Button variant="outline" size="sm" onClick={prevStep} data-testid="tutorial-prev-button">
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Anterior
           </Button>
-        </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={exitTutorial}
+            data-testid="tutorial-skip-button"
+          >
+            Pular
+          </Button>
+        )}
 
-        <label
-          className="flex w-full cursor-pointer items-center gap-2 border-t border-border pt-2"
-          data-testid="tutorial-disable-checkbox-label"
-        >
-          <input
-            type="checkbox"
-            className="h-3.5 w-3.5 rounded border-border accent-primary"
-            data-testid="tutorial-disable-checkbox"
-            onChange={handleDisableTutorials}
-          />
-          <span className="text-xs text-muted-foreground">Não mostrar tutoriais novamente</span>
-        </label>
+        <Button size="sm" onClick={handleNext} data-testid="tutorial-next-button">
+          {isLastStep ? 'Concluir' : 'Próximo'}
+          {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
+        </Button>
       </CardFooter>
     </Card>
   )

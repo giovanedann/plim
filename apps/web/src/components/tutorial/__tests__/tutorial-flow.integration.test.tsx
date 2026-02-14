@@ -78,8 +78,6 @@ describe('Tutorial Flow Integration', () => {
     useTutorialStore.setState({
       activeTutorial: null,
       currentStep: 0,
-      completedTutorials: [],
-      tutorialsDisabled: false,
     })
   })
 
@@ -326,28 +324,10 @@ describe('Tutorial Flow Integration', () => {
         expect(screen.queryByTestId('tutorial-step-card')).not.toBeInTheDocument()
       })
     })
-
-    it('does not mark tutorial as completed when exiting', async () => {
-      addTargetElements()
-
-      render(<TutorialTestHarness />)
-
-      useTutorialStore.getState().startTutorial(TEST_TUTORIAL)
-
-      await waitFor(() => {
-        expect(screen.getByTestId('tutorial-step-card')).toBeInTheDocument()
-      })
-
-      await user.click(screen.getByTestId('tutorial-exit-button'))
-
-      await waitFor(() => {
-        expect(useTutorialStore.getState().completedTutorials).not.toContain('test-tutorial')
-      })
-    })
   })
 
   describe('tutorial completes after last step', () => {
-    it('completes tutorial when clicking finish on last step', async () => {
+    it('exits tutorial when clicking finish on last step', async () => {
       addTargetElements()
 
       render(<TutorialTestHarness />)
@@ -358,7 +338,6 @@ describe('Tutorial Flow Integration', () => {
         expect(screen.getByText('Primeiro passo')).toBeInTheDocument()
       })
 
-      // Navigate to last step
       await user.click(screen.getByTestId('tutorial-next-button'))
       await user.click(screen.getByTestId('tutorial-next-button'))
 
@@ -374,43 +353,13 @@ describe('Tutorial Flow Integration', () => {
         expect(screen.queryByTestId('spotlight-overlay')).not.toBeInTheDocument()
       })
 
-      expect(useTutorialStore.getState().completedTutorials).toContain('test-tutorial')
       expect(useTutorialStore.getState().activeTutorial).toBeNull()
       expect(useTutorialStore.getState().currentStep).toBe(0)
-    })
-
-    it('does not add duplicate to completedTutorials on re-complete', async () => {
-      useTutorialStore.setState({ completedTutorials: ['test-tutorial'] })
-      addTargetElements()
-
-      render(<TutorialTestHarness />)
-
-      useTutorialStore.getState().startTutorial(TEST_TUTORIAL)
-
-      await waitFor(() => {
-        expect(screen.getByText('Primeiro passo')).toBeInTheDocument()
-      })
-
-      await user.click(screen.getByTestId('tutorial-next-button'))
-      await user.click(screen.getByTestId('tutorial-next-button'))
-
-      await waitFor(() => {
-        expect(screen.getByTestId('tutorial-next-button')).toHaveTextContent('Concluir')
-      })
-
-      await user.click(screen.getByTestId('tutorial-next-button'))
-
-      await waitFor(() => {
-        const { completedTutorials } = useTutorialStore.getState()
-        expect(completedTutorials.filter((id) => id === 'test-tutorial')).toHaveLength(1)
-      })
     })
   })
 
   describe('handles missing DOM element gracefully', () => {
     it('does not render spotlight when target element is missing', async () => {
-      // Do NOT add target elements to the DOM
-
       render(<TutorialTestHarness />)
 
       useTutorialStore.getState().startTutorial(TEST_TUTORIAL)
