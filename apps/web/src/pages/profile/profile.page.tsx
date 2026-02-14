@@ -88,7 +88,7 @@ export function ProfilePage() {
       </div>
 
       <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 lg:px-6">
-        <Card>
+        <Card data-tutorial-id="profile-settings-form">
           <CardHeader>
             <CardTitle>Perfil</CardTitle>
             <CardDescription>Suas informações pessoais e preferências</CardDescription>

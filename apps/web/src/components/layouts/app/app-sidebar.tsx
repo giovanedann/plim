@@ -44,21 +44,25 @@ const navigation = [
     title: 'Dashboard',
     url: '/dashboard',
     icon: LayoutDashboard,
+    tutorialId: 'sidebar-nav-dashboard',
   },
   {
     title: 'Despesas',
     url: '/expenses',
     icon: Receipt,
+    tutorialId: 'sidebar-nav-expenses',
   },
   {
     title: 'Categorias',
     url: '/categories',
     icon: Tags,
+    tutorialId: 'sidebar-nav-categories',
   },
   {
     title: 'Cartões',
     url: '/credit-cards',
     icon: CreditCard,
+    tutorialId: 'sidebar-nav-credit-cards',
   },
 ]
 
@@ -105,7 +109,7 @@ export function AppSidebar() {
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
                   >
-                    <Link to={item.url}>
+                    <Link to={item.url} data-tutorial-id={item.tutorialId}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -157,7 +161,7 @@ export function AppSidebar() {
                 <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/profile">
+                  <Link to="/profile" data-tutorial-id="sidebar-nav-profile">
                     <User className="mr-2 h-4 w-4" />
                     Perfil
                   </Link>

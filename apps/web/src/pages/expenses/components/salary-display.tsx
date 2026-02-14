@@ -150,7 +150,10 @@ export function SalaryDisplay({
   }
 
   return (
-    <div className={`grid gap-4 ${hasSalary ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+    <div
+      className={`grid gap-4 ${hasSalary ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}
+      data-tutorial-id="expense-monthly-total"
+    >
       <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">

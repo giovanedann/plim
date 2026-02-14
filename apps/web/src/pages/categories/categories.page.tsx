@@ -94,7 +94,11 @@ export function CategoriesPage() {
         </Tooltip>
       </TooltipProvider>
     ) : (
-      <Button onClick={handleCreateClick} className={className}>
+      <Button
+        onClick={handleCreateClick}
+        className={className}
+        data-tutorial-id="category-add-button"
+      >
         <Plus className="mr-2 h-4 w-4" />
         Nova Categoria
       </Button>
@@ -124,7 +128,7 @@ export function CategoriesPage() {
       )}
 
       {userCategories.length > 0 && (
-        <section>
+        <section data-tutorial-id="category-list">
           <h2 className="mb-3 text-lg font-semibold">Minhas Categorias</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {userCategories.map((category) => (

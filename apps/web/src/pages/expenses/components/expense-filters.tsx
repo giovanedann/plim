@@ -78,7 +78,7 @@ export function ExpenseFilters({
     filters.category_id || filters.payment_method || filters.expense_type || filters.credit_card_id
 
   return (
-    <Card>
+    <Card data-tutorial-id="expense-filters">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <span className="text-sm font-medium">Filtros</span>
         <Button
@@ -178,7 +178,11 @@ export function ExpenseFilters({
             )}
           </div>
 
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="gap-2"
+            data-tutorial-id="expense-add-button"
+          >
             <Plus className="h-4 w-4" />
             Nova Despesa
           </Button>

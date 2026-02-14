@@ -317,7 +317,7 @@ export function ExpenseTable({
   return (
     <>
       {/* mb-20 ensures the last row is accessible above the fixed AI chat FAB */}
-      <div className="rounded-md border mb-20">
+      <div className="rounded-md border mb-20" data-tutorial-id="expense-list">
         <Table>
           <TableHeader>
             <TableRow>

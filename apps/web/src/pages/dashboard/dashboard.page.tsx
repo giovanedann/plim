@@ -80,7 +80,7 @@ export function DashboardPage() {
         <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
       </div>
 
-      <div className="px-4 lg:px-6">
+      <div className="px-4 lg:px-6" data-tutorial-id="dashboard-summary-cards">
         <SummaryCards summary={summary} />
       </div>
 
@@ -98,6 +98,7 @@ export function DashboardPage() {
 
       <div
         className={`grid min-w-0 gap-4 px-4 lg:px-6 ${showSalarySection ? 'md:grid-cols-2' : ''}`}
+        data-tutorial-id="dashboard-charts"
       >
         <div className="min-w-0">
           <ExpensesTimelineChart data={expensesTimeline} />
