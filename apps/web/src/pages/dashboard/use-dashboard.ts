@@ -4,6 +4,7 @@ import { dashboardService } from '@/services/dashboard.service'
 import type { DashboardQuery, TimelineGroupBy } from '@plim/shared'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { filterEmptyPeriods } from './filter-empty-periods'
 
 type TimeRange = 'month' | 'quarter' | 'year'
 
@@ -62,19 +63,24 @@ export function useDashboard() {
     staleTime: queryConfig.staleTime.dashboard,
   })
 
+  const filteredData = useMemo(
+    () => (dashboardQuery.data ? filterEmptyPeriods(dashboardQuery.data) : undefined),
+    [dashboardQuery.data]
+  )
+
   return {
     timeRange,
     setTimeRange,
     dateRange,
-    summary: dashboardQuery.data?.summary,
-    expensesTimeline: dashboardQuery.data?.expensesTimeline,
-    incomeVsExpenses: dashboardQuery.data?.incomeVsExpenses,
-    categoryBreakdown: dashboardQuery.data?.categoryBreakdown,
-    paymentBreakdown: dashboardQuery.data?.paymentBreakdown,
-    creditCardBreakdown: dashboardQuery.data?.creditCardBreakdown,
-    savingsRate: dashboardQuery.data?.savingsRate,
-    salaryTimeline: dashboardQuery.data?.salaryTimeline,
-    installmentForecast: dashboardQuery.data?.installmentForecast,
+    summary: filteredData?.summary,
+    expensesTimeline: filteredData?.expensesTimeline,
+    incomeVsExpenses: filteredData?.incomeVsExpenses,
+    categoryBreakdown: filteredData?.categoryBreakdown,
+    paymentBreakdown: filteredData?.paymentBreakdown,
+    creditCardBreakdown: filteredData?.creditCardBreakdown,
+    savingsRate: filteredData?.savingsRate,
+    salaryTimeline: filteredData?.salaryTimeline,
+    installmentForecast: filteredData?.installmentForecast,
     isLoading: dashboardQuery.isLoading,
   }
 }
