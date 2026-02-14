@@ -936,14 +936,7 @@ describe('ChatUseCase', () => {
 
       await sut.execute(userId, input)
 
-      expect(mockAIRepository.setCachedResponse).toHaveBeenCalledWith(
-        userId,
-        'cache-key-123',
-        'text',
-        expect.stringContaining('Despesa criada'),
-        expect.objectContaining({ type: 'expense_created' }),
-        150
-      )
+      expect(mockAIRepository.setCachedResponse).not.toHaveBeenCalled()
     })
   })
 })

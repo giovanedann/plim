@@ -135,8 +135,7 @@ export class ChatUseCase {
         totalTokens
       )
 
-      // Cache the response (won't cache expense_created)
-      if (input.requestType === 'text') {
+      if (input.requestType === 'text' && result.actionType !== 'expense_created') {
         await this.deps.aiRepository.setCachedResponse(
           userId,
           cacheKey,
