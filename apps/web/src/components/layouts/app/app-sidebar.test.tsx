@@ -14,6 +14,7 @@ const mockProfile = {
   name: 'John Doe',
   avatar_url: 'https://example.com/avatar.jpg',
   is_onboarded: true,
+  referred_by: null,
   created_at: new Date('2024-01-01'),
   updated_at: new Date('2024-01-01'),
 }
