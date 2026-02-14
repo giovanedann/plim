@@ -502,7 +502,7 @@ export function AIChatDrawer(): React.ReactElement {
                 placeholder={isLimitReached ? 'Limite atingido' : 'Digite sua mensagem...'}
                 className={cn(
                   'flex-1 resize-none rounded-xl border bg-muted/50 px-4 py-3',
-                  'text-sm placeholder:text-muted-foreground',
+                  'text-base sm:text-sm placeholder:text-muted-foreground',
                   'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50',
                   'transition-all duration-200'
                 )}

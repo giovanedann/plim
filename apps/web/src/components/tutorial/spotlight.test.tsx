@@ -20,10 +20,12 @@ const mockRect = {
   toJSON: vi.fn(),
 }
 
-function createMockElement(tutorialId: string): HTMLDivElement {
+function createMockElement(tutorialId: string, rectOverride?: Partial<DOMRect>): HTMLDivElement {
   const element = document.createElement('div')
   element.setAttribute('data-tutorial-id', tutorialId)
-  element.getBoundingClientRect = vi.fn(() => mockRect)
+  const rect = rectOverride ? { ...mockRect, ...rectOverride } : mockRect
+  element.getBoundingClientRect = vi.fn(() => rect)
+  element.scrollIntoView = vi.fn()
   document.body.appendChild(element)
   return element
 }
@@ -152,5 +154,41 @@ describe('Spotlight', () => {
 
     expect(clipPath).toContain('184px 84px')
     expect(clipPath).toContain('366px 166px')
+  })
+
+  it('does not scroll when element is already in viewport', () => {
+    const element = createMockElement('test-element')
+
+    render(<Spotlight elementId="test-element" />)
+
+    expect(element.scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it('scrolls element into view when it is below the viewport', () => {
+    const element = createMockElement('off-screen', {
+      top: window.innerHeight + 100,
+      bottom: window.innerHeight + 150,
+    })
+
+    render(<Spotlight elementId="off-screen" />)
+
+    expect(element.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center',
+    })
+  })
+
+  it('scrolls element into view when it is above the viewport', () => {
+    const element = createMockElement('above-screen', {
+      top: -100,
+      bottom: -50,
+    })
+
+    render(<Spotlight elementId="above-screen" />)
+
+    expect(element.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center',
+    })
   })
 })

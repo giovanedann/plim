@@ -111,8 +111,17 @@ export function Spotlight({
       rafRef.current = requestAnimationFrame(tick)
     }
 
+    const scrollToElement = (el: Element): void => {
+      const domRect = el.getBoundingClientRect()
+      const isInViewport = domRect.top >= 0 && domRect.bottom <= window.innerHeight
+      if (!isInViewport) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+
     const element = findVisibleElement(elementId)
     if (element) {
+      scrollToElement(element)
       setRect(computeRect(element, padding))
       startSettle()
     } else {
@@ -124,6 +133,7 @@ export function Spotlight({
         attempts++
         const el = findVisibleElement(elementId)
         if (el) {
+          scrollToElement(el)
           setRect(computeRect(el, padding))
           startSettle()
         } else if (attempts < ELEMENT_POLL_MAX_ATTEMPTS) {
