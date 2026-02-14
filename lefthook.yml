@@ -17,9 +17,12 @@ pre-commit:
 
 pre-push:
   commands:
-    typecheck:
-      run: pnpm typecheck
+    build:
+      run: pnpm -r build
+      priority: 1
     lint:
       run: pnpm lint
+      priority: 2
     test:
       run: pnpm test
+      priority: 3
