@@ -12,7 +12,7 @@ function createMockSupabase(): MockSupabase {
 }
 
 describe('executeQuery', () => {
-  const userId = 'user-123'
+  const userId = '550e8400-e29b-41d4-a716-446655440000'
   let mockSupabase: MockSupabase
 
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe('executeQuery', () => {
     it('blocks DROP statements', async () => {
       const result = await executeQuery(
         {
-          sql: "DROP TABLE expense; SELECT * FROM expense WHERE user_id = '{userId}'",
+          sql: "DROP TABLE expense -- SELECT * FROM expense WHERE user_id = '{userId}'",
           description: 'malicious',
         },
         userId,
@@ -117,7 +117,7 @@ describe('executeQuery', () => {
     it('blocks TRUNCATE statements', async () => {
       const result = await executeQuery(
         {
-          sql: "TRUNCATE expense; SELECT * FROM expense WHERE user_id = '{userId}'",
+          sql: "TRUNCATE expense WHERE user_id = '{userId}'",
           description: 'malicious',
         },
         userId,
@@ -132,7 +132,7 @@ describe('executeQuery', () => {
     it('blocks ALTER statements', async () => {
       const result = await executeQuery(
         {
-          sql: "ALTER TABLE expense ADD COLUMN hack TEXT; SELECT * FROM expense WHERE user_id = '{userId}'",
+          sql: "ALTER TABLE expense ADD COLUMN hack TEXT WHERE user_id = '{userId}'",
           description: 'malicious',
         },
         userId,
@@ -170,6 +170,95 @@ describe('executeQuery', () => {
       )
 
       expect(result.success).toBe(false)
+      expect(mockSupabase.rpc).not.toHaveBeenCalled()
+    })
+
+    it('blocks semicolons (multi-statement prevention)', async () => {
+      const result = await executeQuery(
+        {
+          sql: "SELECT * FROM expense WHERE user_id = '{userId}'; DROP TABLE expense",
+          description: 'malicious',
+        },
+        userId,
+        mockSupabase as never
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('Múltiplas instruções')
+      expect(mockSupabase.rpc).not.toHaveBeenCalled()
+    })
+
+    it('blocks access to auth.users', async () => {
+      const result = await executeQuery(
+        {
+          sql: "SELECT * FROM auth.users WHERE id = '{userId}'",
+          description: 'malicious',
+        },
+        userId,
+        mockSupabase as never
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('tabelas do sistema')
+      expect(mockSupabase.rpc).not.toHaveBeenCalled()
+    })
+
+    it('blocks access to pg_catalog', async () => {
+      const result = await executeQuery(
+        {
+          sql: "SELECT * FROM pg_catalog.pg_tables WHERE user_id = '{userId}'",
+          description: 'malicious',
+        },
+        userId,
+        mockSupabase as never
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('tabelas do sistema')
+      expect(mockSupabase.rpc).not.toHaveBeenCalled()
+    })
+
+    it('blocks access to information_schema', async () => {
+      const result = await executeQuery(
+        {
+          sql: "SELECT * FROM information_schema.tables WHERE user_id = '{userId}'",
+          description: 'malicious',
+        },
+        userId,
+        mockSupabase as never
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('tabelas do sistema')
+      expect(mockSupabase.rpc).not.toHaveBeenCalled()
+    })
+
+    it('blocks COPY keyword', async () => {
+      const result = await executeQuery(
+        {
+          sql: "COPY expense TO '/tmp/data.csv' WHERE user_id = '{userId}'",
+          description: 'malicious',
+        },
+        userId,
+        mockSupabase as never
+      )
+
+      expect(result.success).toBe(false)
+      expect(mockSupabase.rpc).not.toHaveBeenCalled()
+    })
+
+    it('rejects invalid userId format', async () => {
+      const result = await executeQuery(
+        {
+          sql: "SELECT * FROM expense WHERE user_id = '{userId}'",
+          description: 'test',
+        },
+        'not-a-uuid',
+        mockSupabase as never
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('ID de usuário inválido')
       expect(mockSupabase.rpc).not.toHaveBeenCalled()
     })
 

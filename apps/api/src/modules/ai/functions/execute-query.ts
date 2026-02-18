@@ -16,9 +16,33 @@ const DANGEROUS_KEYWORDS = [
   'ROLLBACK',
   'EXEC',
   'EXECUTE',
+  'COPY',
+  'SET',
+  'CALL',
 ] as const
 
+const BLOCKED_TABLES = [
+  'auth.users',
+  'pg_catalog',
+  'information_schema',
+  'pg_tables',
+  'pg_stat',
+  'pg_class',
+  'pg_namespace',
+  'pg_roles',
+] as const
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 function validateSqlSecurity(sql: string, userId: string): { valid: boolean; error?: string } {
+  if (!UUID_REGEX.test(userId)) {
+    return { valid: false, error: 'ID de usuário inválido.' }
+  }
+
+  if (sql.includes(';')) {
+    return { valid: false, error: 'Múltiplas instruções SQL não são permitidas.' }
+  }
+
   const upperSql = sql.toUpperCase()
 
   for (const keyword of DANGEROUS_KEYWORDS) {
@@ -28,6 +52,13 @@ function validateSqlSecurity(sql: string, userId: string): { valid: boolean; err
         valid: false,
         error: `Operação '${keyword}' não permitida. Apenas consultas SELECT são aceitas.`,
       }
+    }
+  }
+
+  const lowerSql = sql.toLowerCase()
+  for (const table of BLOCKED_TABLES) {
+    if (lowerSql.includes(table.toLowerCase())) {
+      return { valid: false, error: 'Acesso a tabelas do sistema não é permitido.' }
     }
   }
 
@@ -81,7 +112,6 @@ export async function executeQuery(
   }
 
   const { sql, description } = parseResult.data
-  console.info('[ExecuteQuery] Generated SQL:', { sql: sql.slice(0, 200), description })
 
   const securityCheck = validateSqlSecurity(sql, userId)
   if (!securityCheck.valid) {
@@ -100,7 +130,6 @@ export async function executeQuery(
     })
 
     if (error) {
-      console.error('[ExecuteQuery] Database error:', error)
       return {
         success: false,
         message: 'Erro ao executar a consulta. Tente novamente.',
@@ -117,8 +146,7 @@ export async function executeQuery(
       data: formattedData,
       actionType: 'query_result',
     }
-  } catch (error) {
-    console.error('[ExecuteQuery] Unexpected error:', error)
+  } catch {
     return {
       success: false,
       message: 'Erro inesperado ao executar a consulta.',

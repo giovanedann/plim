@@ -121,7 +121,14 @@ const showTutorialParameters: JsonSchema = {
     tutorial_id: {
       type: 'string',
       description: 'Tutorial identifier',
-      enum: ['add-expense', 'manage-categories', 'setup-credit-card', 'view-dashboard'],
+      enum: [
+        'add-expense',
+        'manage-categories',
+        'setup-credit-card',
+        'view-dashboard',
+        'profile-settings',
+        'view-upgrade',
+      ],
     },
   },
   required: ['tutorial_id'],

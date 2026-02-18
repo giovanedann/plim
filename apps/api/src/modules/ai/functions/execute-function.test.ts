@@ -32,7 +32,7 @@ describe('executeFunction', () => {
   let mockExpensesRepository: ReturnType<typeof createMockExpensesRepository>
   let context: FunctionExecutionContext
 
-  const userId = 'user-123'
+  const userId = '550e8400-e29b-41d4-a716-446655440000'
 
   beforeEach(() => {
     vi.clearAllMocks()
