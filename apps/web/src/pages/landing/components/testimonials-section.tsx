@@ -21,6 +21,18 @@ const testimonials: Testimonial[] = [
       'O Plim chegou no momento certo. Acompanhar despesas, parcelas e ter controle total do que você gasta pode ser bem difícil. Com o Plim, você consegue visualizar tudo com clareza, criar novas despesas e até simular gastos futuros, tudo em um só lugar.',
     rating: 5,
   },
+  {
+    name: 'Kaique M.',
+    quote:
+      'O aplicativo é muito intuitivo e muito direto ao ponto, é fácil se localizar e inserir os dados, os indicadores ajudam muito a ter um controle visual do que está acontecendo com seu dinheiro e a IA integrada facilita ainda mais o uso e a inserção de dados.',
+    rating: 5,
+  },
+  {
+    name: 'Rodrigo R.',
+    quote:
+      'O Plim é perfeito para a correria do dia a dia. Ele centraliza todas as despesas em um só lugar e o chat integrado com IA melhorou muito o gerenciamento das minhas finanças. Em poucos passos eu já tenho um panorama geral dos meus gastos. Simples, prático e sem complicação, do jeito que eu precisava!',
+    rating: 5,
+  },
 ]
 
 const containerVariants: Variants = {
@@ -98,10 +110,7 @@ export function TestimonialsSection(): React.ReactNode {
           </div>
 
           {/* Testimonial cards grid */}
-          <motion.div
-            variants={containerVariants}
-            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          >
+          <motion.div variants={containerVariants} className="grid gap-6 md:grid-cols-2">
             {testimonials.map((testimonial) => (
               <motion.div
                 key={testimonial.name}

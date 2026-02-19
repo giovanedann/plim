@@ -18,7 +18,7 @@ describe('TestimonialsSection', () => {
   it('renders all testimonial cards with names and quotes', () => {
     render(<TestimonialsSection />)
 
-    const expectedNames = ['Nathan R.', 'Lauane O.']
+    const expectedNames = ['Nathan R.', 'Lauane O.', 'Kaique M.', 'Rodrigo R.']
 
     for (const name of expectedNames) {
       expect(screen.getByText(name)).toBeInTheDocument()
@@ -26,6 +26,8 @@ describe('TestimonialsSection', () => {
 
     expect(screen.getByText(/Gostei muito da plataforma/)).toBeInTheDocument()
     expect(screen.getByText(/O Plim chegou no momento certo/)).toBeInTheDocument()
+    expect(screen.getByText(/O aplicativo é muito intuitivo/)).toBeInTheDocument()
+    expect(screen.getByText(/O Plim é perfeito para a correria/)).toBeInTheDocument()
   })
 
   it('renders correct star ratings', () => {
@@ -33,10 +35,10 @@ describe('TestimonialsSection', () => {
 
     const starRatings = screen.getAllByRole('img')
 
-    expect(starRatings).toHaveLength(2)
+    expect(starRatings).toHaveLength(4)
     expect(
       starRatings.filter((el) => el.getAttribute('aria-label') === '5 de 5 estrelas')
-    ).toHaveLength(2)
+    ).toHaveLength(4)
   })
 
   it('wraps quotes in quotation marks', () => {
