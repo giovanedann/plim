@@ -11,9 +11,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { analytics } from '@/lib/analytics'
 import { useAuthStore } from '@/stores/auth.store'
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import { Check, Eye, EyeOff, X } from 'lucide-react'
 import { useState } from 'react'
+
+const REFERRAL_STORAGE_KEY = 'plim_referral_code'
+
+function getInitialReferralCode(searchRef?: string): string {
+  if (searchRef) return searchRef
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem(REFERRAL_STORAGE_KEY) ?? ''
+  }
+  return ''
+}
 
 function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
   return (
@@ -30,11 +40,16 @@ function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
 
 export function SignUpPage() {
   const { signInWithGoogle, signUpWithEmail, isLoading, error, clearError } = useAuthStore()
+  const { ref: searchRef } = useSearch({ from: '/_auth/sign-up' })
+
+  const initialRef = getInitialReferralCode(searchRef)
+  const isReferralPrefilled = initialRef.length > 0
+
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [referredBy, setReferredBy] = useState('')
+  const [referredBy, setReferredBy] = useState(initialRef)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
@@ -54,6 +69,9 @@ export function SignUpPage() {
 
   const handleGoogleSignUp = async () => {
     try {
+      if (referredBy) {
+        localStorage.setItem(REFERRAL_STORAGE_KEY, referredBy)
+      }
       analytics.signUp('google')
       await signInWithGoogle()
     } catch (err) {
@@ -222,17 +240,20 @@ export function SignUpPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="referredBy">Quem te indicou?</Label>
+              <Label htmlFor="referredBy">Codigo de indicacao</Label>
               <Input
                 id="referredBy"
                 type="text"
-                placeholder="Nome ou email de quem te indicou"
+                placeholder="ex: giovane-daniel-a7x9"
                 value={referredBy}
                 onChange={(e) => setReferredBy(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isReferralPrefilled}
+                readOnly={isReferralPrefilled}
                 maxLength={100}
               />
-              <p className="text-xs text-muted-foreground">Opcional</p>
+              <p className="text-xs text-muted-foreground">
+                {isReferralPrefilled ? 'Preenchido automaticamente' : 'Opcional'}
+              </p>
             </div>
 
             {(localError || error) && (

@@ -1,8 +1,11 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { supabase } from '@/lib/supabase'
+import { referralService } from '@/services/referral.service'
 import { useAuthStore } from '@/stores/auth.store'
+import { createErrorResponse, createSuccessResponse } from '@plim/shared'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
+import { toast } from 'sonner'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthCallbackPage } from '../auth-callback.page'
 
@@ -30,17 +33,34 @@ vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       exchangeCodeForSession: vi.fn(),
+      getSession: vi.fn(),
     },
   },
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockNavigate,
 }))
+
+vi.mock('@/services/referral.service', () => ({
+  referralService: {
+    claimReferral: vi.fn(),
+  },
+}))
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
+const mockNavigate = vi.fn()
 
 describe('AuthCallbackPage Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     useAuthStore.setState({
       user: null,
       isLoading: false,
@@ -150,6 +170,161 @@ describe('AuthCallbackPage Integration', () => {
       })
 
       consoleSpy.mockRestore()
+    })
+  })
+
+  describe('referral claim', () => {
+    it('claims referral when localStorage has code and user is set', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createSuccessResponse({ pro_days_granted: 7 })
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(referralService.claimReferral).toHaveBeenCalledWith('test-referral')
+      })
+    })
+
+    it('shows success toast on successful claim', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createSuccessResponse({ pro_days_granted: 7 })
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith('Voce ganhou 7 dias de Pro gratis!')
+      })
+    })
+
+    it('clears localStorage after successful claim', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createSuccessResponse({ pro_days_granted: 7 })
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(localStorage.getItem('plim_referral_code')).toBeNull()
+      })
+    })
+
+    it('clears localStorage after failed claim', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createErrorResponse('ALREADY_CLAIMED', 'Already claimed')
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(localStorage.getItem('plim_referral_code')).toBeNull()
+      })
+    })
+
+    it('does not show toast when claim fails with error response', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createErrorResponse('ALREADY_CLAIMED', 'Already claimed')
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(referralService.claimReferral).toHaveBeenCalled()
+      })
+
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
+    it('does not crash when claim throws an exception', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockRejectedValue(new Error('Network error'))
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(localStorage.getItem('plim_referral_code')).toBeNull()
+      })
+
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
+    it('does not call claimReferral when no referral code in localStorage', async () => {
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith({ to: '/dashboard' })
+      })
+
+      expect(referralService.claimReferral).not.toHaveBeenCalled()
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
+    it('navigates to dashboard after referral claim completes', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createSuccessResponse({ pro_days_granted: 7 })
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith({ to: '/dashboard' })
+      })
     })
   })
 

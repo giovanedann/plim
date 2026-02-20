@@ -6,8 +6,11 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SignUpPage } from '../sign-up.page'
 
+const mockSearchParams = { ref: undefined as string | undefined }
+
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
+  useSearch: () => mockSearchParams,
 }))
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -36,6 +39,8 @@ describe('SignUpPage Integration', () => {
   beforeEach(() => {
     user = userEvent.setup()
     vi.clearAllMocks()
+    mockSearchParams.ref = undefined
+    localStorage.clear()
     useAuthStore.setState({
       user: null,
       isLoading: false,
@@ -46,6 +51,7 @@ describe('SignUpPage Integration', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    localStorage.clear()
   })
 
   describe('basic rendering', () => {
@@ -393,6 +399,127 @@ describe('SignUpPage Integration', () => {
       await waitFor(() => {
         expect(screen.getByRole('link', { name: /Voltar para login/i })).toBeInTheDocument()
       })
+    })
+  })
+
+  describe('referral code', () => {
+    it('pre-fills referral code from search params', () => {
+      mockSearchParams.ref = 'giovane-daniel-a7x9'
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).toHaveValue('giovane-daniel-a7x9')
+    })
+
+    it('shows referral field as read-only when pre-filled from search params', () => {
+      mockSearchParams.ref = 'giovane-daniel-a7x9'
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).toHaveAttribute('readonly')
+    })
+
+    it('shows "Preenchido automaticamente" when referral is pre-filled', () => {
+      mockSearchParams.ref = 'giovane-daniel-a7x9'
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      expect(screen.getByText(/Preenchido automaticamente/i)).toBeInTheDocument()
+    })
+
+    it('shows "Opcional" when no referral code is present', () => {
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      expect(screen.getByText(/Opcional/i)).toBeInTheDocument()
+    })
+
+    it('falls back to localStorage referral code when no search param', () => {
+      localStorage.setItem('plim_referral_code', 'stored-code-x1y2')
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).toHaveValue('stored-code-x1y2')
+    })
+
+    it('shows referral field as read-only when pre-filled from localStorage', () => {
+      localStorage.setItem('plim_referral_code', 'stored-code-x1y2')
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).toHaveAttribute('readonly')
+    })
+
+    it('prioritizes search param ref over localStorage', () => {
+      localStorage.setItem('plim_referral_code', 'stored-code-x1y2')
+      mockSearchParams.ref = 'url-code-a7x9'
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).toHaveValue('url-code-a7x9')
+    })
+
+    it('allows editing referral field when not pre-filled', async () => {
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).not.toHaveAttribute('readonly')
+
+      await user.type(referralInput, 'manual-code')
+      expect(referralInput).toHaveValue('manual-code')
+    })
+
+    it('stores referral code in localStorage before Google OAuth', async () => {
+      mockSearchParams.ref = 'giovane-daniel-a7x9'
+      const googleSignInSpy = vi.fn().mockResolvedValue(undefined)
+      useAuthStore.setState({
+        signInWithGoogle: googleSignInSpy,
+      } as any)
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      await user.click(screen.getByRole('button', { name: /Continuar com Google/i }))
+
+      await waitFor(() => {
+        expect(localStorage.getItem('plim_referral_code')).toBe('giovane-daniel-a7x9')
+        expect(googleSignInSpy).toHaveBeenCalled()
+      })
+    })
+
+    it('sends referral code when submitting email sign-up', async () => {
+      mockSearchParams.ref = 'giovane-daniel-a7x9'
+      const signUpSpy = vi.fn().mockResolvedValue(undefined)
+      useAuthStore.setState({
+        signUpWithEmail: signUpSpy,
+      } as any)
+
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      await user.type(screen.getByLabelText(/Email/i), 'john@example.com')
+      await user.type(screen.getByLabelText(/^Senha$/i), 'ValidPass123!')
+      await user.type(screen.getByLabelText(/Confirmar senha/i), 'ValidPass123!')
+
+      await user.click(screen.getByRole('button', { name: /Criar conta/i }))
+
+      await waitFor(() => {
+        expect(signUpSpy).toHaveBeenCalledWith(
+          'john@example.com',
+          'ValidPass123!',
+          undefined,
+          'giovane-daniel-a7x9'
+        )
+      })
+    })
+
+    it('renders correct placeholder text', () => {
+      render(<SignUpPage />, { wrapper: TestWrapper })
+
+      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      expect(referralInput).toHaveAttribute('placeholder', 'ex: giovane-daniel-a7x9')
     })
   })
 })
