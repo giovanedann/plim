@@ -47,3 +47,6 @@ docs/
 
 # Database backups (contain sensitive user data)
 backups/
+
+# Instagram posts
+instagram_posts/
