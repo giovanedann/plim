@@ -56,7 +56,7 @@ const aiFeatures: AiFeature[] = [
 
 export function AiDisclaimerSection(): React.JSX.Element {
   return (
-    <section className="landing-section flex w-full items-center bg-slate-950 py-16 md:py-24">
+    <section className="landing-section flex min-h-screen w-full items-center bg-slate-950 py-24 md:py-32">
       <div className="mx-auto w-full max-w-5xl px-4 md:px-8">
         <motion.div
           initial="offscreen"

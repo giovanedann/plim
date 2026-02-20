@@ -17,28 +17,13 @@ export function LandingPage() {
       <LandingHeader />
 
       <main>
-        {/* Hero */}
         <HeroSection />
-
-        {/* Onboarding steps */}
         <OnboardingSection />
-
-        {/* Features with swapping animation */}
         <FeaturesShowcase />
-
-        {/* Security */}
         <SecuritySection />
-
-        {/* Testimonials */}
         <TestimonialsSection />
-
-        {/* AI Disclaimer */}
         <AiDisclaimerSection />
-
-        {/* Pricing */}
         <PricingSection />
-
-        {/* Final CTA */}
         <CtaSection />
       </main>
 

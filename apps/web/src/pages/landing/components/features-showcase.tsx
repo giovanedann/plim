@@ -140,9 +140,10 @@ const textVariantsRight: Variants = {
 interface FeatureSectionProps {
   feature: FeatureData
   imagePosition: 'left' | 'right'
+  bg: 'bg-slate-950' | 'bg-background'
 }
 
-function FeatureSection({ feature, imagePosition }: FeatureSectionProps) {
+function FeatureSection({ feature, imagePosition, bg }: FeatureSectionProps) {
   const isImageLeft = imagePosition === 'left'
 
   const imageContent = (
@@ -164,23 +165,23 @@ function FeatureSection({ feature, imagePosition }: FeatureSectionProps) {
       className="flex-1 flex items-center"
     >
       <div className="w-full p-4 md:p-8">
-        <span className="mb-4 inline-block rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+        <span className="mb-4 inline-block rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-amber-400">
           {feature.badge}
         </span>
 
-        <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+        <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
           {feature.headline}
         </h2>
 
-        <p className="mb-6 text-base text-muted-foreground md:text-lg">{feature.description}</p>
+        <p className="mb-6 text-base text-slate-400 md:text-lg">{feature.description}</p>
 
         <ul className="space-y-3">
           {feature.bulletPoints.map((point) => (
             <li key={point} className="flex items-start gap-3">
               <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
-                <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                <Check className="h-3 w-3 text-emerald-400" />
               </div>
-              <span className="text-foreground">{point}</span>
+              <span className="text-slate-300">{point}</span>
             </li>
           ))}
         </ul>
@@ -190,7 +191,7 @@ function FeatureSection({ feature, imagePosition }: FeatureSectionProps) {
 
   return (
     <motion.div
-      className="min-h-screen flex items-center py-16 md:py-0 bg-background"
+      className={`flex min-h-screen items-center py-24 md:py-32 ${bg}`}
       initial="offscreen"
       whileInView="onscreen"
       viewport={{ once: false, amount: 0.4 }}
@@ -229,6 +230,7 @@ export function FeaturesShowcase() {
           key={feature.id}
           feature={feature}
           imagePosition={index % 2 === 0 ? 'left' : 'right'}
+          bg={index % 2 === 0 ? 'bg-slate-950' : 'bg-background'}
         />
       ))}
     </div>

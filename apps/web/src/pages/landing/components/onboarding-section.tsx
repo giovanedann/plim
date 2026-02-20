@@ -31,8 +31,8 @@ const steps: OnboardingStep[] = [
 
 export function OnboardingSection() {
   return (
-    <section className="landing-section relative min-h-screen w-full overflow-hidden bg-slate-900 flex items-center">
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-20">
+    <section className="landing-section flex min-h-screen w-full items-center bg-background py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 md:px-8">
         {/* Header */}
         <div className="mb-16 text-center">
           <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">

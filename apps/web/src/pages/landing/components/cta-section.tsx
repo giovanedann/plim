@@ -7,7 +7,7 @@ export function CtaSection() {
   const user = useAuthStore((state) => state.user)
 
   return (
-    <section className="landing-section flex min-h-[60vh] w-full items-center bg-slate-950 py-16 md:min-h-[70vh] md:py-0">
+    <section className="landing-section flex min-h-screen w-full items-center bg-slate-950 py-24 md:py-32">
       <div className="mx-auto w-full max-w-4xl px-4 text-center md:px-8">
         {/* Headline */}
         <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
