@@ -1,10 +1,18 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { useReferralStats } from '@/hooks/use-referral-stats'
+import { analytics } from '@/lib/analytics'
 import type { ReferralStats } from '@plim/shared'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ReferralSection } from './referral-section'
+
+vi.mock('@/lib/analytics', () => ({
+  analytics: {
+    referralLinkCopied: vi.fn(),
+    referralLinkShared: vi.fn(),
+  },
+}))
 
 vi.mock('@/hooks/use-referral-stats', () => ({
   useReferralStats: vi.fn(),
@@ -124,6 +132,28 @@ describe('ReferralSection', () => {
       expect(writeTextMock).toHaveBeenCalledWith('https://plim.app/ref/joao-123')
       expect(toast.success).toHaveBeenCalledWith('Link copiado!')
     })
+
+    it('fires referralLinkCopied analytics event on copy', async () => {
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        writable: true,
+        configurable: true,
+      })
+
+      vi.mocked(useReferralStats).mockReturnValue({
+        stats: mockStats,
+        isLoading: false,
+        error: null,
+      })
+
+      renderWithTheme(<ReferralSection />)
+
+      const copyButton = screen.getByRole('button', { name: 'Copiar link' })
+      await user.click(copyButton)
+
+      expect(analytics.referralLinkCopied).toHaveBeenCalled()
+    })
   })
 
   describe('share buttons', () => {
@@ -161,6 +191,23 @@ describe('ReferralSection', () => {
         expect.stringContaining(encodeURIComponent('https://plim.app/ref/joao-123')),
         '_blank'
       )
+    })
+
+    it('fires referralLinkShared analytics event with whatsapp method', async () => {
+      vi.mocked(useReferralStats).mockReturnValue({
+        stats: mockStats,
+        isLoading: false,
+        error: null,
+      })
+
+      vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      renderWithTheme(<ReferralSection />)
+
+      const whatsappButton = screen.getByRole('button', { name: /WhatsApp/i })
+      await user.click(whatsappButton)
+
+      expect(analytics.referralLinkShared).toHaveBeenCalledWith('whatsapp')
     })
 
     it('renders Web Share button when navigator.share is available', () => {
@@ -216,6 +263,26 @@ describe('ReferralSection', () => {
         title: 'Plim - Convite',
         text: expect.stringContaining('Plim'),
         url: 'https://plim.app/ref/joao-123',
+      })
+    })
+
+    it('fires referralLinkShared analytics event with native method', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { share: shareMock })
+
+      vi.mocked(useReferralStats).mockReturnValue({
+        stats: mockStats,
+        isLoading: false,
+        error: null,
+      })
+
+      renderWithTheme(<ReferralSection />)
+
+      const shareButton = screen.getByRole('button', { name: /Compartilhar/i })
+      await user.click(shareButton)
+
+      await waitFor(() => {
+        expect(analytics.referralLinkShared).toHaveBeenCalledWith('native')
       })
     })
   })

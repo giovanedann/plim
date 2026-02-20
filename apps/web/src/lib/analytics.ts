@@ -44,4 +44,20 @@ export const analytics = {
   creditCardAdded(): void {
     getPostHog()?.capture('credit_card_added')
   },
+
+  referralLinkViewed(code: string): void {
+    getPostHog()?.capture('referral_link_viewed', { code })
+  },
+
+  referralLinkCopied(): void {
+    getPostHog()?.capture('referral_link_copied')
+  },
+
+  referralLinkShared(method: 'whatsapp' | 'native'): void {
+    getPostHog()?.capture('referral_link_shared', { method })
+  },
+
+  referralClaimed(code: string): void {
+    getPostHog()?.capture('referral_claimed', { code })
+  },
 }

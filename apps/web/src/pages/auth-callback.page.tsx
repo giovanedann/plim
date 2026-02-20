@@ -1,3 +1,4 @@
+import { analytics } from '@/lib/analytics'
 import { isErrorResponse } from '@/lib/api-client'
 import { supabase } from '@/lib/supabase'
 import { referralService } from '@/services/referral.service'
@@ -15,6 +16,7 @@ async function claimPendingReferral(): Promise<void> {
   try {
     const result = await referralService.claimReferral(code)
     if (!isErrorResponse(result)) {
+      analytics.referralClaimed(code)
       toast.success('Voce ganhou 7 dias de Pro gratis!')
     }
   } catch {

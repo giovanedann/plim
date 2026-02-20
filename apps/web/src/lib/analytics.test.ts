@@ -74,6 +74,31 @@ describe('analytics', () => {
     expect(mockCapture).toHaveBeenCalledWith('credit_card_added')
   })
 
+  it('captures referral_link_viewed with code', () => {
+    analytics.referralLinkViewed('abc-123')
+    expect(mockCapture).toHaveBeenCalledWith('referral_link_viewed', { code: 'abc-123' })
+  })
+
+  it('captures referral_link_copied', () => {
+    analytics.referralLinkCopied()
+    expect(mockCapture).toHaveBeenCalledWith('referral_link_copied')
+  })
+
+  it('captures referral_link_shared with whatsapp method', () => {
+    analytics.referralLinkShared('whatsapp')
+    expect(mockCapture).toHaveBeenCalledWith('referral_link_shared', { method: 'whatsapp' })
+  })
+
+  it('captures referral_link_shared with native method', () => {
+    analytics.referralLinkShared('native')
+    expect(mockCapture).toHaveBeenCalledWith('referral_link_shared', { method: 'native' })
+  })
+
+  it('captures referral_claimed with code', () => {
+    analytics.referralClaimed('abc-123')
+    expect(mockCapture).toHaveBeenCalledWith('referral_claimed', { code: 'abc-123' })
+  })
+
   describe('when PostHog is not initialized', () => {
     it('does not throw when getPostHog returns null', () => {
       mockGetPostHog.mockReturnValue(null)
@@ -85,6 +110,10 @@ describe('analytics', () => {
       expect(() => analytics.upgradePageViewed()).not.toThrow()
       expect(() => analytics.paymentInitiated()).not.toThrow()
       expect(() => analytics.paymentCompleted()).not.toThrow()
+      expect(() => analytics.referralLinkViewed('test')).not.toThrow()
+      expect(() => analytics.referralLinkCopied()).not.toThrow()
+      expect(() => analytics.referralLinkShared('whatsapp')).not.toThrow()
+      expect(() => analytics.referralClaimed('test')).not.toThrow()
       expect(mockCapture).not.toHaveBeenCalled()
     })
   })

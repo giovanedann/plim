@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { analytics } from '@/lib/analytics'
 import { isErrorResponse } from '@/lib/api-client'
 import { referralService } from '@/services/referral.service'
 import { useAuthStore } from '@/stores/auth.store'
@@ -48,6 +49,7 @@ export function ReferralLandingPage(): React.ReactElement {
 
   useEffect(() => {
     localStorage.setItem(REFERRAL_STORAGE_KEY, code)
+    analytics.referralLinkViewed(code)
   }, [code])
 
   useEffect(() => {

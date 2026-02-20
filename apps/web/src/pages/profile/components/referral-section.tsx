@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useReferralStats } from '@/hooks/use-referral-stats'
+import { analytics } from '@/lib/analytics'
 
 function ReferralSkeleton(): React.ReactElement {
   return (
@@ -50,6 +51,7 @@ export function ReferralSection(): React.ReactElement {
     try {
       await navigator.clipboard.writeText(stats.referral_url)
       setHasCopied(true)
+      analytics.referralLinkCopied()
       toast.success('Link copiado!')
       setTimeout(() => setHasCopied(false), 2000)
     } catch {
@@ -62,6 +64,7 @@ export function ReferralSection(): React.ReactElement {
 
     const message = `Conhea o Plim! Use meu link e ganhe 7 dias de Pro gratis: ${stats.referral_url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+    analytics.referralLinkShared('whatsapp')
   }
 
   async function handleNativeShare(): Promise<void> {
@@ -73,6 +76,7 @@ export function ReferralSection(): React.ReactElement {
         text: 'Conhea o Plim! Use meu link e ganhe 7 dias de Pro gratis.',
         url: stats.referral_url,
       })
+      analytics.referralLinkShared('native')
     } catch {
       // User cancelled or share failed silently
     }

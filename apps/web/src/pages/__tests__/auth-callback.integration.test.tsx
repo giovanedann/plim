@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/components/theme-provider'
+import { analytics } from '@/lib/analytics'
 import { supabase } from '@/lib/supabase'
 import { referralService } from '@/services/referral.service'
 import { useAuthStore } from '@/stores/auth.store'
@@ -28,6 +29,12 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
     </ThemeProvider>
   )
 }
+
+vi.mock('@/lib/analytics', () => ({
+  analytics: {
+    referralClaimed: vi.fn(),
+  },
+}))
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -191,6 +198,46 @@ describe('AuthCallbackPage Integration', () => {
       await waitFor(() => {
         expect(referralService.claimReferral).toHaveBeenCalledWith('test-referral')
       })
+    })
+
+    it('fires referralClaimed analytics event on successful claim', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createSuccessResponse({ pro_days_granted: 7 })
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(analytics.referralClaimed).toHaveBeenCalledWith('test-referral')
+      })
+    })
+
+    it('does not fire referralClaimed when claim fails', async () => {
+      localStorage.setItem('plim_referral_code', 'test-referral')
+      vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      } as any)
+      vi.mocked(referralService.claimReferral).mockResolvedValue(
+        createErrorResponse('ALREADY_CLAIMED', 'Already claimed')
+      )
+
+      render(<AuthCallbackPage />, { wrapper: TestWrapper })
+
+      useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
+
+      await waitFor(() => {
+        expect(referralService.claimReferral).toHaveBeenCalled()
+      })
+
+      expect(analytics.referralClaimed).not.toHaveBeenCalled()
     })
 
     it('shows success toast on successful claim', async () => {

@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/components/theme-provider'
+import { analytics } from '@/lib/analytics'
 import { referralService } from '@/services/referral.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -14,6 +15,12 @@ vi.mock('@tanstack/react-router', () => ({
   ),
   useParams: () => ({ code: 'test-code' }),
   useNavigate: () => mockNavigate,
+}))
+
+vi.mock('@/lib/analytics', () => ({
+  analytics: {
+    referralLinkViewed: vi.fn(),
+  },
 }))
 
 vi.mock('@/services/referral.service', () => ({
@@ -188,6 +195,20 @@ describe('ReferralLandingPage Integration', () => {
 
       await waitFor(() => {
         expect(localStorage.getItem('plim_referral_code')).toBe('test-code')
+      })
+    })
+  })
+
+  describe('analytics', () => {
+    it('fires referralLinkViewed event with the referral code', async () => {
+      vi.mocked(referralService.validateCode).mockResolvedValue({
+        data: { valid: true, referrer_name: 'Maria' },
+      })
+
+      render(<ReferralLandingPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(analytics.referralLinkViewed).toHaveBeenCalledWith('test-code')
       })
     })
   })
