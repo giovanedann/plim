@@ -8,6 +8,7 @@ import { AvatarUpload } from './components/avatar-upload'
 import { DangerZoneSection } from './components/danger-zone-section'
 import { DataExportSection } from './components/data-export-section'
 import { ProfileForm } from './components/profile-form'
+import { ReferralSection } from './components/referral-section'
 import { useProfilePage } from './use-profile.page'
 
 function ProfileSkeleton() {
@@ -123,6 +124,8 @@ export function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        <ReferralSection />
 
         <DataExportSection />
 
