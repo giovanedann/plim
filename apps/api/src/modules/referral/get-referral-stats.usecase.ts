@@ -1,7 +1,7 @@
 import type { ReferralStats } from '@plim/shared'
 import type { ReferralRepository } from './referral.repository'
 
-const REFERRAL_BASE_URL = 'https://plim.pro/r'
+const REFERRAL_BASE_URL = 'https://plim.app.br/r'
 
 export class GetReferralStatsUseCase {
   constructor(private referralRepository: ReferralRepository) {}

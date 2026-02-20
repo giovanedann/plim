@@ -97,7 +97,7 @@ describe('Referral Integration - Authenticated Routes', () => {
     it('returns 200 with stats for authenticated user', async () => {
       const stats: ReferralStats = {
         referral_code: 'giovane-abc',
-        referral_url: 'https://plim.pro/r/giovane-abc',
+        referral_url: 'https://plim.app.br/r/giovane-abc',
         total_referrals: 3,
         total_pro_days_earned: 21,
         referrals: [

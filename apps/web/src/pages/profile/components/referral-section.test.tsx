@@ -78,7 +78,7 @@ describe('ReferralSection', () => {
 
       renderWithTheme(<ReferralSection />)
 
-      expect(screen.getByText('Erro ao carregar dados de indicacao')).toBeInTheDocument()
+      expect(screen.getByText('Erro ao carregar dados de indicação')).toBeInTheDocument()
     })
   })
 
@@ -92,7 +92,7 @@ describe('ReferralSection', () => {
 
       renderWithTheme(<ReferralSection />)
 
-      const input = screen.getByLabelText('Seu link de indicacao')
+      const input = screen.getByLabelText('Seu link de indicação')
       expect(input).toHaveValue('https://plim.app/ref/joao-123')
     })
 
@@ -298,7 +298,7 @@ describe('ReferralSection', () => {
       renderWithTheme(<ReferralSection />)
 
       expect(screen.getByText('3')).toBeInTheDocument()
-      expect(screen.getByText('Indicacoes')).toBeInTheDocument()
+      expect(screen.getByText('Indicações')).toBeInTheDocument()
     })
 
     it('renders total Pro days earned', () => {
@@ -327,7 +327,7 @@ describe('ReferralSection', () => {
 
       expect(screen.getByText('Maria')).toBeInTheDocument()
       expect(screen.getByText('Carlos')).toBeInTheDocument()
-      expect(screen.getByText('Usuario')).toBeInTheDocument()
+      expect(screen.getByText('Usuário')).toBeInTheDocument()
     })
 
     it('renders formatted dates in pt-BR', () => {
@@ -377,7 +377,7 @@ describe('ReferralSection', () => {
 
       renderWithTheme(<ReferralSection />)
 
-      expect(screen.queryByRole('list', { name: 'Lista de indicacoes' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('list', { name: 'Lista de indicações' })).not.toBeInTheDocument()
     })
 
     it('renders accessible list with aria-label', () => {
@@ -389,7 +389,7 @@ describe('ReferralSection', () => {
 
       renderWithTheme(<ReferralSection />)
 
-      expect(screen.getByRole('list', { name: 'Lista de indicacoes' })).toBeInTheDocument()
+      expect(screen.getByRole('list', { name: 'Lista de indicações' })).toBeInTheDocument()
     })
   })
 
@@ -416,7 +416,7 @@ describe('ReferralSection', () => {
       renderWithTheme(<ReferralSection />)
 
       expect(
-        screen.getByText('Convide amigos e ganhe 7 dias de Pro para cada indicacao')
+        screen.getByText('Convide amigos e ganhe 7 dias de Pro para cada indicação')
       ).toBeInTheDocument()
     })
   })

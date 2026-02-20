@@ -38,7 +38,7 @@ describe('GetReferralStatsUseCase', () => {
     const result = await sut.execute('user-123')
 
     expect(result.referral_code).toBe('giovane')
-    expect(result.referral_url).toBe('https://plim.pro/r/giovane')
+    expect(result.referral_url).toBe('https://plim.app.br/r/giovane')
   })
 
   it('returns correct total referrals count', async () => {
@@ -117,7 +117,7 @@ describe('GetReferralStatsUseCase', () => {
     const result = await sut.execute('user-123')
 
     expect(result.referral_code).toBe('lonely-user')
-    expect(result.referral_url).toBe('https://plim.pro/r/lonely-user')
+    expect(result.referral_url).toBe('https://plim.app.br/r/lonely-user')
     expect(result.total_referrals).toBe(0)
     expect(result.total_pro_days_earned).toBe(0)
     expect(result.referrals).toEqual([])

@@ -62,7 +62,7 @@ export function ReferralSection(): React.ReactElement {
   function handleWhatsAppShare(): void {
     if (!stats?.referral_url) return
 
-    const message = `Conhea o Plim! Use meu link e ganhe 7 dias de Pro gratis: ${stats.referral_url}`
+    const message = `Conhece o Plim? Use meu link e ganhe 7 dias de Pro gratis: ${stats.referral_url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
     analytics.referralLinkShared('whatsapp')
   }
@@ -73,7 +73,7 @@ export function ReferralSection(): React.ReactElement {
     try {
       await navigator.share({
         title: 'Plim - Convite',
-        text: 'Conhea o Plim! Use meu link e ganhe 7 dias de Pro gratis.',
+        text: 'Conhece o Plim? Use meu link e ganhe 7 dias de Pro gratis.',
         url: stats.referral_url,
       })
       analytics.referralLinkShared('native')
@@ -89,18 +89,18 @@ export function ReferralSection(): React.ReactElement {
           <Gift className="h-5 w-5" />
           Indique e Ganhe
         </CardTitle>
-        <CardDescription>Convide amigos e ganhe 7 dias de Pro para cada indicacao</CardDescription>
+        <CardDescription>Convide amigos e ganhe 7 dias de Pro para cada indicação</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <ReferralSkeleton />
         ) : !stats ? (
-          <p className="text-center text-muted-foreground">Erro ao carregar dados de indicacao</p>
+          <p className="text-center text-muted-foreground">Erro ao carregar dados de indicação</p>
         ) : (
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="referral-url">
-                Seu link de indicacao
+                Seu link de indicação
               </label>
               <div className="flex gap-2">
                 <Input
@@ -140,7 +140,7 @@ export function ReferralSection(): React.ReactElement {
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <p className="text-2xl font-bold">{stats.total_referrals}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Indicacoes</p>
+                <p className="text-sm text-muted-foreground">Indicações</p>
               </div>
               <div className="rounded-lg border bg-muted/50 p-4 text-center">
                 <div className="flex items-center justify-center gap-1">
@@ -152,20 +152,20 @@ export function ReferralSection(): React.ReactElement {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-medium">Indicacoes recentes</h4>
+              <h4 className="text-sm font-medium">Indicações recentes</h4>
               {stats.referrals.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Compartilhe seu link e ganhe Pro gratis!
                 </p>
               ) : (
-                <ul className="space-y-2" aria-label="Lista de indicacoes">
+                <ul className="space-y-2" aria-label="Lista de indicações">
                   {stats.referrals.map((referral) => (
                     <li
                       key={referral.created_at}
                       className="flex items-center justify-between rounded-md border px-3 py-2"
                     >
                       <span className="text-sm font-medium">
-                        {referral.referred_name ?? 'Usuario'}
+                        {referral.referred_name ?? 'Usuário'}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {formatDate(referral.created_at)}

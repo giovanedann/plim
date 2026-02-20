@@ -41,9 +41,7 @@ export class ReferralRepository {
 
     const { data: referrals, error } = await this.supabase
       .from('referral')
-      .select(
-        'referred_user_id, pro_days_granted, created_at, profile!referral_referred_user_id_fkey(name)'
-      )
+      .select('referred_user_id, created_at')
       .eq('referrer_user_id', userId)
       .order('created_at', { ascending: false })
 
@@ -57,17 +55,29 @@ export class ReferralRepository {
       }
     }
 
-    const rows = referrals as unknown as Array<{
+    const rows = referrals as Array<{
       referred_user_id: string
-      pro_days_granted: number
       created_at: string
-      profile: { name: string | null } | null
     }>
 
-    const totalProDays = rows.reduce((sum, row) => sum + row.pro_days_granted, 0)
+    const referredUserIds = rows.map((r) => r.referred_user_id)
+
+    const profileMap: Record<string, string | null> = {}
+    if (referredUserIds.length > 0) {
+      const { data: profiles } = await this.supabase
+        .from('profile')
+        .select('user_id, name')
+        .in('user_id', referredUserIds)
+
+      if (profiles) {
+        for (const p of profiles as Array<{ user_id: string; name: string | null }>) {
+          profileMap[p.user_id] = p.name
+        }
+      }
+    }
 
     const referralList: ReferralRow[] = rows.map((row) => ({
-      referred_name: row.profile?.name ?? null,
+      referred_name: profileMap[row.referred_user_id] ?? null,
       created_at: row.created_at,
     }))
 
@@ -75,7 +85,7 @@ export class ReferralRepository {
       referral_code: referralCode,
       referral_url: '',
       total_referrals: rows.length,
-      total_pro_days_earned: totalProDays,
+      total_pro_days_earned: rows.length * 7,
       referrals: referralList,
     }
   }

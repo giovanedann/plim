@@ -58,18 +58,12 @@ describe('ReferralRepository', () => {
   describe('getReferralStats', () => {
     it('returns correct counts and referral list', async () => {
       const referrals = [
-        {
-          referred_user_id: 'ref-1',
-          pro_days_granted: 7,
-          created_at: '2026-01-15T12:00:00.000Z',
-          profile: { name: 'Alice' },
-        },
-        {
-          referred_user_id: 'ref-2',
-          pro_days_granted: 7,
-          created_at: '2026-01-10T12:00:00.000Z',
-          profile: { name: 'Bob' },
-        },
+        { referred_user_id: 'ref-1', created_at: '2026-01-15T12:00:00.000Z' },
+        { referred_user_id: 'ref-2', created_at: '2026-01-10T12:00:00.000Z' },
+      ]
+      const profiles = [
+        { user_id: 'ref-1', name: 'Alice' },
+        { user_id: 'ref-2', name: 'Bob' },
       ]
 
       let fromCallCount = 0
@@ -87,11 +81,18 @@ describe('ReferralRepository', () => {
             }),
           }
         }
+        if (fromCallCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({ data: referrals, error: null }),
+              }),
+            }),
+          }
+        }
         return {
           select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({ data: referrals, error: null }),
-            }),
+            in: vi.fn().mockResolvedValue({ data: profiles, error: null }),
           }),
         }
       })
