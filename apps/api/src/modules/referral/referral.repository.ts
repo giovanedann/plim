@@ -64,10 +64,9 @@ export class ReferralRepository {
 
     const profileMap: Record<string, string | null> = {}
     if (referredUserIds.length > 0) {
-      const { data: profiles } = await this.supabase
-        .from('profile')
-        .select('user_id, name')
-        .in('user_id', referredUserIds)
+      const { data: profiles } = await this.supabase.rpc('get_referred_user_names', {
+        p_referred_user_ids: referredUserIds,
+      })
 
       if (profiles) {
         for (const p of profiles as Array<{ user_id: string; name: string | null }>) {

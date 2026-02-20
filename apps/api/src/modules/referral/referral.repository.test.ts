@@ -81,21 +81,15 @@ describe('ReferralRepository', () => {
             }),
           }
         }
-        if (fromCallCount === 2) {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                order: vi.fn().mockResolvedValue({ data: referrals, error: null }),
-              }),
-            }),
-          }
-        }
         return {
           select: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: referrals, error: null }),
+            }),
           }),
         }
       })
+      mockSupabase.rpc.mockResolvedValue({ data: profiles, error: null })
 
       const result = await sut.getReferralStats('user-123')
 
@@ -106,6 +100,9 @@ describe('ReferralRepository', () => {
         { referred_name: 'Alice', created_at: '2026-01-15T12:00:00.000Z' },
         { referred_name: 'Bob', created_at: '2026-01-10T12:00:00.000Z' },
       ])
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_referred_user_names', {
+        p_referred_user_ids: ['ref-1', 'ref-2'],
+      })
     })
 
     it('returns zero stats for user with no referrals', async () => {
