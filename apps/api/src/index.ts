@@ -12,6 +12,7 @@ import { dashboardController } from './modules/dashboard/dashboard.controller'
 import { expensesRouter } from './modules/expenses/expenses.routes'
 import { paymentRouter, webhookRouter } from './modules/payment/payment.routes'
 import { profileController } from './modules/profile/profile.controller'
+import { referralPublicRouter, referralRouter } from './modules/referral/referral.routes'
 import { salaryController } from './modules/salary/salary.controller'
 import { spendingLimitsController } from './modules/spending-limits/spending-limits.controller'
 import type { Env } from './types'
@@ -59,8 +60,10 @@ api.route('/credit-cards', creditCardsController)
 api.route('/account', accountController)
 api.route('/ai', aiRouter)
 api.route('/payment', paymentRouter)
+api.route('/referral', referralRouter)
 
-// Public webhook routes (no auth, no rate limit)
+// Public routes (no auth, no rate limit)
+app.route('/api/v1/referral', referralPublicRouter)
 app.route('/api/v1/webhooks', webhookRouter)
 
 app.route('/api/v1', api)
