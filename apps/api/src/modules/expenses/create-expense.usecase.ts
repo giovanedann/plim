@@ -14,6 +14,8 @@ export class CreateExpenseUseCase {
         return this.createRecurrent(userId, input)
       case 'installment':
         return this.createInstallments(userId, input)
+      case 'income':
+        return this.createIncome(userId, input)
       default:
         throw new AppError(
           ERROR_CODES.VALIDATION_ERROR,
@@ -155,5 +157,32 @@ export class CreateExpenseUseCase {
     }
 
     return expenses
+  }
+
+  private async createIncome(
+    userId: string,
+    input: Extract<CreateExpense, { type: 'income' }>
+  ): Promise<Expense> {
+    const data: CreateExpenseData = {
+      description: input.description,
+      amount_cents: input.amount_cents,
+      payment_method: input.payment_method ?? 'pix',
+      date: input.date,
+      type: 'income',
+      is_recurrent: false,
+      credit_card_id: input.credit_card_id ?? null,
+    }
+
+    const expense = await this.expensesRepository.create(userId, data)
+
+    if (!expense) {
+      throw new AppError(
+        ERROR_CODES.INTERNAL_ERROR,
+        'Failed to create income',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR
+      )
+    }
+
+    return expense
   }
 }

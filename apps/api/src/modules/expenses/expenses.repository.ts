@@ -11,6 +11,7 @@ const EXPENSE_COLUMNS = `
   amount_cents,
   payment_method,
   date,
+  type,
   is_recurrent,
   recurrence_day,
   recurrence_start,
@@ -25,11 +26,12 @@ const EXPENSE_COLUMNS = `
 `
 
 export interface CreateExpenseData {
-  category_id: string
+  category_id?: string | null
   description: string
   amount_cents: number
   payment_method: string
   date: string
+  type?: 'expense' | 'income'
   is_recurrent?: boolean
   recurrence_day?: number | null
   recurrence_start?: string | null
@@ -94,6 +96,10 @@ export class ExpensesRepository {
       }
     }
 
+    if (filters?.transaction_type) {
+      query = query.eq('type', filters.transaction_type)
+    }
+
     const { data, error } = await query.order('date', { ascending: false })
 
     if (error) return []
@@ -152,6 +158,10 @@ export class ExpensesRepository {
       }
     }
 
+    if (filters?.transaction_type) {
+      query = query.eq('type', filters.transaction_type)
+    }
+
     const { data, error, count } = await query
       .order('date', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -192,11 +202,12 @@ export class ExpensesRepository {
       .from('expense')
       .insert({
         user_id: userId,
-        category_id: input.category_id,
+        category_id: input.category_id ?? null,
         description: input.description,
         amount_cents: input.amount_cents,
         payment_method: input.payment_method,
         date: input.date,
+        type: input.type ?? 'expense',
         is_recurrent: input.is_recurrent ?? false,
         recurrence_day: input.recurrence_day ?? null,
         recurrence_start: input.recurrence_start ?? null,
@@ -219,11 +230,12 @@ export class ExpensesRepository {
   async createMany(userId: string, inputs: CreateExpenseData[]): Promise<Expense[]> {
     const records = inputs.map((input) => ({
       user_id: userId,
-      category_id: input.category_id,
+      category_id: input.category_id ?? null,
       description: input.description,
       amount_cents: input.amount_cents,
       payment_method: input.payment_method,
       date: input.date,
+      type: input.type ?? 'expense',
       is_recurrent: input.is_recurrent ?? false,
       recurrence_day: input.recurrence_day ?? null,
       recurrence_start: input.recurrence_start ?? null,

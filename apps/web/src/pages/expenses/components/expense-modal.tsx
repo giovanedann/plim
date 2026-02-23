@@ -242,7 +242,7 @@ export function ExpenseModal({
           type,
           description: expense.description,
           amount: centsToDecimal(expense.amount_cents).toFixed(2).replace('.', ','),
-          category_id: expense.category_id,
+          category_id: expense.category_id ?? '',
           payment_method: expense.payment_method,
           credit_card_id: expense.credit_card_id ?? '',
           date: expense.date,
@@ -278,16 +278,17 @@ export function ExpenseModal({
     onMutate: async (newExpense) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.all })
 
-      const category = categories.find((c) => c.id === newExpense.category_id)
+      const categoryId = 'category_id' in newExpense ? newExpense.category_id : null
+      const category = categoryId ? categories.find((c) => c.id === categoryId) : undefined
       const creditCard = creditCards.find((c) => c.id === newExpense.credit_card_id)
 
       const change: ExpenseChange = {
         amount_cents: newExpense.amount_cents,
-        category_id: newExpense.category_id,
+        category_id: categoryId,
         category_name: category?.name,
         category_color: category?.color,
         category_icon: category?.icon,
-        payment_method: newExpense.payment_method,
+        payment_method: newExpense.payment_method ?? 'pix',
         credit_card_id: newExpense.credit_card_id,
         credit_card_name: creditCard?.name,
         credit_card_color: creditCard?.color,

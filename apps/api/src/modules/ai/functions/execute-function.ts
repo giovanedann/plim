@@ -450,7 +450,7 @@ function groupExpenses(
 
     switch (groupBy) {
       case 'category':
-        key = expense.category_id
+        key = expense.category_id ?? 'uncategorized'
         break
       case 'payment_method':
         key = expense.payment_method

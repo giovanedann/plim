@@ -271,7 +271,8 @@ export function ExpenseTable({
     deleteInstallmentGroupMutation.isPending ||
     deleteRecurrentGroupMutation.isPending
 
-  const getCategory = (categoryId: string) => {
+  const getCategory = (categoryId: string | null) => {
+    if (!categoryId) return undefined
     return categories.find((c) => c.id === categoryId)
   }
 

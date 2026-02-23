@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   createExpenseSchema,
+  createIncomeSchema,
   expenseFiltersSchema,
+  expenseSchema,
   expenseTypeSchema,
   paginatedExpenseFiltersSchema,
   paymentMethodSchema,
+  transactionTypeSchema,
   updateExpenseSchema,
 } from './expense'
 
@@ -48,6 +51,122 @@ describe('expenseTypeSchema', () => {
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe('Selecione um tipo de despesa válido')
+    }
+  })
+})
+
+describe('transactionTypeSchema', () => {
+  const sut = transactionTypeSchema
+
+  it.each(['expense', 'income'] as const)('accepts valid transaction type: %s', (type) => {
+    const result = sut.safeParse(type)
+
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects invalid transaction type', () => {
+    const result = sut.safeParse('transfer')
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Selecione um tipo de transação válido')
+    }
+  })
+})
+
+describe('expenseSchema', () => {
+  const sut = expenseSchema
+
+  it('accepts expense with type field', () => {
+    const expense = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      user_id: '550e8400-e29b-41d4-a716-446655440001',
+      type: 'expense',
+      category_id: '550e8400-e29b-41d4-a716-446655440002',
+      description: 'Grocery shopping',
+      amount_cents: 5000,
+      payment_method: 'pix',
+      date: '2024-01-15',
+      is_recurrent: false,
+      recurrence_day: null,
+      recurrence_start: null,
+      recurrence_end: null,
+      installment_current: null,
+      installment_total: null,
+      installment_group_id: null,
+      recurrent_group_id: null,
+      credit_card_id: null,
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+    }
+
+    const result = sut.safeParse(expense)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.type).toBe('expense')
+    }
+  })
+
+  it('defaults type to expense when not provided', () => {
+    const expense = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      user_id: '550e8400-e29b-41d4-a716-446655440001',
+      category_id: '550e8400-e29b-41d4-a716-446655440002',
+      description: 'Grocery shopping',
+      amount_cents: 5000,
+      payment_method: 'pix',
+      date: '2024-01-15',
+      is_recurrent: false,
+      recurrence_day: null,
+      recurrence_start: null,
+      recurrence_end: null,
+      installment_current: null,
+      installment_total: null,
+      installment_group_id: null,
+      recurrent_group_id: null,
+      credit_card_id: null,
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+    }
+
+    const result = sut.safeParse(expense)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.type).toBe('expense')
+    }
+  })
+
+  it('accepts income with nullable category_id', () => {
+    const income = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      user_id: '550e8400-e29b-41d4-a716-446655440001',
+      type: 'income',
+      category_id: null,
+      description: 'Salary',
+      amount_cents: 500000,
+      payment_method: 'pix',
+      date: '2024-01-15',
+      is_recurrent: false,
+      recurrence_day: null,
+      recurrence_start: null,
+      recurrence_end: null,
+      installment_current: null,
+      installment_total: null,
+      installment_group_id: null,
+      recurrent_group_id: null,
+      credit_card_id: null,
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+    }
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.type).toBe('income')
+      expect(result.data.category_id).toBeNull()
     }
   })
 })
@@ -317,6 +436,76 @@ describe('createExpenseSchema', () => {
     })
   })
 
+  describe('income', () => {
+    const validIncome = {
+      type: 'income' as const,
+      description: 'Salary payment',
+      amount_cents: 500000,
+      date: '2024-01-15',
+    }
+
+    it('accepts valid income with minimal fields', () => {
+      const result = sut.safeParse(validIncome)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual(validIncome)
+      }
+    })
+
+    it('accepts income with optional payment_method', () => {
+      const income = {
+        ...validIncome,
+        payment_method: 'pix' as const,
+      }
+
+      const result = sut.safeParse(income)
+
+      expect(result.success).toBe(true)
+    })
+
+    it('accepts income with optional credit_card_id', () => {
+      const income = {
+        ...validIncome,
+        credit_card_id: '550e8400-e29b-41d4-a716-446655440001',
+      }
+
+      const result = sut.safeParse(income)
+
+      expect(result.success).toBe(true)
+    })
+
+    it('does not require category_id', () => {
+      const result = sut.safeParse(validIncome)
+
+      expect(result.success).toBe(true)
+    })
+
+    it('rejects income with empty description', () => {
+      const income = { ...validIncome, description: '' }
+
+      const result = sut.safeParse(income)
+
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects income with zero amount', () => {
+      const income = { ...validIncome, amount_cents: 0 }
+
+      const result = sut.safeParse(income)
+
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects income with invalid date', () => {
+      const income = { ...validIncome, date: '15-01-2024' }
+
+      const result = sut.safeParse(income)
+
+      expect(result.success).toBe(false)
+    })
+  })
+
   describe('discriminated union', () => {
     it('rejects expense with invalid type', () => {
       const expense = {
@@ -346,6 +535,80 @@ describe('createExpenseSchema', () => {
 
       expect(result.success).toBe(false)
     })
+  })
+})
+
+describe('createIncomeSchema', () => {
+  const sut = createIncomeSchema
+
+  const validIncome = {
+    type: 'income' as const,
+    description: 'Freelance work',
+    amount_cents: 250000,
+    date: '2024-01-15',
+  }
+
+  it('accepts valid income', () => {
+    const result = sut.safeParse(validIncome)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual(validIncome)
+    }
+  })
+
+  it('accepts income with optional payment_method', () => {
+    const income = { ...validIncome, payment_method: 'pix' as const }
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.payment_method).toBe('pix')
+    }
+  })
+
+  it('accepts income with optional credit_card_id', () => {
+    const income = {
+      ...validIncome,
+      credit_card_id: '550e8400-e29b-41d4-a716-446655440001',
+    }
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects income with wrong type literal', () => {
+    const income = { ...validIncome, type: 'expense' }
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects income without required description', () => {
+    const { description: _, ...income } = validIncome
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects income without required amount_cents', () => {
+    const { amount_cents: _, ...income } = validIncome
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects income without required date', () => {
+    const { date: _, ...income } = validIncome
+
+    const result = sut.safeParse(income)
+
+    expect(result.success).toBe(false)
   })
 })
 
@@ -505,6 +768,30 @@ describe('expenseFiltersSchema', () => {
     expect(result.data?.credit_card_id).toBe('none')
   })
 
+  it('accepts filters with transaction_type expense', () => {
+    const result = sut.safeParse({ transaction_type: 'expense' })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.transaction_type).toBe('expense')
+    }
+  })
+
+  it('accepts filters with transaction_type income', () => {
+    const result = sut.safeParse({ transaction_type: 'income' })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.transaction_type).toBe('income')
+    }
+  })
+
+  it('rejects filters with invalid transaction_type', () => {
+    const result = sut.safeParse({ transaction_type: 'transfer' })
+
+    expect(result.success).toBe(false)
+  })
+
   it('accepts all filters combined', () => {
     const filters = {
       start_date: '2024-01-01',
@@ -513,6 +800,7 @@ describe('expenseFiltersSchema', () => {
       payment_method: 'credit_card' as const,
       expense_type: 'installment' as const,
       credit_card_id: '550e8400-e29b-41d4-a716-446655440001',
+      transaction_type: 'expense' as const,
     }
 
     const result = sut.safeParse(filters)

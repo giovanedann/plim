@@ -21,6 +21,7 @@ export function createMockExpense(overrides: Partial<Expense> = {}): Expense {
   return {
     id: generateId(),
     user_id: '00000000-0000-4000-8000-000000000001',
+    type: 'expense',
     category_id: '00000000-0000-4000-8000-000000000002',
     description: 'Test expense',
     amount_cents: 5000,
