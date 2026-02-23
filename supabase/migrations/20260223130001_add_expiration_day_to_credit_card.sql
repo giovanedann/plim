@@ -10,9 +10,12 @@ ALTER TABLE private.credit_card_data ADD CONSTRAINT credit_card_expiration_day_c
   CHECK (expiration_day IS NULL OR (expiration_day >= 1 AND expiration_day <= 31));
 
 -- ================================================================
--- 2. Recreate view to include new column
+-- 2. Drop and recreate view to include new column
+-- (CREATE OR REPLACE VIEW cannot reorder columns)
 -- ================================================================
-CREATE OR REPLACE VIEW public.credit_card AS
+DROP VIEW IF EXISTS public.credit_card;
+
+CREATE VIEW public.credit_card AS
 SELECT
   id,
   user_id,
@@ -33,6 +36,11 @@ SELECT
   created_at,
   updated_at
 FROM private.credit_card_data;
+
+-- Restore grants (dropped with the view)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.credit_card TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.credit_card TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.credit_card TO service_role;
 
 -- ================================================================
 -- 3. Update INSERT trigger to include expiration_day
@@ -123,3 +131,21 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- ================================================================
+-- 5. Recreate INSTEAD OF triggers (dropped with the view)
+-- ================================================================
+CREATE TRIGGER credit_card_insert
+  INSTEAD OF INSERT ON public.credit_card
+  FOR EACH ROW
+  EXECUTE FUNCTION private.credit_card_insert_trigger();
+
+CREATE TRIGGER credit_card_update
+  INSTEAD OF UPDATE ON public.credit_card
+  FOR EACH ROW
+  EXECUTE FUNCTION private.credit_card_update_trigger();
+
+CREATE TRIGGER credit_card_delete
+  INSTEAD OF DELETE ON public.credit_card
+  FOR EACH ROW
+  EXECUTE FUNCTION private.credit_card_delete_trigger();
