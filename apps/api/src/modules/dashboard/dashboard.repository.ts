@@ -26,6 +26,12 @@ interface ExpenseRow {
   description: string
 }
 
+interface IncomeRow {
+  date: string
+  amount_cents: number
+  description: string
+}
+
 interface ExpenseWithCreditCardRow {
   date: string
   amount_cents: number
@@ -59,6 +65,7 @@ export class DashboardRepository {
         description
       `)
       .eq('user_id', userId)
+      .eq('type', 'expense')
       .gte('date', query.start_date)
       .lte('date', query.end_date)
       .order('date', { ascending: true })
@@ -87,6 +94,21 @@ export class DashboardRepository {
     })
   }
 
+  async getIncomesForPeriod(userId: string, query: DashboardQuery): Promise<IncomeRow[]> {
+    const { data: incomes, error } = await this.supabase
+      .from('expense')
+      .select('date, amount_cents, description')
+      .eq('user_id', userId)
+      .eq('type', 'income')
+      .gte('date', query.start_date)
+      .lte('date', query.end_date)
+      .order('date', { ascending: true })
+
+    if (error || !incomes) return []
+
+    return incomes as IncomeRow[]
+  }
+
   async getSalariesForPeriod(userId: string, query: DashboardQuery): Promise<SalaryRow[]> {
     const { data, error } = await this.supabase
       .from('salary_history')
@@ -112,6 +134,7 @@ export class DashboardRepository {
       .from('expense')
       .select('amount_cents, date')
       .eq('user_id', userId)
+      .eq('type', 'expense')
       .gte('date', currentDate)
       .lte('date', endDate.toISOString().slice(0, 10))
       .order('date', { ascending: true })
@@ -194,11 +217,11 @@ export class DashboardRepository {
     userId: string,
     query: DashboardQuery
   ): Promise<ExpenseWithCreditCardRow[]> {
-    // Query expenses - only credit/debit card payments
     const { data: expenses, error: expensesError } = await this.supabase
       .from('expense')
       .select('date, amount_cents, credit_card_id')
       .eq('user_id', userId)
+      .eq('type', 'expense')
       .in('payment_method', ['credit_card', 'debit_card'])
       .gte('date', query.start_date)
       .lte('date', query.end_date)
@@ -291,7 +314,8 @@ export class DashboardRepository {
     expenses: ExpenseRow[],
     salaries: SalaryRow[],
     startDate: string,
-    endDate: string
+    endDate: string,
+    incomes: IncomeRow[] = []
   ): IncomeExpensesDataPoint[] {
     const result: IncomeExpensesDataPoint[] = []
     const startMonth = startDate.slice(0, 7)
@@ -304,14 +328,22 @@ export class DashboardRepository {
       expensesByMonth.set(month, current + expense.amount_cents)
     }
 
+    const incomesByMonth = new Map<string, number>()
+    for (const income of incomes) {
+      const month = income.date.slice(0, 7)
+      const current = incomesByMonth.get(month) ?? 0
+      incomesByMonth.set(month, current + income.amount_cents)
+    }
+
     let currentMonth = startMonth
     while (currentMonth <= endMonth) {
-      const income = this.getSalaryForMonth(salaries, currentMonth)
+      const salaryIncome = this.getSalaryForMonth(salaries, currentMonth)
+      const transactionIncome = incomesByMonth.get(currentMonth) ?? 0
       const expensesTotal = expensesByMonth.get(currentMonth) ?? 0
 
       result.push({
         month: currentMonth,
-        income,
+        income: salaryIncome + transactionIncome,
         expenses: expensesTotal,
       })
 

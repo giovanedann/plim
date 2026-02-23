@@ -70,8 +70,8 @@ export function DashboardPage() {
     return <DashboardSkeleton />
   }
 
-  const hasSalary = (summary?.total_income ?? 0) > 0
-  const showSalarySection = hasSalary || !isPro
+  const hasIncome = (summary?.total_income ?? 0) > 0
+  const showIncomeSection = hasIncome || !isPro
 
   return (
     <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -84,7 +84,7 @@ export function DashboardPage() {
         <SummaryCards summary={summary} />
       </div>
 
-      {showSalarySection && (
+      {showIncomeSection && (
         <div className="px-4 lg:px-6">
           {isPro ? (
             <IncomeExpensesChart data={incomeVsExpenses!} />
@@ -97,13 +97,13 @@ export function DashboardPage() {
       )}
 
       <div
-        className={`grid min-w-0 gap-4 px-4 lg:px-6 ${showSalarySection ? 'md:grid-cols-2' : ''}`}
+        className={`grid min-w-0 gap-4 px-4 lg:px-6 ${showIncomeSection ? 'md:grid-cols-2' : ''}`}
         data-tutorial-id="dashboard-charts"
       >
         <div className="min-w-0">
           <ExpensesTimelineChart data={expensesTimeline} />
         </div>
-        {showSalarySection && (
+        {showIncomeSection && (
           <div className="min-w-0">
             {isPro ? (
               <SavingsRateChart data={savingsRate!} />
@@ -135,7 +135,7 @@ export function DashboardPage() {
       </div>
 
       <div
-        className={`grid min-w-0 gap-4 px-4 lg:px-6 ${showSalarySection ? 'md:grid-cols-2' : ''}`}
+        className={`grid min-w-0 gap-4 px-4 lg:px-6 ${showIncomeSection ? 'md:grid-cols-2' : ''}`}
       >
         <div className="min-w-0">
           {isPro ? (
@@ -146,7 +146,7 @@ export function DashboardPage() {
             </ProChartLock>
           )}
         </div>
-        {showSalarySection && (
+        {showIncomeSection && (
           <div className="min-w-0">
             {isPro ? (
               <SalaryTimelineChart data={salaryTimeline!} />

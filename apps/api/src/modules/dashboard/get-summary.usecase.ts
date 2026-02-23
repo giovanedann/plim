@@ -5,9 +5,10 @@ export class GetSummaryUseCase {
   constructor(private dashboardRepository: DashboardRepository) {}
 
   async execute(userId: string, query: DashboardQuery): Promise<DashboardSummary> {
-    const [expenses, salaries] = await Promise.all([
+    const [expenses, salaries, incomes] = await Promise.all([
       this.dashboardRepository.getExpensesForPeriod(userId, query),
       this.dashboardRepository.getSalariesForPeriod(userId, query),
+      this.dashboardRepository.getIncomesForPeriod(userId, query),
     ])
 
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount_cents, 0)
@@ -16,7 +17,8 @@ export class GetSummaryUseCase {
       expenses,
       salaries,
       query.start_date,
-      query.end_date
+      query.end_date,
+      incomes
     )
 
     const totalIncome = incomeExpenses.reduce((sum, ie) => sum + ie.income, 0)
@@ -50,9 +52,10 @@ export class GetSummaryUseCase {
     const periodDays = this.daysBetween(query.start_date, query.end_date)
     const previousQuery = this.getPreviousPeriod(query, periodDays)
 
-    const [prevExpenses, prevSalaries] = await Promise.all([
+    const [prevExpenses, prevSalaries, prevIncomes] = await Promise.all([
       this.dashboardRepository.getExpensesForPeriod(userId, previousQuery),
       this.dashboardRepository.getSalariesForPeriod(userId, previousQuery),
+      this.dashboardRepository.getIncomesForPeriod(userId, previousQuery),
     ])
 
     const prevTotalExpenses = prevExpenses.reduce((sum, e) => sum + e.amount_cents, 0)
@@ -61,7 +64,8 @@ export class GetSummaryUseCase {
       prevExpenses,
       prevSalaries,
       previousQuery.start_date,
-      previousQuery.end_date
+      previousQuery.end_date,
+      prevIncomes
     )
 
     const prevTotalIncome = prevIncomeExpenses.reduce((sum, ie) => sum + ie.income, 0)

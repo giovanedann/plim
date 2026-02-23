@@ -151,6 +151,7 @@ describe('DashboardRepository', () => {
       })
       expect(mocks.mockFrom).toHaveBeenCalledWith('expense')
       expect(mocks.mockEq).toHaveBeenCalledWith('user_id', userId)
+      expect(mocks.mockEq).toHaveBeenCalledWith('type', 'expense')
       expect(mocks.mockGte).toHaveBeenCalledWith('date', query.start_date)
       expect(mocks.mockLte).toHaveBeenCalledWith('date', query.end_date)
     })
@@ -193,6 +194,37 @@ describe('DashboardRepository', () => {
       const result = await sut.getExpensesForPeriod(userId, query)
 
       // Assert
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('getIncomesForPeriod', () => {
+    it('returns income transactions for the period', async () => {
+      const userId = 'user-123'
+      const query: DashboardQuery = { start_date: '2024-01-01', end_date: '2024-01-31' }
+      const incomes = [
+        { date: '2024-01-10', amount_cents: 15000, description: 'Freelance' },
+        { date: '2024-01-20', amount_cents: 5000, description: 'Side gig' },
+      ]
+      mocks.mockOrder.mockResolvedValue({ data: incomes, error: null })
+
+      const result = await sut.getIncomesForPeriod(userId, query)
+
+      expect(result).toEqual(incomes)
+      expect(mocks.mockFrom).toHaveBeenCalledWith('expense')
+      expect(mocks.mockEq).toHaveBeenCalledWith('user_id', userId)
+      expect(mocks.mockEq).toHaveBeenCalledWith('type', 'income')
+      expect(mocks.mockGte).toHaveBeenCalledWith('date', query.start_date)
+      expect(mocks.mockLte).toHaveBeenCalledWith('date', query.end_date)
+    })
+
+    it('returns empty array on error', async () => {
+      const userId = 'user-123'
+      const query: DashboardQuery = { start_date: '2024-01-01', end_date: '2024-01-31' }
+      mocks.mockOrder.mockResolvedValue({ data: null, error: new Error('Query failed') })
+
+      const result = await sut.getIncomesForPeriod(userId, query)
+
       expect(result).toEqual([])
     })
   })
@@ -650,6 +682,92 @@ describe('DashboardRepository', () => {
 
       // Assert
       expect(result[0]?.income).toBe(0)
+    })
+
+    it('includes income transactions in monthly income', () => {
+      const expenses: ExpenseRow[] = [
+        createMockExpenseRow({ date: '2024-01-15', amount_cents: 10000 }),
+      ]
+      const salaries: SalaryRow[] = [
+        createMockSalaryRow({ effective_from: '2024-01-01', amount_cents: 500000 }),
+      ]
+      const incomes = [
+        { date: '2024-01-10', amount_cents: 20000, description: 'Freelance' },
+        { date: '2024-01-25', amount_cents: 15000, description: 'Side gig' },
+      ]
+      const startDate = '2024-01-01'
+      const endDate = '2024-01-31'
+
+      const result = sut.calculateMonthlyIncomeExpenses(
+        expenses,
+        salaries,
+        startDate,
+        endDate,
+        incomes
+      )
+
+      expect(result[0]?.income).toBe(535000)
+      expect(result[0]?.expenses).toBe(10000)
+    })
+
+    it('handles income transactions across multiple months', () => {
+      const expenses: ExpenseRow[] = []
+      const salaries: SalaryRow[] = [
+        createMockSalaryRow({ effective_from: '2024-01-01', amount_cents: 500000 }),
+      ]
+      const incomes = [
+        { date: '2024-01-10', amount_cents: 20000, description: 'Jan freelance' },
+        { date: '2024-02-15', amount_cents: 30000, description: 'Feb freelance' },
+      ]
+      const startDate = '2024-01-01'
+      const endDate = '2024-02-28'
+
+      const result = sut.calculateMonthlyIncomeExpenses(
+        expenses,
+        salaries,
+        startDate,
+        endDate,
+        incomes
+      )
+
+      expect(result[0]?.income).toBe(520000)
+      expect(result[1]?.income).toBe(530000)
+    })
+
+    it('works with income transactions and no salary', () => {
+      const expenses: ExpenseRow[] = [
+        createMockExpenseRow({ date: '2024-01-15', amount_cents: 10000 }),
+      ]
+      const salaries: SalaryRow[] = []
+      const incomes = [{ date: '2024-01-20', amount_cents: 50000, description: 'Freelance' }]
+      const startDate = '2024-01-01'
+      const endDate = '2024-01-31'
+
+      const result = sut.calculateMonthlyIncomeExpenses(
+        expenses,
+        salaries,
+        startDate,
+        endDate,
+        incomes
+      )
+
+      expect(result[0]?.income).toBe(50000)
+      expect(result[0]?.expenses).toBe(10000)
+    })
+
+    it('defaults to empty incomes when parameter not provided', () => {
+      const expenses: ExpenseRow[] = [
+        createMockExpenseRow({ date: '2024-01-15', amount_cents: 10000 }),
+      ]
+      const salaries: SalaryRow[] = [
+        createMockSalaryRow({ effective_from: '2024-01-01', amount_cents: 500000 }),
+      ]
+      const startDate = '2024-01-01'
+      const endDate = '2024-01-31'
+
+      const result = sut.calculateMonthlyIncomeExpenses(expenses, salaries, startDate, endDate)
+
+      expect(result[0]?.income).toBe(500000)
     })
   })
 
