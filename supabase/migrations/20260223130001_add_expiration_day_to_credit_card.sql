@@ -15,7 +15,7 @@ ALTER TABLE private.credit_card_data ADD CONSTRAINT credit_card_expiration_day_c
 -- ================================================================
 DROP VIEW IF EXISTS public.credit_card;
 
-CREATE VIEW public.credit_card AS
+CREATE VIEW public.credit_card WITH (security_invoker = true) AS
 SELECT
   id,
   user_id,
