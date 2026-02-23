@@ -45,7 +45,6 @@ import type {
   CreditCard,
   EffectiveSpendingLimit,
   Expense,
-  ExpenseType,
   UpdateExpense,
 } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -56,6 +55,8 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { QuickCategoryModal } from './quick-category-modal'
 
+type TransactionMode = 'expense' | 'income'
+
 interface ExpenseModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -65,14 +66,15 @@ interface ExpenseModalProps {
   expense?: Expense
   spendingLimit?: EffectiveSpendingLimit | null
   totalExpenses?: number
+  initialMode?: TransactionMode
 }
 
 const formSchema = z.object({
-  type: z.enum(['one_time', 'recurrent', 'installment']),
+  type: z.enum(['one_time', 'recurrent', 'installment', 'income']),
   description: z.string().min(1, 'Descrição é obrigatória').max(255),
   amount: z.string().min(1, 'Valor é obrigatório'),
-  category_id: z.string().uuid('Selecione uma categoria'),
-  payment_method: z.enum(['credit_card', 'debit_card', 'pix', 'cash']),
+  category_id: z.string().uuid('Selecione uma categoria').optional().or(z.literal('')),
+  payment_method: z.enum(['credit_card', 'debit_card', 'pix', 'cash']).optional(),
   credit_card_id: z.string().uuid().optional().or(z.literal('')),
   date: z.string().min(1, 'Data é obrigatória'),
   recurrence_day: z.string().optional(),
@@ -111,10 +113,12 @@ export function ExpenseModal({
   expense,
   spendingLimit,
   totalExpenses = 0,
+  initialMode = 'expense',
 }: ExpenseModalProps) {
   const isEditing = !!expense
   const queryClient = useQueryClient()
   const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false)
+  const [transactionMode, setTransactionMode] = useState<TransactionMode>(initialMode)
 
   const {
     register,
@@ -147,6 +151,20 @@ export function ExpenseModal({
   const watchedPaymentMethod = watch('payment_method')
   const watchedInstallmentTotal = watch('installment_total')
   const watchedInstallmentInputMode = watch('installment_input_mode')
+
+  const isIncomeMode = transactionMode === 'income'
+
+  const handleTransactionModeChange = (mode: TransactionMode): void => {
+    setTransactionMode(mode)
+    if (mode === 'income') {
+      setValue('type', 'income')
+      setValue('category_id', '')
+      setValue('payment_method', undefined)
+    } else {
+      setValue('type', 'one_time')
+      setValue('payment_method', 'credit_card')
+    }
+  }
 
   const installmentCalculation = useMemo(() => {
     if (expenseType !== 'installment' || !watchedAmount || !watchedInstallmentTotal) {
@@ -233,10 +251,19 @@ export function ExpenseModal({
 
   useEffect(() => {
     if (open) {
+      setTransactionMode(initialMode)
       if (expense) {
-        let type: ExpenseType = 'one_time'
-        if (expense.is_recurrent) type = 'recurrent'
-        else if (expense.installment_total) type = 'installment'
+        const isIncome = expense.type === 'income'
+        let type: FormData['type'] = 'one_time'
+        if (isIncome) {
+          type = 'income'
+        } else if (expense.is_recurrent) {
+          type = 'recurrent'
+        } else if (expense.installment_total) {
+          type = 'installment'
+        }
+
+        setTransactionMode(isIncome ? 'income' : 'expense')
 
         reset({
           type,
@@ -255,12 +282,13 @@ export function ExpenseModal({
       } else {
         const defaultDate = getDefaultDate(selectedMonth)
         const monthStart = `${selectedMonth}-01`
+        const isIncome = initialMode === 'income'
         reset({
-          type: 'one_time',
+          type: isIncome ? 'income' : 'one_time',
           description: '',
           amount: '',
           category_id: '',
-          payment_method: 'credit_card',
+          payment_method: isIncome ? undefined : 'credit_card',
           credit_card_id: '',
           date: defaultDate,
           recurrence_day: defaultDate.split('-')[2] ?? '1',
@@ -271,7 +299,7 @@ export function ExpenseModal({
         })
       }
     }
-  }, [open, expense, selectedMonth, reset])
+  }, [open, expense, selectedMonth, reset, initialMode])
 
   const createMutation = useMutation({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
@@ -303,18 +331,20 @@ export function ExpenseModal({
       const previousDashboards = applyOptimisticDashboardUpdate(queryClient, change)
       return { previousDashboards }
     },
-    onSuccess: (response) => {
+    onSuccess: (response, variables) => {
       if (!isErrorResponse(response) && 'data' in response && !('meta' in response)) {
         addExpensesToCache(queryClient, response.data)
       }
-      toast.success('Despesa criada com sucesso!')
+      const isIncome = variables.type === 'income'
+      toast.success(isIncome ? 'Receita criada com sucesso!' : 'Despesa criada com sucesso!')
       onOpenChange(false)
     },
-    onError: (error, _variables, context) => {
+    onError: (error, variables, context) => {
       if (context?.previousDashboards) {
         rollbackDashboardUpdate(queryClient, context.previousDashboards)
       }
-      toast.error(error.message || 'Erro ao criar despesa')
+      const isIncome = variables.type === 'income'
+      toast.error(error.message || (isIncome ? 'Erro ao criar receita' : 'Erro ao criar despesa'))
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
@@ -418,7 +448,7 @@ export function ExpenseModal({
       const updateData: UpdateExpense = {
         description: data.description,
         amount_cents: amountCents,
-        category_id: data.category_id,
+        category_id: data.category_id || undefined,
         payment_method: data.payment_method,
         credit_card_id: data.credit_card_id || null,
         date: data.date,
@@ -438,7 +468,20 @@ export function ExpenseModal({
 
     const creditCardId = data.credit_card_id || undefined
 
-    if (data.type === 'one_time') {
+    if (data.type === 'income') {
+      createData = {
+        type: 'income',
+        description: data.description,
+        amount_cents: amountCents,
+        date: data.date,
+        payment_method: data.payment_method || undefined,
+        credit_card_id: creditCardId,
+      }
+    } else if (data.type === 'one_time') {
+      if (!data.category_id || !data.payment_method) {
+        toast.error('Dados inválidos. Verifique os campos.')
+        return
+      }
       createData = {
         type: 'one_time',
         description: data.description,
@@ -449,6 +492,10 @@ export function ExpenseModal({
         credit_card_id: creditCardId,
       }
     } else if (data.type === 'recurrent') {
+      if (!data.category_id || !data.payment_method) {
+        toast.error('Dados inválidos. Verifique os campos.')
+        return
+      }
       createData = {
         type: 'recurrent',
         description: data.description,
@@ -461,6 +508,10 @@ export function ExpenseModal({
         credit_card_id: creditCardId,
       }
     } else {
+      if (!data.category_id || !data.payment_method) {
+        toast.error('Dados inválidos. Verifique os campos.')
+        return
+      }
       const installments = Number.parseInt(data.installment_total || '2', 10)
       const isPerInstallmentMode = data.installment_input_mode === 'per_installment'
       const totalAmountCents = isPerInstallmentMode ? amountCents * installments : amountCents
@@ -492,14 +543,51 @@ export function ExpenseModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Despesa' : 'Nova Despesa'}</DialogTitle>
+          <DialogTitle>
+            {isEditing
+              ? isIncomeMode
+                ? 'Editar Receita'
+                : 'Editar Despesa'
+              : isIncomeMode
+                ? 'Nova Receita'
+                : 'Nova Despesa'}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Edite os dados da despesa abaixo.' : 'Preencha os dados da nova despesa.'}
+            {isEditing
+              ? isIncomeMode
+                ? 'Edite os dados da receita abaixo.'
+                : 'Edite os dados da despesa abaixo.'
+              : isIncomeMode
+                ? 'Preencha os dados da nova receita.'
+                : 'Preencha os dados da nova despesa.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
           {!isEditing && (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={transactionMode === 'expense' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => handleTransactionModeChange('expense')}
+              >
+                Despesa
+              </Button>
+              <Button
+                type="button"
+                variant={transactionMode === 'income' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => handleTransactionModeChange('income')}
+              >
+                Receita
+              </Button>
+            </div>
+          )}
+
+          {!isEditing && !isIncomeMode && (
             <div className="space-y-2">
               <Label>Tipo de Despesa</Label>
               <Controller
@@ -532,7 +620,7 @@ export function ExpenseModal({
             <Label htmlFor="description">Descrição</Label>
             <Input
               id="description"
-              placeholder="Ex: Almoço no restaurante"
+              placeholder={isIncomeMode ? 'Ex: Salário, Freelance' : 'Ex: Almoço no restaurante'}
               {...register('description')}
             />
             {errors.description && (
@@ -540,7 +628,9 @@ export function ExpenseModal({
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div
+            className={`grid grid-cols-1 ${isIncomeMode ? '' : 'sm:grid-cols-2'} gap-3 sm:gap-4`}
+          >
             <div className="space-y-2">
               <Label htmlFor="amount">
                 {expenseType === 'installment' && watchedInstallmentInputMode === 'per_installment'
@@ -551,51 +641,53 @@ export function ExpenseModal({
               {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Controller
-                name="category_id"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      if (value === CREATE_NEW_CATEGORY_VALUE) {
-                        setShowQuickCategoryModal(true)
-                      } else {
-                        field.onChange(value)
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[40vh] overflow-y-auto">
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          <div className="flex items-center gap-2">
-                            <CategoryIcon name={category.icon} color={category.color} size="sm" />
-                            {category.name}
+            {!isIncomeMode && (
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <Controller
+                  name="category_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        if (value === CREATE_NEW_CATEGORY_VALUE) {
+                          setShowQuickCategoryModal(true)
+                        } else {
+                          field.onChange(value)
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[40vh] overflow-y-auto">
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            <div className="flex items-center gap-2">
+                              <CategoryIcon name={category.icon} color={category.color} size="sm" />
+                              {category.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                        <SelectItem value={CREATE_NEW_CATEGORY_VALUE}>
+                          <div className="flex items-center gap-2 text-primary">
+                            <Plus className="h-3 w-3" />
+                            Criar nova categoria
                           </div>
                         </SelectItem>
-                      ))}
-                      <SelectItem value={CREATE_NEW_CATEGORY_VALUE}>
-                        <div className="flex items-center gap-2 text-primary">
-                          <Plus className="h-3 w-3" />
-                          Criar nova categoria
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.category_id && (
+                  <p className="text-sm text-destructive">{errors.category_id.message}</p>
                 )}
-              />
-              {errors.category_id && (
-                <p className="text-sm text-destructive">{errors.category_id.message}</p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
-          {spendingLimitWarning && (
+          {!isIncomeMode && spendingLimitWarning && (
             <div
               className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
                 spendingLimitWarning.severity === 'exceeded'
@@ -612,12 +704,17 @@ export function ExpenseModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label>Forma de Pagamento</Label>
+              <Label>
+                {isIncomeMode ? 'Forma de Recebimento (opcional)' : 'Forma de Pagamento'}
+              </Label>
               <Controller
                 name="payment_method"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={(value) => field.onChange(value || undefined)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -664,7 +761,7 @@ export function ExpenseModal({
                 </div>
               )}
 
-            {expenseType !== 'recurrent' && (
+            {(isIncomeMode || expenseType !== 'recurrent') && (
               <div className="space-y-2">
                 <Label>Data</Label>
                 <Controller
@@ -683,7 +780,7 @@ export function ExpenseModal({
             )}
           </div>
 
-          {expenseType === 'recurrent' && !isEditing && (
+          {!isIncomeMode && expenseType === 'recurrent' && !isEditing && (
             <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Recorrência</h4>
               <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-400">
@@ -737,7 +834,7 @@ export function ExpenseModal({
             </div>
           )}
 
-          {expenseType === 'installment' && !isEditing && (
+          {!isIncomeMode && expenseType === 'installment' && !isEditing && (
             <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
               <h4 className="font-medium">Configuração de Parcelas</h4>
               <div className="space-y-3">
@@ -809,7 +906,13 @@ export function ExpenseModal({
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Salvando...' : isEditing ? 'Salvar' : 'Criar Despesa'}
+              {isPending
+                ? 'Salvando...'
+                : isEditing
+                  ? 'Salvar'
+                  : isIncomeMode
+                    ? 'Criar Receita'
+                    : 'Criar Despesa'}
             </Button>
           </DialogFooter>
         </form>
