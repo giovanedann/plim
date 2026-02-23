@@ -34,7 +34,7 @@ export function buildSystemPrompt(context: UserContext): string {
 
 ## Database Schema
 
-expense: id(uuid), user_id(uuid), description(text), amount_cents(int), category_id(uuid FK→category), credit_card_id(uuid FK→credit_card, nullable), payment_method(enum: credit_card|debit_card|pix|cash), date(date), is_recurrent(bool), recurrence_day(int 1-31), installment_current(int), installment_total(int), recurrent_group_id(uuid)
+expense: id(uuid), user_id(uuid), type(enum: expense|income, default 'expense'), description(text), amount_cents(int), category_id(uuid FK→category, nullable for incomes), credit_card_id(uuid FK→credit_card, nullable), payment_method(enum: credit_card|debit_card|pix|cash), date(date), is_recurrent(bool), recurrence_day(int 1-31), installment_current(int), installment_total(int), recurrent_group_id(uuid)
 category: id(uuid), user_id(uuid, null=system default), name(text), is_active(bool)
 credit_card: id(uuid), user_id(uuid), name(text), flag(text), bank(text), is_active(bool)
 salary_history: id(uuid), user_id(uuid), amount_cents(int), effective_from(date)
@@ -42,8 +42,9 @@ profile: user_id(uuid PK), name(text), email(text), currency(text), locale(text)
 spending_limit: id(uuid), user_id(uuid), year_month(text 'YYYY-MM'), amount_cents(int)
 
 Note: Spending limits carry over. If no limit exists for the current month, use the most recent one.
+Note: The \`type\` column distinguishes expenses from incomes. Always filter by type when the user asks about "gastos"/"despesas" (type='expense') or "receitas"/"rendimentos" (type='income').
 
-Example for "quanto ainda posso gastar?" (remaining budget = limit - spent):
+Example for "quanto ainda posso gastar?" (remaining budget = limit - spent, only expenses):
 \`\`\`sql
 SELECT
   sl.amount_cents as limite,
@@ -55,6 +56,7 @@ FROM (
   ORDER BY year_month DESC LIMIT 1
 ) sl
 LEFT JOIN expense e ON e.user_id = '{userId}'
+  AND e.type = 'expense'
   AND e.date BETWEEN '2026-02-01' AND '2026-02-28'
 GROUP BY sl.amount_cents
 \`\`\`
@@ -70,18 +72,28 @@ GROUP BY sl.amount_cents
 
 Call functions to fulfill requests. Don't explain what you will do - just do it.
 
-**create_expense** - Create expense record
+**create_expense** - Create expense or income record (pass transaction_type='income' for incomes)
 **query_expenses** - Simple filters and totals (auto-projects recurrents)
 **execute_query** - SQL for GROUP BY, aggregations, JOINs
 **forecast_spending** - Future projections
 **show_tutorial** - Show interactive UI tutorial (when user asks HOW to do something)
 
 ### Function Selection
-- User mentions purchase → create_expense
+- User mentions purchase/spending → create_expense (transaction_type='expense')
+- User mentions receiving money, salary, payment, reimbursement, freelance income → create_expense (transaction_type='income')
 - User asks for totals BY something → execute_query (needs GROUP BY)
 - User asks for simple total/filter → query_expenses
 - User asks about future → forecast_spending
 - User asks HOW to do something → show_tutorial
+
+### Income Detection
+When the user mentions receiving money, use create_expense with transaction_type='income':
+- "recebi R$50 do João" → create_expense(transaction_type='income', payment_method='pix')
+- "meu salário de R$5000 caiu" → create_expense(transaction_type='income', payment_method='pix')
+- "ganhei R$200 de freelance" → create_expense(transaction_type='income')
+- "reembolso de R$150" → create_expense(transaction_type='income')
+
+For incomes: category_name is optional, payment_method defaults to 'pix' if not specified.
 
 ### Help Detection (CRITICAL)
 
@@ -101,10 +113,14 @@ When the user asks HOW to do something (asking for guidance), call **show_tutori
 - "adiciona uma despesa de R$50"
 - "quanto gastei esse mês?"
 - "cria uma despesa de almoço"
+- "recebi R$50 do João" → create_expense with transaction_type='income'
+- "meu salário caiu" → create_expense with transaction_type='income'
+- "quanto recebi esse mês?" → query about incomes (type='income')
 
 **Examples:**
 - "Como adiciono uma despesa?" → show_tutorial(tutorial_id: "add-expense")
 - "Adiciona uma despesa de R$50 de almoço" → create_expense(...)
+- "Recebi R$200 do João via pix" → create_expense(transaction_type='income', ...)
 - "Como gerencio categorias?" → show_tutorial(tutorial_id: "manage-categories")
 - "Como configuro um cartão?" → show_tutorial(tutorial_id: "setup-credit-card")
 - "Como vejo meu dashboard?" → show_tutorial(tutorial_id: "view-dashboard")
@@ -121,17 +137,36 @@ When the user asks HOW to do something (asking for guidance), call **show_tutori
 
 ### Query Building (for execute_query)
 Always include \`WHERE user_id = '{userId}'\` - the placeholder is replaced automatically.
+Always filter by \`type\` when context is clear: "gastos"/"despesas" → type='expense', "receitas"/"rendimentos" → type='income'.
 
 **Date ranges:** Use correct last day of month (28/29/30/31). February 2026 = 28 days.
 
-Example for "gastos por cartão" in February:
+Example for "gastos por cartão" in February (only expenses):
 \`\`\`sql
 SELECT cc.name, SUM(e.amount_cents) as total
 FROM expense e
 JOIN credit_card cc ON e.credit_card_id = cc.id
-WHERE e.user_id = '{userId}' AND e.date BETWEEN '2026-02-01' AND '2026-02-28'
+WHERE e.user_id = '{userId}' AND e.type = 'expense' AND e.date BETWEEN '2026-02-01' AND '2026-02-28'
 GROUP BY cc.name
 ORDER BY total DESC
+\`\`\`
+
+Example for "minhas receitas este mês" (only incomes):
+\`\`\`sql
+SELECT description, amount_cents, date
+FROM expense
+WHERE user_id = '{userId}' AND type = 'income' AND date BETWEEN '2026-02-01' AND '2026-02-28'
+ORDER BY date DESC
+\`\`\`
+
+Example for "balanço do mês" (income minus expenses):
+\`\`\`sql
+SELECT
+  COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE 0 END), 0) as receitas,
+  COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_cents ELSE 0 END), 0) as despesas,
+  COALESCE(SUM(CASE WHEN type = 'income' THEN amount_cents ELSE -amount_cents END), 0) as saldo
+FROM expense
+WHERE user_id = '{userId}' AND date BETWEEN '2026-02-01' AND '2026-02-28'
 \`\`\`
 
 ## User's Data

@@ -103,12 +103,27 @@ async function executeCreateExpense(
   }
 
   const params = parseResult.data
+  const isIncome = params.transaction_type === 'income'
 
-  const category = await findCategoryByName(context.supabase, context.userId, params.category_name)
-  if (!category) {
+  let categoryId: string | undefined
+  if (params.category_name) {
+    const category = await findCategoryByName(
+      context.supabase,
+      context.userId,
+      params.category_name
+    )
+    if (!category) {
+      return {
+        success: false,
+        message: `Não encontrei a categoria "${params.category_name}". Você pode criar ela primeiro ou escolher outra.`,
+        actionType: 'error',
+      }
+    }
+    categoryId = category.id
+  } else if (!isIncome) {
     return {
       success: false,
-      message: `Não encontrei a categoria "${params.category_name}". Você pode criar ela primeiro ou escolher outra.`,
+      message: 'Categoria é obrigatória para despesas. Qual categoria deseja usar?',
       actionType: 'error',
     }
   }
@@ -132,10 +147,19 @@ async function executeCreateExpense(
 
   let createExpenseInput: CreateExpense
 
-  if (params.installment_total && params.installment_total >= 2) {
+  if (isIncome) {
+    createExpenseInput = {
+      type: 'income',
+      description: params.description,
+      amount_cents: params.amount_cents,
+      date: params.date,
+      payment_method: params.payment_method,
+      credit_card_id: creditCardId,
+    }
+  } else if (params.installment_total && params.installment_total >= 2) {
     createExpenseInput = {
       type: 'installment',
-      category_id: category.id,
+      category_id: categoryId!,
       description: params.description,
       amount_cents: params.amount_cents,
       payment_method: params.payment_method,
@@ -146,7 +170,7 @@ async function executeCreateExpense(
   } else if (params.is_recurrent && params.recurrence_day) {
     createExpenseInput = {
       type: 'recurrent',
-      category_id: category.id,
+      category_id: categoryId!,
       description: params.description,
       amount_cents: params.amount_cents,
       payment_method: params.payment_method,
@@ -157,7 +181,7 @@ async function executeCreateExpense(
   } else {
     createExpenseInput = {
       type: 'one_time',
-      category_id: category.id,
+      category_id: categoryId!,
       description: params.description,
       amount_cents: params.amount_cents,
       payment_method: params.payment_method,
@@ -172,17 +196,20 @@ async function executeCreateExpense(
     const expense = expenses[0]
 
     const formattedAmount = formatCurrency(params.amount_cents)
+    const label = isIncome ? 'Receita' : 'Despesa'
     let message: string
 
-    if (params.installment_total && params.installment_total >= 2) {
+    if (isIncome) {
+      message = `Receita registrada: ${params.description} de ${formattedAmount}`
+    } else if (params.installment_total && params.installment_total >= 2) {
       const installmentAmount = formatCurrency(
         Math.ceil(params.amount_cents / params.installment_total)
       )
-      message = `Despesa criada: ${params.description} de ${formattedAmount} em ${params.installment_total}x de ${installmentAmount}`
+      message = `${label} criada: ${params.description} de ${formattedAmount} em ${params.installment_total}x de ${installmentAmount}`
     } else if (params.is_recurrent) {
-      message = `Despesa recorrente criada: ${params.description} de ${formattedAmount} todo dia ${params.recurrence_day}`
+      message = `${label} recorrente criada: ${params.description} de ${formattedAmount} todo dia ${params.recurrence_day}`
     } else {
-      message = `Despesa criada: ${params.description} de ${formattedAmount}`
+      message = `${label} criada: ${params.description} de ${formattedAmount}`
     }
 
     return {
@@ -194,7 +221,7 @@ async function executeCreateExpense(
   } catch (_error) {
     return {
       success: false,
-      message: 'Não consegui criar a despesa. Tente novamente.',
+      message: `Não consegui criar a ${isIncome ? 'receita' : 'despesa'}. Tente novamente.`,
       actionType: 'error',
     }
   }

@@ -68,17 +68,18 @@ export const aiChatResponseSchema = z.object({
 
 // Function parameter schemas for Gemini function calling
 
-// Create expense function parameters
+// Create expense/income function parameters
 export const createExpenseFunctionParamsSchema = z.object({
   description: z.string().min(1).max(255),
   amount_cents: z.number().int().positive(),
-  category_name: z.string().min(1),
+  category_name: z.string().min(1).optional(),
   payment_method: z.enum(['credit_card', 'debit_card', 'pix', 'cash']),
   date: z.string(),
   credit_card_name: z.string().optional(),
   installment_total: z.number().int().min(2).max(48).optional(),
   is_recurrent: z.boolean().optional(),
   recurrence_day: z.number().int().min(1).max(31).optional(),
+  transaction_type: z.enum(['expense', 'income']).default('expense'),
 })
 
 // Query expenses function parameters
