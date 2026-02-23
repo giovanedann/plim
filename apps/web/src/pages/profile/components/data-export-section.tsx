@@ -59,7 +59,7 @@ export function DataExportSection() {
       </CardHeader>
       <CardContent className="space-y-2">
         <ExportButton table="profile" label="Exportar Perfil" />
-        <ExportButton table="expenses" label="Exportar Despesas" />
+        <ExportButton table="expenses" label="Exportar Transações" />
         <ExportButton table="categories" label="Exportar Categorias" />
         <ExportButton table="credit-cards" label="Exportar Cartões" />
         <ExportButton table="salary-history" label="Exportar Histórico de Salário" />

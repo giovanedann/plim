@@ -174,7 +174,7 @@ describe('AppLayout', () => {
         </AppLayout>
       )
 
-      expect(screen.getByText('Despesas')).toBeInTheDocument()
+      expect(screen.getByText('Transações')).toBeInTheDocument()
     })
 
     it('displays no title for unknown routes', () => {

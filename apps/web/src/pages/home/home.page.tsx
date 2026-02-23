@@ -13,10 +13,10 @@ const navCards = [
     description: 'Visao geral',
   },
   {
-    title: 'Despesas',
+    title: 'Transações',
     url: '/expenses',
     icon: Receipt,
-    description: 'Suas despesas',
+    description: 'Suas transações',
   },
   {
     title: 'Categorias',

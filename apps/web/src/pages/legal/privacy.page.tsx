@@ -41,7 +41,7 @@ export function PrivacyPage() {
 
           <h3 className="mt-6 text-lg font-medium">2.2 Dados Financeiros</h3>
           <ul className="mt-4 list-disc space-y-2 pl-6 text-muted-foreground">
-            <li>Despesas e suas descrições</li>
+            <li>Transações e suas descrições</li>
             <li>Informações de salários</li>
             <li>Dados de cartões de crédito (nome do cartão e limite)</li>
             <li>Categorias de gastos personalizadas</li>

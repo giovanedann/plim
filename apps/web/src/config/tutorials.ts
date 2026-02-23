@@ -8,8 +8,8 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         elementId: 'sidebar-nav-expenses',
-        title: 'Página de Despesas',
-        description: 'Clique em "Despesas" no menu lateral para acessar a página de despesas.',
+        title: 'Página de Transações',
+        description: 'Clique em "Transações" no menu lateral para acessar a página de transações.',
         action: 'navigate',
         navigateTo: '/expenses',
       },

@@ -14,7 +14,7 @@ import { SiteHeader } from './site-header'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/expenses': 'Despesas',
+  '/expenses': 'Transações',
 }
 
 interface AppLayoutProps {

@@ -152,7 +152,7 @@ describe('PrivacyPage Integration', () => {
       render(<PrivacyPage />, { wrapper: TestWrapper })
 
       expect(screen.getByText(/2.2 Dados Financeiros/i)).toBeInTheDocument()
-      expect(screen.getByText(/Despesas e suas descrições/i)).toBeInTheDocument()
+      expect(screen.getByText(/Transações e suas descrições/i)).toBeInTheDocument()
       expect(screen.getByText(/Informações de salários/i)).toBeInTheDocument()
     })
 

@@ -98,7 +98,7 @@ describe('Sidebar Integration', () => {
       render(<TestLayout />)
 
       expect(await screen.findByRole('link', { name: /dashboard/i })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: /despesas/i })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /transações/i })).toBeInTheDocument()
       expect(screen.getByRole('link', { name: /categorias/i })).toBeInTheDocument()
       expect(screen.getByRole('link', { name: /cartões/i })).toBeInTheDocument()
     })
@@ -116,7 +116,7 @@ describe('Sidebar Integration', () => {
       const dashboardLink = await screen.findByRole('link', { name: /dashboard/i })
       expect(dashboardLink).toHaveAttribute('href', '/dashboard')
 
-      const expensesLink = screen.getByRole('link', { name: /despesas/i })
+      const expensesLink = screen.getByRole('link', { name: /transações/i })
       expect(expensesLink).toHaveAttribute('href', '/expenses')
     })
   })

@@ -54,7 +54,7 @@ const navigation = [
     tutorialId: 'sidebar-nav-dashboard',
   },
   {
-    title: 'Despesas',
+    title: 'Transações',
     url: '/expenses',
     icon: Receipt,
     tutorialId: 'sidebar-nav-expenses',
