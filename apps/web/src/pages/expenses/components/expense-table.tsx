@@ -37,7 +37,13 @@ import { queryKeys } from '@/lib/query-config'
 import { expenseService } from '@/services/expense.service'
 import { useUIStore } from '@/stores'
 import { formatBRL } from '@plim/shared'
-import type { Category, CreditCard, EffectiveSpendingLimit, Expense } from '@plim/shared'
+import type {
+  Category,
+  CreditCard,
+  EffectiveSpendingLimit,
+  Expense,
+  TransactionType,
+} from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -62,9 +68,18 @@ const PAYMENT_METHOD_CONFIG: Record<string, { label: string; className: string }
   cash: { label: 'Dinheiro', className: 'border-muted-foreground/50 text-muted-foreground' },
 }
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`)
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
+
+function formatSignedAmount(amountCents: number, type: TransactionType): string {
+  const formatted = formatBRL(amountCents)
+  return type === 'income' ? `+ ${formatted}` : `- ${formatted}`
+}
+
+function getAmountClassName(type: TransactionType): string {
+  return type === 'income' ? 'text-emerald-500' : 'text-red-500'
 }
 
 export function ExpenseTable({
@@ -307,9 +322,11 @@ export function ExpenseTable({
   if (expenses.length === 0) {
     return (
       <div className="rounded-md border mb-20 p-8 text-center">
-        <p className="text-muted-foreground">Nenhuma despesa encontrada para este mês.</p>
+        <p className="text-muted-foreground">
+          Nenhuma despesa ou receita encontrada para este mês.
+        </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Clique em &quot;Nova Despesa&quot; para adicionar sua primeira despesa.
+          Clique em &quot;Nova Despesa&quot; para adicionar sua primeira despesa ou receita.
         </p>
       </div>
     )
@@ -364,26 +381,34 @@ export function ExpenseTable({
                     </div>
                   </TableCell>
                   <TableCell className="py-2 px-4">
-                    <Badge
-                      variant="secondary"
-                      className="gap-1.5"
-                      style={{
-                        backgroundColor: category?.color ? `${category.color}20` : undefined,
-                        borderColor: category?.color ? `${category.color}50` : undefined,
-                        borderWidth: '1px',
-                      }}
-                    >
-                      <CategoryIcon name={category?.icon} color={category?.color} size="sm" />
-                      {category?.name ?? 'Sem categoria'}
-                    </Badge>
+                    {expense.type === 'income' ? (
+                      <Badge variant="outline" className="border-emerald-500/50 text-emerald-500">
+                        Receita
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="gap-1.5"
+                        style={{
+                          backgroundColor: category?.color ? `${category.color}20` : undefined,
+                          borderColor: category?.color ? `${category.color}50` : undefined,
+                          borderWidth: '1px',
+                        }}
+                      >
+                        <CategoryIcon name={category?.icon} color={category?.color} size="sm" />
+                        {category?.name ?? 'Sem categoria'}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="py-2 px-4">
                     <Badge variant="outline" className={paymentConfig?.className}>
                       {paymentConfig?.label ?? expense.payment_method}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-2 px-4 text-right font-medium">
-                    {hideValues ? '••••••' : formatBRL(expense.amount_cents)}
+                  <TableCell
+                    className={`py-2 px-4 text-right font-medium ${hideValues ? '' : getAmountClassName(expense.type)}`}
+                  >
+                    {hideValues ? '••••••' : formatSignedAmount(expense.amount_cents, expense.type)}
                   </TableCell>
                   <TableCell className="py-2 px-4">
                     <DropdownMenu>

@@ -1,4 +1,4 @@
-import type { ExpenseType, PaymentMethod } from '../schemas'
+import type { ExpenseType, PaymentMethod, TransactionType } from '../schemas'
 
 export { PLAN_LIMITS } from './limits'
 export type { PlanTier, TierLimits } from './limits'
@@ -25,4 +25,14 @@ export const EXPENSE_TYPES: readonly ExpenseTypeOption[] = [
   { value: 'one_time', label: 'Única', description: 'Despesa pontual' },
   { value: 'recurrent', label: 'Recorrente', description: 'Repete todo mês' },
   { value: 'installment', label: 'Parcelada', description: 'Dividida em parcelas' },
+] as const
+
+export interface TransactionTypeOption {
+  value: TransactionType
+  label: string
+}
+
+export const TRANSACTION_TYPES: readonly TransactionTypeOption[] = [
+  { value: 'expense', label: 'Despesa' },
+  { value: 'income', label: 'Receita' },
 ] as const
