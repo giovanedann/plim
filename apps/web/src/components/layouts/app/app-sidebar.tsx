@@ -32,6 +32,7 @@ import {
   CreditCard,
   Crown,
   Download,
+  Home,
   LayoutDashboard,
   LogOut,
   Receipt,
@@ -40,6 +41,12 @@ import {
 } from 'lucide-react'
 
 const navigation = [
+  {
+    title: 'Home',
+    url: '/home',
+    icon: Home,
+    tutorialId: 'sidebar-nav-home',
+  },
   {
     title: 'Dashboard',
     url: '/dashboard',
