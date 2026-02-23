@@ -61,6 +61,7 @@ export const creditCardSchema = z.object({
     .length(4, 'Deve ter exatamente 4 dígitos')
     .regex(/^\d{4}$/, 'Deve conter apenas números')
     .nullable(),
+  expiration_day: z.number().int().min(1).max(31).nullable(),
   is_active: z.boolean(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -76,6 +77,7 @@ export const createCreditCardSchema = z.object({
     .length(4, 'Deve ter exatamente 4 dígitos')
     .regex(/^\d{4}$/, 'Deve conter apenas números')
     .optional(),
+  expiration_day: z.number().int().min(1).max(31).optional(),
 })
 
 export const updateCreditCardSchema = z.object({
@@ -93,6 +95,7 @@ export const updateCreditCardSchema = z.object({
     .regex(/^\d{4}$/, 'Deve conter apenas números')
     .nullable()
     .optional(),
+  expiration_day: z.number().int().min(1).max(31).nullable().optional(),
   is_active: z.boolean().optional(),
 })
 

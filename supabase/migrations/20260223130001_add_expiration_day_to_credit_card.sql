@@ -1,0 +1,125 @@
+-- Migration: Add expiration_day column to credit_card
+-- Tracks the day of the month when the credit card invoice/bill is due (1-31)
+
+-- ================================================================
+-- 1. Add column to base table with constraint
+-- ================================================================
+ALTER TABLE private.credit_card_data ADD COLUMN expiration_day INTEGER;
+
+ALTER TABLE private.credit_card_data ADD CONSTRAINT credit_card_expiration_day_check
+  CHECK (expiration_day IS NULL OR (expiration_day >= 1 AND expiration_day <= 31));
+
+-- ================================================================
+-- 2. Recreate view to include new column
+-- ================================================================
+CREATE OR REPLACE VIEW public.credit_card AS
+SELECT
+  id,
+  user_id,
+  name,
+  color,
+  flag,
+  bank,
+  CASE
+    WHEN last_4_digits_encrypted IS NOT NULL THEN
+      pgp_sym_decrypt(
+        last_4_digits_encrypted,
+        private.get_encryption_key()
+      )
+    ELSE NULL
+  END AS last_4_digits,
+  expiration_day,
+  is_active,
+  created_at,
+  updated_at
+FROM private.credit_card_data;
+
+-- ================================================================
+-- 3. Update INSERT trigger to include expiration_day
+-- ================================================================
+CREATE OR REPLACE FUNCTION private.credit_card_insert_trigger()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = private, public, extensions
+AS $$
+DECLARE
+  new_id UUID;
+BEGIN
+  INSERT INTO private.credit_card_data (
+    id,
+    user_id,
+    name,
+    color,
+    flag,
+    bank,
+    last_4_digits_encrypted,
+    expiration_day,
+    is_active,
+    created_at,
+    updated_at
+  ) VALUES (
+    COALESCE(NEW.id, gen_random_uuid()),
+    NEW.user_id,
+    NEW.name,
+    NEW.color,
+    NEW.flag,
+    NEW.bank,
+    CASE
+      WHEN NEW.last_4_digits IS NOT NULL AND NEW.last_4_digits != '' THEN
+        pgp_sym_encrypt(
+          NEW.last_4_digits,
+          private.get_encryption_key(),
+          'compress-algo=1, cipher-algo=aes256'
+        )
+      ELSE NULL
+    END,
+    NEW.expiration_day,
+    COALESCE(NEW.is_active, TRUE),
+    COALESCE(NEW.created_at, NOW()),
+    COALESCE(NEW.updated_at, NOW())
+  )
+  RETURNING id INTO new_id;
+
+  NEW.id := new_id;
+  RETURN NEW;
+END;
+$$;
+
+-- ================================================================
+-- 4. Update UPDATE trigger to include expiration_day
+-- ================================================================
+CREATE OR REPLACE FUNCTION private.credit_card_update_trigger()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = private, public, extensions
+AS $$
+BEGIN
+  UPDATE private.credit_card_data
+  SET
+    name = COALESCE(NEW.name, name),
+    color = COALESCE(NEW.color, color),
+    flag = COALESCE(NEW.flag, flag),
+    bank = COALESCE(NEW.bank, bank),
+    last_4_digits_encrypted = CASE
+      WHEN NEW.last_4_digits IS DISTINCT FROM OLD.last_4_digits THEN
+        CASE
+          WHEN NEW.last_4_digits IS NOT NULL AND NEW.last_4_digits != '' THEN
+            pgp_sym_encrypt(
+              NEW.last_4_digits,
+              private.get_encryption_key(),
+              'compress-algo=1, cipher-algo=aes256'
+            )
+          ELSE NULL
+        END
+      ELSE last_4_digits_encrypted
+    END,
+    expiration_day = COALESCE(NEW.expiration_day, expiration_day),
+    is_active = COALESCE(NEW.is_active, is_active),
+    updated_at = NOW()
+  WHERE id = OLD.id;
+
+  RETURN NEW;
+END;
+$$;

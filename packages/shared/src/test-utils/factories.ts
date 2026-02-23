@@ -81,6 +81,7 @@ export function createMockCreditCard(overrides: Partial<CreditCard> = {}): Credi
     flag: 'visa',
     bank: 'nubank',
     last_4_digits: '1234',
+    expiration_day: null,
     is_active: true,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),

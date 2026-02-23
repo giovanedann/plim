@@ -83,6 +83,7 @@ export function CreditCardModal({
   const [flag, setFlag] = useState<CardFlag>('visa')
   const [bank, setBank] = useState<CardBank>('nubank')
   const [last4Digits, setLast4Digits] = useState('')
+  const [expirationDay, setExpirationDay] = useState('')
 
   const isEditing = !!creditCard
 
@@ -93,12 +94,14 @@ export function CreditCardModal({
       setFlag(creditCard.flag)
       setBank(creditCard.bank)
       setLast4Digits(creditCard.last_4_digits || '')
+      setExpirationDay(creditCard.expiration_day?.toString() || '')
     } else {
       setName('')
       setColor('black')
       setFlag('visa')
       setBank('nubank')
       setLast4Digits('')
+      setExpirationDay('')
     }
   }, [creditCard])
 
@@ -107,18 +110,28 @@ export function CreditCardModal({
 
     if (!name.trim()) return
 
+    const parsedDay = expirationDay ? Number.parseInt(expirationDay, 10) : undefined
     await onSubmit({
       name: name.trim(),
       color,
       flag,
       bank,
       last_4_digits: last4Digits || undefined,
+      expiration_day: parsedDay && parsedDay >= 1 && parsedDay <= 31 ? parsedDay : undefined,
     })
   }
 
   const handleLast4DigitsChange = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 4)
     setLast4Digits(digits)
+  }
+
+  const handleExpirationDayChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 2)
+    const num = Number.parseInt(digits, 10)
+    if (digits === '' || (num >= 0 && num <= 31)) {
+      setExpirationDay(digits)
+    }
   }
 
   return (
@@ -224,20 +237,34 @@ export function CreditCardModal({
               </div>
             </div>
 
-            {/* Last 4 Digits */}
-            <div className="space-y-2">
-              <Label htmlFor="last4">Últimos 4 dígitos (opcional)</Label>
-              <Input
-                id="last4"
-                value={last4Digits}
-                onChange={(e) => handleLast4DigitsChange(e.target.value)}
-                placeholder="1234"
-                maxLength={4}
-                inputMode="numeric"
-              />
-              <p className="text-xs text-muted-foreground">
-                Os dígitos são criptografados para sua segurança.
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Last 4 Digits */}
+              <div className="space-y-2">
+                <Label htmlFor="last4">Últimos 4 dígitos (opcional)</Label>
+                <Input
+                  id="last4"
+                  value={last4Digits}
+                  onChange={(e) => handleLast4DigitsChange(e.target.value)}
+                  placeholder="1234"
+                  maxLength={4}
+                  inputMode="numeric"
+                />
+                <p className="text-xs text-muted-foreground">Criptografados para sua segurança.</p>
+              </div>
+
+              {/* Expiration Day */}
+              <div className="space-y-2">
+                <Label htmlFor="expirationDay">Dia de vencimento (opcional)</Label>
+                <Input
+                  id="expirationDay"
+                  value={expirationDay}
+                  onChange={(e) => handleExpirationDayChange(e.target.value)}
+                  placeholder="15"
+                  maxLength={2}
+                  inputMode="numeric"
+                />
+                <p className="text-xs text-muted-foreground">Dia do mês que a fatura vence.</p>
+              </div>
             </div>
           </div>
 
