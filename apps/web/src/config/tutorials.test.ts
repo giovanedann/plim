@@ -63,7 +63,7 @@ describe('tutorials config', () => {
     const tutorial = getTutorialConfig('add-expense')
     expect(tutorial).toBeDefined()
     expect(tutorial?.id).toBe('add-expense')
-    expect(tutorial?.title).toBe('Como adicionar uma despesa')
+    expect(tutorial?.title).toBe('Como adicionar uma transação')
   })
 
   it('getTutorialConfig returns undefined for unknown ID', () => {
