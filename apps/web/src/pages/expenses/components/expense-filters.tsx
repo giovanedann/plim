@@ -30,8 +30,6 @@ interface ExpenseFiltersProps {
   totalExpenses?: number
 }
 
-type TransactionMode = 'expense' | 'income'
-
 export function ExpenseFilters({
   filters,
   onFiltersChange,
@@ -42,13 +40,7 @@ export function ExpenseFilters({
   totalExpenses,
 }: ExpenseFiltersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<TransactionMode>('expense')
   const { hideValues, toggleHideValues } = useUIStore()
-
-  const openModal = (mode: TransactionMode): void => {
-    setModalMode(mode)
-    setIsModalOpen(true)
-  }
 
   const handleCategoryChange = (value: string) => {
     onFiltersChange({
@@ -218,20 +210,14 @@ export function ExpenseFilters({
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={() => openModal('income')} variant="outline" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Receita
-            </Button>
-            <Button
-              onClick={() => openModal('expense')}
-              className="gap-2"
-              data-tutorial-id="expense-add-button"
-            >
-              <Plus className="h-4 w-4" />
-              Nova Despesa
-            </Button>
-          </div>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="gap-2"
+            data-tutorial-id="expense-add-button"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Transação
+          </Button>
         </div>
       </CardContent>
 
@@ -243,7 +229,6 @@ export function ExpenseFilters({
         selectedMonth={selectedMonth}
         spendingLimit={spendingLimit}
         totalExpenses={totalExpenses}
-        initialMode={modalMode}
       />
     </Card>
   )

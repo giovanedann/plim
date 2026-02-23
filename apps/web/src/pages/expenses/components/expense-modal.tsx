@@ -544,22 +544,14 @@ export function ExpenseModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing
-              ? isIncomeMode
-                ? 'Editar Receita'
-                : 'Editar Despesa'
-              : isIncomeMode
-                ? 'Nova Receita'
-                : 'Nova Despesa'}
+            {isEditing ? (isIncomeMode ? 'Editar Receita' : 'Editar Despesa') : 'Nova Transação'}
           </DialogTitle>
           <DialogDescription>
             {isEditing
               ? isIncomeMode
                 ? 'Edite os dados da receita abaixo.'
                 : 'Edite os dados da despesa abaixo.'
-              : isIncomeMode
-                ? 'Preencha os dados da nova receita.'
-                : 'Preencha os dados da nova despesa.'}
+              : 'Preencha os dados da nova transação.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -704,9 +696,7 @@ export function ExpenseModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label>
-                {isIncomeMode ? 'Forma de Recebimento (opcional)' : 'Forma de Pagamento'}
-              </Label>
+              <Label>{isIncomeMode ? 'Recebimento (opcional)' : 'Forma de Pagamento'}</Label>
               <Controller
                 name="payment_method"
                 control={control}

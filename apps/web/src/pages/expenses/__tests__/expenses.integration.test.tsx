@@ -85,7 +85,7 @@ describe('ExpensesPage Integration', () => {
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText(/Nenhuma despesa encontrada/i)).toBeInTheDocument()
+        expect(screen.getByText(/Nenhuma despesa ou receita encontrada/i)).toBeInTheDocument()
       })
     })
 
@@ -168,7 +168,7 @@ describe('ExpensesPage Integration', () => {
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('Nova Despesa')).toBeInTheDocument()
+        expect(screen.getByText('Nova Transação')).toBeInTheDocument()
       })
     })
 
