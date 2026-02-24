@@ -45,7 +45,7 @@ function ChangeIndicator({ value }: { value: number }) {
 export function SummaryCards({ summary }: SummaryCardsProps) {
   if (!summary) return null
 
-  const hasSalary = summary.total_income > 0
+  const hasIncome = summary.total_income > 0
 
   const cards = [
     {
@@ -54,7 +54,7 @@ export function SummaryCards({ summary }: SummaryCardsProps) {
       change: summary.comparison.income_change_percent,
       icon: TrendingUp,
       iconClass: 'text-emerald-500',
-      show: hasSalary,
+      show: hasIncome,
     },
     {
       title: 'Despesas',
@@ -71,14 +71,14 @@ export function SummaryCards({ summary }: SummaryCardsProps) {
       change: summary.comparison.balance_change_percent,
       icon: Wallet,
       iconClass: summary.balance >= 0 ? 'text-emerald-500' : 'text-red-500',
-      show: hasSalary,
+      show: hasIncome,
     },
     {
       title: 'Taxa de Economia',
       value: `${summary.savings_rate.toFixed(1)}%`,
       icon: PiggyBank,
       iconClass: summary.savings_rate > 0 ? 'text-emerald-500' : 'text-amber-500',
-      show: hasSalary,
+      show: hasIncome,
     },
   ].filter((card) => card.show)
 

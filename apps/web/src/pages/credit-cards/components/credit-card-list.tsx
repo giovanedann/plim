@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { CreditCard } from '@plim/shared'
 import { motion } from 'framer-motion'
-import { Edit, MoreVertical, Trash2 } from 'lucide-react'
+import { CalendarClock, Edit, MoreVertical, Trash2 } from 'lucide-react'
 import { CreditCard3D } from './credit-card-3d'
 
 interface CreditCardListProps {
@@ -63,6 +63,13 @@ export function CreditCardList({ creditCards, onEdit, onDelete }: CreditCardList
               last4Digits={card.last_4_digits}
               size="md"
             />
+
+            {card.expiration_day && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarClock className="h-3.5 w-3.5" />
+                <span>Vence dia {card.expiration_day}</span>
+              </div>
+            )}
 
             {/* Actions dropdown - positioned on top right of card */}
             <div className="absolute right-1 top-1">

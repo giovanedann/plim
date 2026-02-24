@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useUIStore } from '@/stores'
-import { EXPENSE_TYPES, PAYMENT_METHODS } from '@plim/shared'
+import { EXPENSE_TYPES, PAYMENT_METHODS, TRANSACTION_TYPES } from '@plim/shared'
 import type {
   Category,
   CreditCard,
@@ -27,7 +27,7 @@ interface ExpenseFiltersProps {
   creditCards: CreditCard[]
   selectedMonth: string
   spendingLimit?: EffectiveSpendingLimit | null
-  totalExpenses?: number
+  netCost?: number
 }
 
 export function ExpenseFilters({
@@ -37,7 +37,7 @@ export function ExpenseFilters({
   creditCards,
   selectedMonth,
   spendingLimit,
-  totalExpenses,
+  netCost,
 }: ExpenseFiltersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { hideValues, toggleHideValues } = useUIStore()
@@ -63,6 +63,14 @@ export function ExpenseFilters({
     })
   }
 
+  const handleTransactionTypeChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      transaction_type:
+        value === 'all' ? undefined : (value as ExpenseFiltersType['transaction_type']),
+    })
+  }
+
   const handleCreditCardChange = (value: string) => {
     onFiltersChange({
       ...filters,
@@ -75,7 +83,11 @@ export function ExpenseFilters({
   }
 
   const hasActiveFilters =
-    filters.category_id || filters.payment_method || filters.expense_type || filters.credit_card_id
+    filters.category_id ||
+    filters.payment_method ||
+    filters.expense_type ||
+    filters.credit_card_id ||
+    filters.transaction_type
 
   return (
     <Card data-tutorial-id="expense-filters">
@@ -93,6 +105,26 @@ export function ExpenseFilters({
       <CardContent>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="grid w-full grid-cols-1 gap-4 sm:flex sm:w-auto sm:flex-wrap sm:items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Transação</Label>
+              <Select
+                value={filters.transaction_type ?? 'all'}
+                onValueChange={handleTransactionTypeChange}
+              >
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {TRANSACTION_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Categoria</Label>
               <Select value={filters.category_id ?? 'all'} onValueChange={handleCategoryChange}>
@@ -184,7 +216,7 @@ export function ExpenseFilters({
             data-tutorial-id="expense-add-button"
           >
             <Plus className="h-4 w-4" />
-            Nova Despesa
+            Nova Transação
           </Button>
         </div>
       </CardContent>
@@ -196,7 +228,7 @@ export function ExpenseFilters({
         creditCards={creditCards}
         selectedMonth={selectedMonth}
         spendingLimit={spendingLimit}
-        totalExpenses={totalExpenses}
+        netCost={netCost}
       />
     </Card>
   )

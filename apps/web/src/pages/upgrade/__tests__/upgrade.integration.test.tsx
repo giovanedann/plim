@@ -143,7 +143,7 @@ describe('UpgradePage Integration', () => {
       render(<UpgradePage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('Periodo atual')).toBeInTheDocument()
+        expect(screen.getByText('Período atual')).toBeInTheDocument()
       })
 
       expect(screen.getByRole('progressbar')).toBeInTheDocument()

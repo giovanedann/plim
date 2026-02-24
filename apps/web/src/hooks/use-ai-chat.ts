@@ -65,7 +65,7 @@ export function useAIChat(): UseAIChatReturn {
       if (isErrorResponse(response)) {
         const isLimitReached = response.error.code === 'FORBIDDEN'
         const message = isLimitReached
-          ? 'Voce atingiu o limite semanal. Atualize para o Pro!'
+          ? 'Você atingiu o limite semanal. Atualize para o Pro!'
           : response.error.message
         setError(message)
         setIsLoading(false)

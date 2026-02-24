@@ -24,7 +24,7 @@ import { queryKeys } from './query-config'
 
 export interface ExpenseChange {
   amount_cents: number
-  category_id: string
+  category_id: string | null
   category_name?: string
   category_color?: string | null
   category_icon?: string | null
@@ -68,11 +68,16 @@ function updateCategoryBreakdown(
   breakdown: CategoryBreakdownResponse,
   change: ExpenseChange
 ): CategoryBreakdownResponse {
+  if (!change.category_id) {
+    return breakdown
+  }
+
   const delta = change.operation === 'add' ? change.amount_cents : -change.amount_cents
   const data = [...breakdown.data]
   let newTotal = breakdown.total + delta
 
-  const existingIndex = data.findIndex((item) => item.category_id === change.category_id)
+  const categoryId = change.category_id
+  const existingIndex = data.findIndex((item) => item.category_id === categoryId)
   const existingItem = data[existingIndex]
 
   if (existingItem) {
@@ -84,7 +89,7 @@ function updateCategoryBreakdown(
     }
   } else if (change.operation === 'add') {
     const newItem: CategoryBreakdownItem = {
-      category_id: change.category_id,
+      category_id: categoryId,
       name: change.category_name ?? 'Categoria',
       color: change.category_color ?? null,
       icon: change.category_icon ?? null,

@@ -6,6 +6,7 @@ import { GetSavingsRateUseCase } from './get-savings-rate.usecase'
 type MockRepository = {
   getExpensesForPeriod: ReturnType<typeof vi.fn>
   getSalariesForPeriod: ReturnType<typeof vi.fn>
+  getIncomesForPeriod: ReturnType<typeof vi.fn>
   calculateMonthlyIncomeExpenses: ReturnType<typeof vi.fn>
   calculateSavingsRate: ReturnType<typeof vi.fn>
 }
@@ -14,6 +15,7 @@ function createMockDashboardRepository(): MockRepository {
   return {
     getExpensesForPeriod: vi.fn(),
     getSalariesForPeriod: vi.fn(),
+    getIncomesForPeriod: vi.fn(),
     calculateMonthlyIncomeExpenses: vi.fn(),
     calculateSavingsRate: vi.fn(),
   }
@@ -38,6 +40,7 @@ describe('GetSavingsRateUseCase', () => {
 
     mockRepository.getExpensesForPeriod.mockResolvedValue(expenses)
     mockRepository.getSalariesForPeriod.mockResolvedValue(salaries)
+    mockRepository.getIncomesForPeriod.mockResolvedValue([])
     mockRepository.calculateMonthlyIncomeExpenses.mockReturnValue(incomeExpenses)
     mockRepository.calculateSavingsRate.mockReturnValue(savingsData)
 
@@ -59,6 +62,7 @@ describe('GetSavingsRateUseCase', () => {
 
     mockRepository.getExpensesForPeriod.mockResolvedValue(expenses)
     mockRepository.getSalariesForPeriod.mockResolvedValue(salaries)
+    mockRepository.getIncomesForPeriod.mockResolvedValue([])
     mockRepository.calculateMonthlyIncomeExpenses.mockReturnValue(incomeExpenses)
     mockRepository.calculateSavingsRate.mockReturnValue(savingsData)
 
@@ -73,6 +77,7 @@ describe('GetSavingsRateUseCase', () => {
   it('returns empty data when no income or expenses', async () => {
     mockRepository.getExpensesForPeriod.mockResolvedValue([])
     mockRepository.getSalariesForPeriod.mockResolvedValue([])
+    mockRepository.getIncomesForPeriod.mockResolvedValue([])
     mockRepository.calculateMonthlyIncomeExpenses.mockReturnValue([])
     mockRepository.calculateSavingsRate.mockReturnValue([])
 
@@ -92,6 +97,7 @@ describe('GetSavingsRateUseCase', () => {
 
       mockRepository.getExpensesForPeriod.mockResolvedValue(expenses)
       mockRepository.getSalariesForPeriod.mockResolvedValue([])
+      mockRepository.getIncomesForPeriod.mockResolvedValue([])
       mockRepository.calculateMonthlyIncomeExpenses.mockReturnValue(incomeExpenses)
       mockRepository.calculateSavingsRate.mockReturnValue(savingsData)
 
@@ -110,6 +116,7 @@ describe('GetSavingsRateUseCase', () => {
 
       mockRepository.getExpensesForPeriod.mockResolvedValue([])
       mockRepository.getSalariesForPeriod.mockResolvedValue(salaries)
+      mockRepository.getIncomesForPeriod.mockResolvedValue([])
       mockRepository.calculateMonthlyIncomeExpenses.mockReturnValue(incomeExpenses)
       mockRepository.calculateSavingsRate.mockReturnValue(savingsData)
 

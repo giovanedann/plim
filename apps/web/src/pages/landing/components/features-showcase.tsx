@@ -29,7 +29,7 @@ const features: FeatureData[] = [
   },
   {
     id: 'expenses',
-    badge: 'Despesas',
+    badge: 'Transações',
     headline: 'Controle total dos gastos',
     description:
       'Registre despesas únicas, recorrentes ou parceladas. Nunca mais perca uma parcela do cartão de crédito.',
@@ -39,7 +39,7 @@ const features: FeatureData[] = [
       'Histórico completo por mês',
     ],
     imageSrc: '/landing/expenses.png',
-    imageAlt: 'Screenshot da página de Despesas do Plim',
+    imageAlt: 'Screenshot da página de Transações do Plim',
   },
   {
     id: 'categories',

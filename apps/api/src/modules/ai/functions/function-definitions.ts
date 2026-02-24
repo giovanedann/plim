@@ -2,11 +2,12 @@ import type { FunctionDefinition, JsonSchema } from '../client'
 
 const createExpenseParameters: JsonSchema = {
   type: 'object',
-  description: 'Create a new expense record',
+  description:
+    'Create a new expense or income record. For incomes, set transaction_type to "income".',
   properties: {
     description: {
       type: 'string',
-      description: 'What was purchased',
+      description: 'What was purchased or received',
     },
     amount_cents: {
       type: 'integer',
@@ -14,11 +15,11 @@ const createExpenseParameters: JsonSchema = {
     },
     category_name: {
       type: 'string',
-      description: 'Category name from available categories',
+      description: 'Category name from available categories (optional for incomes)',
     },
     payment_method: {
       type: 'string',
-      description: 'How it was paid',
+      description: 'How it was paid or received',
       enum: ['credit_card', 'debit_card', 'pix', 'cash'],
     },
     date: {
@@ -31,7 +32,7 @@ const createExpenseParameters: JsonSchema = {
     },
     installment_total: {
       type: 'integer',
-      description: 'Number of installments (2-48)',
+      description: 'Number of installments (2-48, only for expenses)',
     },
     is_recurrent: {
       type: 'boolean',
@@ -41,8 +42,13 @@ const createExpenseParameters: JsonSchema = {
       type: 'integer',
       description: 'Day of month for recurrents (1-31)',
     },
+    transaction_type: {
+      type: 'string',
+      description: 'Type of transaction: "expense" (default) or "income"',
+      enum: ['expense', 'income'],
+    },
   },
-  required: ['description', 'amount_cents', 'category_name', 'payment_method', 'date'],
+  required: ['description', 'amount_cents', 'payment_method', 'date'],
 }
 
 const queryExpensesParameters: JsonSchema = {
@@ -137,7 +143,7 @@ const showTutorialParameters: JsonSchema = {
 export const aiFunctionDefinitions: FunctionDefinition[] = [
   {
     name: 'create_expense',
-    description: 'Create expense record',
+    description: 'Create expense or income record (use transaction_type="income" for incomes)',
     parameters: createExpenseParameters,
   },
   {

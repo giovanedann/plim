@@ -44,7 +44,7 @@ const tiers: PricingTier[] = [
     period: '/mês',
     description: 'Tudo que você precisa para começar',
     features: [
-      'Despesas ilimitadas',
+      'Transações ilimitadas',
       'Dashboard — últimos 30 dias',
       'Até 5 categorias personalizadas',
       'Até 2 cartões de crédito',

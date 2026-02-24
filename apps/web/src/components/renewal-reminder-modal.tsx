@@ -100,7 +100,7 @@ export function RenewalReminderModal(): React.JSX.Element | null {
           <DialogDescription className="text-center">
             {isExpired
               ? 'Renove agora para continuar usando os recursos Pro.'
-              : 'Renove antes do vencimento para nao perder seus beneficios.'}
+              : 'Renove antes do vencimento para não perder seus benefícios.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -117,7 +117,7 @@ export function RenewalReminderModal(): React.JSX.Element | null {
             onClick={handleDismissPermanently}
             className="w-full text-muted-foreground"
           >
-            Nao quero mais ver isso
+            Não quero mais ver isso
           </Button>
         </DialogFooter>
       </DialogContent>

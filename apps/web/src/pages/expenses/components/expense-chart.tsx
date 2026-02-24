@@ -12,7 +12,7 @@ import { formatBRL } from '@plim/shared'
 import type { Expense } from '@plim/shared'
 import { ChevronDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts'
 
 interface ExpenseChartProps {
   expenses: Expense[]
@@ -22,20 +22,23 @@ interface ExpenseChartProps {
 
 type ViewMode = 'daily' | 'weekly'
 
-interface DailyData {
+interface ChartDataPoint {
   label: string
-  total: number
+  expenses: number
+  incomes: number
 }
 
-interface WeeklyData {
-  label: string
-  total: number
-}
+const EXPENSE_COLOR = 'hsl(0 84% 60%)'
+const INCOME_COLOR = 'hsl(142.1 76.2% 36.3%)'
 
 const chartConfig = {
-  total: {
-    label: 'Total',
-    color: 'hsl(var(--primary))',
+  expenses: {
+    label: 'Despesas',
+    color: EXPENSE_COLOR,
+  },
+  incomes: {
+    label: 'Receitas',
+    color: INCOME_COLOR,
   },
 } satisfies ChartConfig
 
@@ -48,50 +51,64 @@ function getWeekOfMonth(day: number): number {
   return Math.ceil(day / 7)
 }
 
-function aggregateByDay(expenses: Expense[], selectedMonth: string): DailyData[] {
+function aggregateByDay(transactions: Expense[], selectedMonth: string): ChartDataPoint[] {
   const daysInMonth = getDaysInMonth(selectedMonth)
-  const dailyTotals: Record<number, number> = {}
+  const dailyExpenses: Record<number, number> = {}
+  const dailyIncomes: Record<number, number> = {}
 
-  // Initialize all days with 0
   for (let day = 1; day <= daysInMonth; day++) {
-    dailyTotals[day] = 0
+    dailyExpenses[day] = 0
+    dailyIncomes[day] = 0
   }
 
-  // Sum expenses by day
-  for (const expense of expenses) {
-    const day = new Date(`${expense.date}T00:00:00`).getDate()
-    dailyTotals[day] = (dailyTotals[day] ?? 0) + expense.amount_cents
+  for (const transaction of transactions) {
+    const day = new Date(`${transaction.date}T00:00:00`).getDate()
+    if (transaction.type === 'income') {
+      dailyIncomes[day] = (dailyIncomes[day] ?? 0) + transaction.amount_cents
+    } else {
+      dailyExpenses[day] = (dailyExpenses[day] ?? 0) + transaction.amount_cents
+    }
   }
 
-  // Convert to array
-  return Object.entries(dailyTotals).map(([day, total]) => ({
-    label: day.padStart(2, '0'),
-    total: total / 100, // Convert cents to reais
-  }))
+  return Object.keys(dailyExpenses).map((dayStr) => {
+    const day = Number(dayStr)
+    return {
+      label: String(day).padStart(2, '0'),
+      expenses: (dailyExpenses[day] ?? 0) / 100,
+      incomes: (dailyIncomes[day] ?? 0) / 100,
+    }
+  })
 }
 
-function aggregateByWeek(expenses: Expense[], selectedMonth: string): WeeklyData[] {
+function aggregateByWeek(transactions: Expense[], selectedMonth: string): ChartDataPoint[] {
   const daysInMonth = getDaysInMonth(selectedMonth)
   const totalWeeks = Math.ceil(daysInMonth / 7)
-  const weeklyTotals: Record<number, number> = {}
+  const weeklyExpenses: Record<number, number> = {}
+  const weeklyIncomes: Record<number, number> = {}
 
-  // Initialize all weeks with 0
   for (let week = 1; week <= totalWeeks; week++) {
-    weeklyTotals[week] = 0
+    weeklyExpenses[week] = 0
+    weeklyIncomes[week] = 0
   }
 
-  // Sum expenses by week
-  for (const expense of expenses) {
-    const day = new Date(`${expense.date}T00:00:00`).getDate()
+  for (const transaction of transactions) {
+    const day = new Date(`${transaction.date}T00:00:00`).getDate()
     const week = getWeekOfMonth(day)
-    weeklyTotals[week] = (weeklyTotals[week] ?? 0) + expense.amount_cents
+    if (transaction.type === 'income') {
+      weeklyIncomes[week] = (weeklyIncomes[week] ?? 0) + transaction.amount_cents
+    } else {
+      weeklyExpenses[week] = (weeklyExpenses[week] ?? 0) + transaction.amount_cents
+    }
   }
 
-  // Convert to array
-  return Object.entries(weeklyTotals).map(([week, total]) => ({
-    label: `Sem ${week}`,
-    total: total / 100, // Convert cents to reais
-  }))
+  return Object.keys(weeklyExpenses).map((weekStr) => {
+    const week = Number(weekStr)
+    return {
+      label: `Sem ${week}`,
+      expenses: (weeklyExpenses[week] ?? 0) / 100,
+      incomes: (weeklyIncomes[week] ?? 0) / 100,
+    }
+  })
 }
 
 export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChartProps) {
@@ -105,6 +122,8 @@ export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChar
     return aggregateByWeek(expenses, selectedMonth)
   }, [expenses, selectedMonth, viewMode])
 
+  const hasIncomes = useMemo(() => expenses.some((t) => t.type === 'income'), [expenses])
+
   if (isLoading) {
     return <div className="h-[250px] animate-pulse rounded-lg bg-muted" />
   }
@@ -112,7 +131,9 @@ export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChar
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">Despesas por período</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">
+          {hasIncomes ? 'Despesas e Receitas por período' : 'Despesas por período'}
+        </h3>
         <div className="flex items-center gap-2">
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
             <TabsList className="h-8">
@@ -141,13 +162,7 @@ export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChar
 
       <CollapsibleContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-              </linearGradient>
-            </defs>
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
             <YAxis
@@ -160,20 +175,15 @@ export function ExpenseChart({ expenses, selectedMonth, isLoading }: ExpenseChar
             <ChartTooltip
               cursor={false}
               content={
-                <ChartTooltipContent
-                  formatter={(value) => formatBRL(Number(value) * 100)}
-                  hideIndicator
-                />
+                <ChartTooltipContent formatter={(value) => formatBRL(Number(value) * 100)} />
               }
             />
-            <Area
-              type="monotone"
-              dataKey="total"
-              stroke="hsl(var(--primary))"
-              fill="url(#fillTotal)"
-              strokeWidth={2}
-            />
-          </AreaChart>
+            {hasIncomes && (
+              <Legend formatter={(value) => (value === 'expenses' ? 'Despesas' : 'Receitas')} />
+            )}
+            <Bar dataKey="expenses" fill={EXPENSE_COLOR} radius={[4, 4, 0, 0]} />
+            {hasIncomes && <Bar dataKey="incomes" fill={INCOME_COLOR} radius={[4, 4, 0, 0]} />}
+          </BarChart>
         </ChartContainer>
       </CollapsibleContent>
     </Collapsible>

@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 export const Route = createFileRoute('/_auth')({
   beforeLoad: ({ context }) => {
     if (context.auth.user && !context.auth.isInRecoveryMode) {
-      throw redirect({ to: '/dashboard' })
+      throw redirect({ to: '/home' })
     }
   },
   component: AuthLayoutWrapper,
@@ -19,7 +19,7 @@ function AuthLayoutWrapper() {
 
   useEffect(() => {
     if (user && !isInRecoveryMode) {
-      navigate({ to: '/dashboard' })
+      navigate({ to: '/home' })
     }
   }, [user, isInRecoveryMode, navigate])
 

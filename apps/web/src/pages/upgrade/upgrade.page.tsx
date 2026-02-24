@@ -125,7 +125,7 @@ export function UpgradePage(): React.JSX.Element {
                     </Badge>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">Valido ate</span>
+                    <span className="text-xs text-muted-foreground">Válido até</span>
                     <span className="flex items-center gap-1 text-sm font-medium">
                       <Calendar className="size-3.5 text-muted-foreground" />
                       {subscription?.current_period_end
@@ -151,7 +151,7 @@ export function UpgradePage(): React.JSX.Element {
 
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Periodo atual</span>
+                    <span>Período atual</span>
                     <span>
                       {Math.round(
                         getElapsedPercent(
@@ -178,7 +178,7 @@ export function UpgradePage(): React.JSX.Element {
                 <Card className="bg-muted/50">
                   <CardContent className="pt-4 pb-4">
                     <p className="mb-2 text-xs font-medium text-muted-foreground">
-                      Seus beneficios
+                      Seus benefícios
                     </p>
                     <ul className="space-y-1.5">
                       {PERKS.map((perk) => (
@@ -210,7 +210,7 @@ export function UpgradePage(): React.JSX.Element {
               <div className="text-center">
                 <p className="text-3xl font-bold">R$ 24,90</p>
                 <p className="text-sm text-muted-foreground">/ 30 dias</p>
-                <p className="mt-1 text-xs text-muted-foreground">Pagamento unico via PIX</p>
+                <p className="mt-1 text-xs text-muted-foreground">Pagamento único via PIX</p>
               </div>
 
               <ul className="space-y-3">

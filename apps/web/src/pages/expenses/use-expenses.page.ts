@@ -154,23 +154,49 @@ export function useExpensesPage() {
   const spendingLimit = spendingLimitResponse ?? null
 
   const totalExpenses = useMemo(
-    () => allExpenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
+    () =>
+      allExpenses
+        .filter((t) => t.type !== 'income')
+        .reduce((sum, expense) => sum + expense.amount_cents, 0),
     [allExpenses]
   )
 
-  const balance = useMemo(
-    () => (salary?.amount_cents ?? 0) - totalExpenses,
-    [salary, totalExpenses]
+  const totalIncomes = useMemo(
+    () =>
+      allExpenses
+        .filter((t) => t.type === 'income')
+        .reduce((sum, income) => sum + income.amount_cents, 0),
+    [allExpenses]
   )
 
+  const netCost = useMemo(() => totalExpenses - totalIncomes, [totalExpenses, totalIncomes])
+
+  const balance = useMemo(() => (salary?.amount_cents ?? 0) - netCost, [salary, netCost])
+
   const previousTotalExpenses = useMemo(
-    () => previousExpenses.reduce((sum, expense) => sum + expense.amount_cents, 0),
+    () =>
+      previousExpenses
+        .filter((t) => t.type !== 'income')
+        .reduce((sum, expense) => sum + expense.amount_cents, 0),
     [previousExpenses]
   )
 
+  const previousTotalIncomes = useMemo(
+    () =>
+      previousExpenses
+        .filter((t) => t.type === 'income')
+        .reduce((sum, income) => sum + income.amount_cents, 0),
+    [previousExpenses]
+  )
+
+  const previousNetCost = useMemo(
+    () => previousTotalExpenses - previousTotalIncomes,
+    [previousTotalExpenses, previousTotalIncomes]
+  )
+
   const previousBalance = useMemo(
-    () => (previousSalary?.amount_cents ?? 0) - previousTotalExpenses,
-    [previousSalary, previousTotalExpenses]
+    () => (previousSalary?.amount_cents ?? 0) - previousNetCost,
+    [previousSalary, previousNetCost]
   )
 
   const comparison = useMemo(() => {
@@ -178,14 +204,25 @@ export function useExpensesPage() {
     if (!hasPreviousData) {
       return {
         previousExpenses: null,
+        previousIncomes: null,
+        previousNetCost: null,
         previousBalance: null,
       }
     }
     return {
       previousExpenses: previousTotalExpenses,
+      previousIncomes: previousTotalIncomes,
+      previousNetCost: previousNetCost,
       previousBalance: previousBalance,
     }
-  }, [previousExpenses.length, previousSalary, previousTotalExpenses, previousBalance])
+  }, [
+    previousExpenses.length,
+    previousSalary,
+    previousTotalExpenses,
+    previousTotalIncomes,
+    previousNetCost,
+    previousBalance,
+  ])
 
   const isLoading =
     isLoadingExpenses ||
@@ -214,6 +251,8 @@ export function useExpensesPage() {
     spendingLimit,
     isLoading,
     totalExpenses,
+    totalIncomes,
+    netCost,
     balance,
     comparison,
     page,

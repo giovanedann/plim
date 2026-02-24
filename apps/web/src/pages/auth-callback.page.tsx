@@ -17,7 +17,7 @@ async function claimPendingReferral(): Promise<void> {
     const result = await referralService.claimReferral(code)
     if (!isErrorResponse(result)) {
       analytics.referralClaimed(code)
-      toast.success('Voce ganhou 7 dias de Pro gratis!')
+      toast.success('Você ganhou 7 dias de Pro grátis!')
     }
   } catch {
     // Silently ignore claim errors
@@ -50,7 +50,7 @@ export function AuthCallbackPage() {
   useEffect(() => {
     if (user) {
       claimPendingReferral().then(() => {
-        navigate({ to: '/dashboard' })
+        navigate({ to: '/home' })
       })
     }
   }, [user, navigate])

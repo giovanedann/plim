@@ -147,7 +147,7 @@ describe('AppSidebar', () => {
       render(<AppSidebar />)
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
-      expect(screen.getByText('Despesas')).toBeInTheDocument()
+      expect(screen.getByText('Transações')).toBeInTheDocument()
       expect(screen.getByText('Categorias')).toBeInTheDocument()
       expect(screen.getByText('Cartões')).toBeInTheDocument()
     })
@@ -156,12 +156,12 @@ describe('AppSidebar', () => {
       render(<AppSidebar />)
 
       const dashboardLink = screen.getByText('Dashboard').closest('a')
-      const expensesLink = screen.getByText('Despesas').closest('a')
+      const expensesLink = screen.getByText('Transações').closest('a')
       const categoriesLink = screen.getByText('Categorias').closest('a')
       const cardsLink = screen.getByText('Cartões').closest('a')
 
       expect(dashboardLink).toHaveAttribute('href', '/dashboard')
-      expect(expensesLink).toHaveAttribute('href', '/expenses')
+      expect(expensesLink).toHaveAttribute('href', '/transactions')
       expect(categoriesLink).toHaveAttribute('href', '/categories')
       expect(cardsLink).toHaveAttribute('href', '/credit-cards')
     })
@@ -189,12 +189,12 @@ describe('AppSidebar', () => {
       expect(dashboardWrapper).toHaveAttribute('data-active', 'true')
     })
 
-    it('highlights expenses as active when on expenses route', () => {
-      mockUseLocation.mockReturnValue({ pathname: '/expenses' })
+    it('highlights transactions as active when on transactions route', () => {
+      mockUseLocation.mockReturnValue({ pathname: '/transactions' })
 
       render(<AppSidebar />)
 
-      const expensesWrapper = screen.getByText('Despesas').closest('[data-active]')
+      const expensesWrapper = screen.getByText('Transações').closest('[data-active]')
       expect(expensesWrapper).toHaveAttribute('data-active', 'true')
     })
 
@@ -221,7 +221,7 @@ describe('AppSidebar', () => {
 
       render(<AppSidebar />)
 
-      const expensesWrapper = screen.getByText('Despesas').closest('[data-active]')
+      const expensesWrapper = screen.getByText('Transações').closest('[data-active]')
       const categoriesWrapper = screen.getByText('Categorias').closest('[data-active]')
       const cardsWrapper = screen.getByText('Cartões').closest('[data-active]')
 
@@ -344,7 +344,7 @@ describe('AppSidebar', () => {
       const mainNav = navs.find((nav) => nav.textContent?.includes('Dashboard'))
       expect(mainNav).toBeInTheDocument()
       expect(mainNav?.textContent).toContain('Dashboard')
-      expect(mainNav?.textContent).toContain('Despesas')
+      expect(mainNav?.textContent).toContain('Transações')
     })
   })
 
@@ -414,7 +414,7 @@ describe('AppSidebar', () => {
       render(<AppSidebar />)
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
-      expect(screen.getByText('Despesas')).toBeInTheDocument()
+      expect(screen.getByText('Transações')).toBeInTheDocument()
       expect(screen.getByText('Categorias')).toBeInTheDocument()
       expect(screen.getByText('Cartões')).toBeInTheDocument()
     })

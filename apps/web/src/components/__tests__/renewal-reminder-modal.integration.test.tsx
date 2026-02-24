@@ -136,7 +136,7 @@ describe('RenewalReminderModal Integration', () => {
       expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
     })
 
-    it('"Nao quero mais ver isso" permanently dismisses via localStorage', async () => {
+    it('"Não quero mais ver isso" permanently dismisses via localStorage', async () => {
       vi.spyOn(paymentService, 'getSubscriptionStatus').mockResolvedValue({
         data: EXPIRING_SOON_STATUS,
       })
@@ -147,7 +147,7 @@ describe('RenewalReminderModal Integration', () => {
         expect(screen.getByText(/Seu plano Pro expira em 5 dias/)).toBeInTheDocument()
       })
 
-      await user.click(screen.getByRole('button', { name: /Nao quero mais ver isso/i }))
+      await user.click(screen.getByRole('button', { name: /Não quero mais ver isso/i }))
 
       await waitFor(() => {
         expect(screen.queryByText(/Seu plano Pro expira em 5 dias/)).not.toBeInTheDocument()

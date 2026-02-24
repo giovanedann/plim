@@ -4,10 +4,19 @@ export const paymentMethodSchema = z.enum(['credit_card', 'debit_card', 'pix', '
   message: 'Selecione um método de pagamento válido',
 })
 
+export const incomePaymentMethodSchema = z.enum(['pix', 'cash'], {
+  message: 'Selecione um método de recebimento válido',
+})
+
+export const transactionTypeSchema = z.enum(['expense', 'income'], {
+  message: 'Selecione um tipo de transação válido',
+})
+
 export const expenseSchema = z.object({
   id: z.uuid(),
   user_id: z.uuid(),
-  category_id: z.uuid(),
+  type: transactionTypeSchema.default('expense'),
+  category_id: z.uuid().nullable(),
   description: z
     .string()
     .min(1, 'Descrição é obrigatória')
@@ -81,7 +90,62 @@ export const createExpenseSchema = z.discriminatedUnion('type', [
       .max(48, 'Número de parcelas deve ser entre 2 e 48'),
     credit_card_id: z.uuid().optional(),
   }),
+  // Income (one-time)
+  z.object({
+    type: z.literal('income'),
+    description: z
+      .string()
+      .min(1, 'Descrição é obrigatória')
+      .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+    amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
+    date: z.iso.date({ message: 'Selecione uma data válida' }),
+    payment_method: incomePaymentMethodSchema,
+  }),
+  // Income (recurrent)
+  z.object({
+    type: z.literal('income_recurrent'),
+    description: z
+      .string()
+      .min(1, 'Descrição é obrigatória')
+      .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+    amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
+    payment_method: incomePaymentMethodSchema,
+    recurrence_day: z
+      .number()
+      .int()
+      .min(1, 'Dia deve ser entre 1 e 31')
+      .max(31, 'Dia deve ser entre 1 e 31'),
+    recurrence_start: z.iso.date({ message: 'Selecione a data de início' }),
+    recurrence_end: z.iso.date().optional(),
+  }),
+  // Income (installment)
+  z.object({
+    type: z.literal('income_installment'),
+    description: z
+      .string()
+      .min(1, 'Descrição é obrigatória')
+      .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+    amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
+    payment_method: incomePaymentMethodSchema,
+    date: z.iso.date({ message: 'Selecione uma data válida' }),
+    installment_total: z
+      .number()
+      .int()
+      .min(2, 'Número de parcelas deve ser entre 2 e 48')
+      .max(48, 'Número de parcelas deve ser entre 2 e 48'),
+  }),
 ])
+
+export const createIncomeSchema = z.object({
+  type: z.literal('income'),
+  description: z
+    .string()
+    .min(1, 'Descrição é obrigatória')
+    .max(255, 'Descrição deve ter no máximo 255 caracteres'),
+  amount_cents: z.number().int().positive('Valor deve ser maior que zero'),
+  date: z.iso.date({ message: 'Selecione uma data válida' }),
+  payment_method: incomePaymentMethodSchema,
+})
 
 export const updateExpenseSchema = expenseSchema
   .pick({
@@ -106,6 +170,7 @@ export const expenseFiltersSchema = z.object({
   payment_method: paymentMethodSchema.optional(),
   expense_type: expenseTypeSchema.optional(),
   credit_card_id: z.union([z.uuid(), z.literal('none')]).optional(),
+  transaction_type: transactionTypeSchema.optional(),
 })
 
 export const paginatedExpenseFiltersSchema = expenseFiltersSchema.extend({
@@ -126,9 +191,12 @@ export const paginatedExpensesSchema = z.object({
 })
 
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
+export type IncomePaymentMethod = z.infer<typeof incomePaymentMethodSchema>
+export type TransactionType = z.infer<typeof transactionTypeSchema>
 export type ExpenseType = z.infer<typeof expenseTypeSchema>
 export type Expense = z.infer<typeof expenseSchema>
 export type CreateExpense = z.infer<typeof createExpenseSchema>
+export type CreateIncome = z.infer<typeof createIncomeSchema>
 export type UpdateExpense = z.infer<typeof updateExpenseSchema>
 export type ExpenseFilters = z.infer<typeof expenseFiltersSchema>
 export type PaginatedExpenseFilters = z.infer<typeof paginatedExpenseFiltersSchema>

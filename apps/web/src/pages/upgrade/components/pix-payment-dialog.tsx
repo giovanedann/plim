@@ -73,7 +73,7 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
       analytics.paymentCompleted()
       cleanup()
       queryClient.invalidateQueries({ queryKey: ['ai-usage'] })
-      toast.success('Pagamento confirmado! Voce agora e Pro.')
+      toast.success('Pagamento confirmado! Você agora é Pro.')
     }
   }, [isPro, open, isApproved, cleanup, queryClient])
 
@@ -81,7 +81,7 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
     if (!pixData) return
     await navigator.clipboard.writeText(pixData.pix_copia_cola)
     setCopied(true)
-    toast.success('Codigo copiado!')
+    toast.success('Código copiado!')
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -94,8 +94,8 @@ export function PixPaymentDialog({ open, onOpenChange, pixData }: PixPaymentDial
           <DialogTitle>{isApproved ? 'Pagamento confirmado!' : 'Pagar com PIX'}</DialogTitle>
           <DialogDescription>
             {isApproved
-              ? 'Seu plano Pro esta ativo.'
-              : 'Escaneie o QR Code ou copie o codigo abaixo.'}
+              ? 'Seu plano Pro está ativo.'
+              : 'Escaneie o QR Code ou copie o código abaixo.'}
           </DialogDescription>
         </DialogHeader>
 

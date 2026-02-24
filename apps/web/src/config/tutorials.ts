@@ -3,34 +3,35 @@ import { type Tutorial, registerTutorials } from '@/stores/tutorial.store'
 export const TUTORIALS: Tutorial[] = [
   {
     id: 'add-expense',
-    title: 'Como adicionar uma despesa',
-    description: 'Aprenda a registrar suas despesas no Plim',
+    title: 'Como adicionar uma transação',
+    description: 'Aprenda a registrar despesas e receitas no Plim',
     steps: [
       {
         elementId: 'sidebar-nav-expenses',
-        title: 'Página de Despesas',
-        description: 'Clique em "Despesas" no menu lateral para acessar a página de despesas.',
+        title: 'Página de Transações',
+        description: 'Clique em "Transações" no menu lateral para acessar a página de transações.',
         action: 'navigate',
-        navigateTo: '/expenses',
+        navigateTo: '/transactions',
       },
       {
         elementId: 'expense-add-button',
-        title: 'Criar uma despesa',
+        title: 'Criar uma transação',
         description:
-          'Use este botão para registrar uma nova despesa. Preencha o valor, categoria e método de pagamento.',
+          'Use este botão para registrar uma nova despesa ou receita. Escolha o tipo, preencha o valor, categoria e método de pagamento.',
         action: 'click',
       },
       {
         elementId: 'expense-list',
         title: 'Editar ou excluir',
         description:
-          'Clique em qualquer despesa da lista para editar ou excluir. Você pode alterar valor, categoria e outros detalhes.',
+          'Clique em qualquer transação da lista para editar ou excluir. Você pode alterar valor, tipo, categoria e outros detalhes.',
         action: 'observe',
       },
       {
         elementId: 'sidebar-nav-expenses',
         title: 'Pronto!',
-        description: 'Agora é só registrar suas despesas e acompanhar seus gastos por aqui!',
+        description:
+          'Agora é só registrar suas despesas e receitas e acompanhar suas finanças por aqui!',
         action: 'observe',
       },
     ],
@@ -38,7 +39,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'manage-categories',
     title: 'Como gerenciar categorias',
-    description: 'Aprenda a criar e organizar suas categorias de despesas',
+    description: 'Aprenda a criar e organizar suas categorias de transações',
     steps: [
       {
         elementId: 'sidebar-nav-categories',
@@ -65,7 +66,7 @@ export const TUTORIALS: Tutorial[] = [
         elementId: 'sidebar-nav-categories',
         title: 'Pronto!',
         description:
-          'Agora é só usar suas categorias personalizadas quando for registrar uma despesa!',
+          'Agora é só usar suas categorias personalizadas quando for registrar uma transação!',
         action: 'observe',
       },
     ],
@@ -99,7 +100,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         elementId: 'sidebar-nav-credit-cards',
         title: 'Pronto!',
-        description: 'Agora é só usar esse cartão quando for registrar uma despesa!',
+        description: 'Agora é só usar esse cartão quando for registrar uma transação!',
         action: 'observe',
       },
     ],
@@ -163,7 +164,7 @@ export const TUTORIALS: Tutorial[] = [
         elementId: 'profile-data-export',
         title: 'Exportar dados',
         description:
-          'Baixe uma cópia dos seus dados a qualquer momento em formato CSV. Você pode exportar despesas, categorias e mais.',
+          'Baixe uma cópia dos seus dados a qualquer momento em formato CSV. Você pode exportar transações, categorias e mais.',
         action: 'observe',
       },
       {

@@ -7,6 +7,7 @@ type MockRepository = {
   getExpensesForPeriod: ReturnType<typeof vi.fn>
   getExpensesWithCreditCards: ReturnType<typeof vi.fn>
   getSalariesForPeriod: ReturnType<typeof vi.fn>
+  getIncomesForPeriod: ReturnType<typeof vi.fn>
   getFutureExpenses: ReturnType<typeof vi.fn>
   aggregateByCategory: ReturnType<typeof vi.fn>
   aggregateByPaymentMethod: ReturnType<typeof vi.fn>
@@ -26,6 +27,7 @@ function createMockDashboardRepository(): MockRepository {
     getExpensesForPeriod: vi.fn().mockResolvedValue([]),
     getExpensesWithCreditCards: vi.fn().mockResolvedValue([]),
     getSalariesForPeriod: vi.fn().mockResolvedValue([]),
+    getIncomesForPeriod: vi.fn().mockResolvedValue([]),
     getFutureExpenses: vi.fn().mockResolvedValue([]),
     aggregateByCategory: vi.fn().mockReturnValue([]),
     aggregateByPaymentMethod: vi.fn().mockReturnValue([]),

@@ -28,8 +28,8 @@ export function CtaSection() {
             size="lg"
             className="bg-primary text-primary-foreground hover:bg-primary/90 text-base md:text-lg px-8"
           >
-            <Link to="/dashboard" className="flex items-center gap-2">
-              Ir para Dashboard
+            <Link to="/home" className="flex items-center gap-2">
+              Acessar app
               <ArrowRight className="h-5 w-5" />
             </Link>
           </Button>

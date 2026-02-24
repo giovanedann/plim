@@ -32,7 +32,7 @@ export function DeleteCategoryDialog({
           <AlertDialogTitle>Excluir categoria</AlertDialogTitle>
           <AlertDialogDescription>
             Tem certeza que deseja excluir a categoria &quot;{category?.name}&quot;? Esta ação não
-            pode ser desfeita. Despesas associadas a esta categoria podem ficar sem categoria.
+            pode ser desfeita. Transações associadas a esta categoria podem ficar sem categoria.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

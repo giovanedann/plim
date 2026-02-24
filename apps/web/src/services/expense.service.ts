@@ -17,6 +17,7 @@ function buildQueryString(filters?: ExpenseFilters | PaginatedExpenseFilters): s
   if (filters.payment_method) params.set('payment_method', filters.payment_method)
   if (filters.expense_type) params.set('expense_type', filters.expense_type)
   if (filters.credit_card_id) params.set('credit_card_id', filters.credit_card_id)
+  if (filters.transaction_type) params.set('transaction_type', filters.transaction_type)
   if ('page' in filters && filters.page) params.set('page', String(filters.page))
   if ('limit' in filters && filters.limit) params.set('limit', String(filters.limit))
 

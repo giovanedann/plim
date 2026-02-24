@@ -102,7 +102,7 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('Crie sua conta e ganhe 7 dias de Pro gratis')).toBeInTheDocument()
+        expect(screen.getByText('Crie sua conta e ganhe 7 dias de Pro grátis')).toBeInTheDocument()
       })
     })
 
@@ -114,7 +114,7 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        const ctaLink = screen.getByRole('link', { name: /Criar conta gratis/i })
+        const ctaLink = screen.getByRole('link', { name: /Criar conta grátis/i })
         expect(ctaLink).toBeInTheDocument()
         expect(ctaLink).toHaveAttribute('href', '/sign-up?ref=test-code')
       })
@@ -144,7 +144,7 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('Voce foi convidado para o Plim!')).toBeInTheDocument()
+        expect(screen.getByText('Você foi convidado para o Plim!')).toBeInTheDocument()
       })
     })
 
@@ -156,7 +156,7 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('Voce foi convidado para o Plim!')).toBeInTheDocument()
+        expect(screen.getByText('Você foi convidado para o Plim!')).toBeInTheDocument()
       })
     })
 
@@ -166,7 +166,7 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('Voce foi convidado para o Plim!')).toBeInTheDocument()
+        expect(screen.getByText('Você foi convidado para o Plim!')).toBeInTheDocument()
       })
     })
 
@@ -178,7 +178,7 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        const ctaLink = screen.getByRole('link', { name: /Criar conta gratis/i })
+        const ctaLink = screen.getByRole('link', { name: /Criar conta grátis/i })
         expect(ctaLink).toBeInTheDocument()
         expect(ctaLink).toHaveAttribute('href', '/sign-up')
       })
@@ -214,7 +214,7 @@ describe('ReferralLandingPage Integration', () => {
   })
 
   describe('authenticated user redirect', () => {
-    it('redirects authenticated users to dashboard', async () => {
+    it('redirects authenticated users to home', async () => {
       const { toast } = await import('sonner')
 
       vi.mocked(referralService.validateCode).mockResolvedValue({
@@ -231,8 +231,8 @@ describe('ReferralLandingPage Integration', () => {
       render(<ReferralLandingPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith({ to: '/dashboard' })
-        expect(toast.info).toHaveBeenCalledWith('Voce ja esta logado!')
+        expect(mockNavigate).toHaveBeenCalledWith({ to: '/home' })
+        expect(toast.info).toHaveBeenCalledWith('Você já está logado!')
       })
     })
   })

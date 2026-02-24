@@ -13,8 +13,9 @@ import { AppSidebar } from './app-sidebar'
 import { SiteHeader } from './site-header'
 
 const PAGE_TITLES: Record<string, string> = {
+  '/home': 'Início',
   '/dashboard': 'Dashboard',
-  '/expenses': 'Despesas',
+  '/transactions': 'Transações',
 }
 
 interface AppLayoutProps {
@@ -22,7 +23,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { open } = useOnboardingStore()
+  const { open, isOpen } = useOnboardingStore()
   const { profile, isLoading: isLoadingProfile } = useProfile()
   const location = useLocation()
 
@@ -31,12 +32,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   const pageTitle = PAGE_TITLES[location.pathname]
 
   useEffect(() => {
-    if (isLoadingProfile) return
+    if (isLoadingProfile || !profile) return
+    if (isOpen) return
 
-    if (!profile || !profile.is_onboarded) {
+    if (profile.is_onboarded === false) {
       open(false)
     }
-  }, [profile, isLoadingProfile, open])
+  }, [profile, isLoadingProfile, isOpen, open])
 
   const handleSaveSalary = useCallback(async (salaryInCents: number) => {
     await salaryService.createCurrentMonthSalary(salaryInCents)

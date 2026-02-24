@@ -1,4 +1,4 @@
-import type { ExpenseType, PaymentMethod } from '../schemas'
+import type { ExpenseType, IncomePaymentMethod, PaymentMethod, TransactionType } from '../schemas'
 
 export { PLAN_LIMITS } from './limits'
 export type { PlanTier, TierLimits } from './limits'
@@ -25,4 +25,38 @@ export const EXPENSE_TYPES: readonly ExpenseTypeOption[] = [
   { value: 'one_time', label: 'Única', description: 'Despesa pontual' },
   { value: 'recurrent', label: 'Recorrente', description: 'Repete todo mês' },
   { value: 'installment', label: 'Parcelada', description: 'Dividida em parcelas' },
+] as const
+
+export type IncomeType = 'income' | 'income_recurrent' | 'income_installment'
+
+export interface IncomeTypeOption {
+  value: IncomeType
+  label: string
+  description: string
+}
+
+export const INCOME_TYPES: readonly IncomeTypeOption[] = [
+  { value: 'income', label: 'Única', description: 'Receita pontual' },
+  { value: 'income_recurrent', label: 'Recorrente', description: 'Repete todo mês' },
+  { value: 'income_installment', label: 'Parcelada', description: 'Recebida em parcelas' },
+] as const
+
+export interface IncomePaymentMethodOption {
+  value: IncomePaymentMethod
+  label: string
+}
+
+export const INCOME_PAYMENT_METHODS: readonly IncomePaymentMethodOption[] = [
+  { value: 'pix', label: 'Pix' },
+  { value: 'cash', label: 'Dinheiro' },
+] as const
+
+export interface TransactionTypeOption {
+  value: TransactionType
+  label: string
+}
+
+export const TRANSACTION_TYPES: readonly TransactionTypeOption[] = [
+  { value: 'expense', label: 'Despesa' },
+  { value: 'income', label: 'Receita' },
 ] as const

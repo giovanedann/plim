@@ -62,7 +62,7 @@ export function ReferralSection(): React.ReactElement {
   function handleWhatsAppShare(): void {
     if (!stats?.referral_url) return
 
-    const message = `Conhece o Plim? Use meu link e ganhe 7 dias de Pro gratis: ${stats.referral_url}`
+    const message = `Conhece o Plim? Use meu link e ganhe 7 dias de Pro grátis: ${stats.referral_url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
     analytics.referralLinkShared('whatsapp')
   }
@@ -73,7 +73,7 @@ export function ReferralSection(): React.ReactElement {
     try {
       await navigator.share({
         title: 'Plim - Convite',
-        text: 'Conhece o Plim? Use meu link e ganhe 7 dias de Pro gratis.',
+        text: 'Conhece o Plim? Use meu link e ganhe 7 dias de Pro grátis.',
         url: stats.referral_url,
       })
       analytics.referralLinkShared('native')
@@ -155,7 +155,7 @@ export function ReferralSection(): React.ReactElement {
               <h4 className="text-sm font-medium">Indicações recentes</h4>
               {stats.referrals.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Compartilhe seu link e ganhe Pro gratis!
+                  Compartilhe seu link e ganhe Pro grátis!
                 </p>
               ) : (
                 <ul className="space-y-2" aria-label="Lista de indicações">

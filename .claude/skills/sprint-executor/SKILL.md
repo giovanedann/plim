@@ -87,6 +87,7 @@ Task tool (general-purpose):
     - [BE] tasks: Invoke the `backend-engineering` skill using the Skill tool
     - [FS] tasks: Invoke BOTH `frontend-engineering` AND `backend-engineering` skills
     - [CONFIG] tasks: No skill invocation needed
+    - [DB] tasks: No skill invocation needed. Write a .sql migration file to supabase/migrations/ using the naming pattern YYYYMMDDHHmmss_descriptive_name.sql. Do NOT call apply_migration or execute SQL against the database.
 
     Your task type is: [TASK_TYPE]
 
@@ -127,7 +128,7 @@ Task tool (general-purpose):
 | `[BE]` | `backend-engineering` | Invoke via Skill tool |
 | `[FS]` | Both FE + BE | Invoke both via Skill tool |
 | `[CONFIG]` | None | Proceed directly |
-| `[DB]` | None | Use Supabase MCP tools |
+| `[DB]` | None | Write `.sql` file to `supabase/migrations/` — do NOT execute |
 | `[BLOCKED]` | N/A | Skip, report to user |
 
 ---
@@ -204,3 +205,34 @@ Report:
 - Do NOT read implementation files yourself — that's the sub-agent's job
 - Do NOT carry code context between phases
 - Only read: sprint file, verification output, sub-agent reports
+
+---
+
+## Migration Safety Protocol
+
+`[DB]` tasks write SQL files but NEVER execute them against the database.
+
+### How It Works
+
+1. **During the sprint:** `[DB]` tasks create `.sql` files in `supabase/migrations/` with timestamp naming (`YYYYMMDDHHmmss_snake_case.sql`). Sub-agents use the `Write` tool, NOT `apply_migration`.
+
+2. **Final phase:** Every sprint with `[DB]` tasks MUST have a final phase (typically the last letter) titled "Apply Migrations". This phase:
+   - Lists all `.sql` files created during the sprint
+   - Is tagged `[BLOCKED]` — the orchestrator skips it and asks the user for approval
+   - When the user says "apply migrations", the orchestrator runs `apply_migration` for each file in timestamp order
+
+3. **Why:** The production database should only change after all code is written, built, and reviewed. This prevents broken states where DB schema changes exist but dependent code doesn't.
+
+### Apply Migrations Phase Template
+
+```
+### Phase Z: Apply Migrations
+
+- [ ] `[BLOCKED]` Apply all pending migrations
+  - Migrations created in this sprint:
+    1. `supabase/migrations/YYYYMMDDHHMMSS_first_migration.sql`
+    2. `supabase/migrations/YYYYMMDDHHMMSS_second_migration.sql`
+  - Run each migration via Supabase MCP `apply_migration` in timestamp order
+  - After applying, run verification queries from each [DB] task's acceptance criteria
+  - Acceptance: All migrations applied successfully, verification queries pass
+```
