@@ -1,9 +1,15 @@
 import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { creditCardService } from '@/services/credit-card.service'
-import type { CreateCreditCard, CreditCard, UpdateCreditCard } from '@plim/shared'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { invoiceService } from '@/services/invoice.service'
+import type {
+  CreateCreditCard,
+  CreditCard,
+  CreditCardLimitUsage,
+  UpdateCreditCard,
+} from '@plim/shared'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 export function useCreditCardsPage() {
@@ -21,6 +27,33 @@ export function useCreditCardsPage() {
     },
     staleTime: queryConfig.staleTime.creditCards,
   })
+
+  const cardsWithLimit = creditCardsQuery.data?.filter((card) => card.credit_limit_cents) ?? []
+
+  const limitUsageQueries = useQueries({
+    queries: cardsWithLimit.map((card) => ({
+      queryKey: queryKeys.limitUsage(card.id),
+      queryFn: async () => {
+        const response = await invoiceService.getLimitUsage(card.id)
+        if (isErrorResponse(response)) throw new Error(response.error.message)
+        return response.data
+      },
+      staleTime: queryConfig.staleTime.limitUsage,
+      enabled: !!card.credit_limit_cents,
+    })),
+  })
+
+  const limitUsages = useMemo(() => {
+    const record: Record<string, CreditCardLimitUsage> = {}
+    for (let i = 0; i < cardsWithLimit.length; i++) {
+      const card = cardsWithLimit[i]
+      const query = limitUsageQueries[i]
+      if (card && query?.data) {
+        record[card.id] = query.data
+      }
+    }
+    return record
+  }, [cardsWithLimit, limitUsageQueries])
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCreditCard) => creditCardService.createCreditCard(data),
@@ -86,6 +119,7 @@ export function useCreditCardsPage() {
 
   return {
     creditCards: creditCardsQuery.data || [],
+    limitUsages,
     isLoading: creditCardsQuery.isLoading,
     isModalOpen,
     setIsModalOpen,

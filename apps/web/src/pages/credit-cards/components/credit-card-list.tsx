@@ -6,18 +6,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { CreditCard } from '@plim/shared'
+import type { CreditCard, CreditCardLimitUsage } from '@plim/shared'
+import { formatBRL } from '@plim/shared'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { CalendarClock, Edit, MoreVertical, Trash2 } from 'lucide-react'
+import { CalendarClock, Edit, MoreVertical, Receipt, Trash2 } from 'lucide-react'
 import { CreditCard3D } from './credit-card-3d'
+
+function getUsageColor(percentage: number): string {
+  if (percentage > 90) return 'bg-red-500'
+  if (percentage >= 70) return 'bg-amber-500'
+  return 'bg-emerald-500'
+}
 
 interface CreditCardListProps {
   creditCards: CreditCard[]
+  limitUsages: Record<string, CreditCardLimitUsage>
   onEdit: (card: CreditCard) => void
   onDelete: (card: CreditCard) => void
 }
 
-export function CreditCardList({ creditCards, onEdit, onDelete }: CreditCardListProps) {
+export function CreditCardList({
+  creditCards,
+  limitUsages,
+  onEdit,
+  onDelete,
+}: CreditCardListProps): React.JSX.Element {
+  const navigate = useNavigate()
   if (creditCards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -71,6 +86,32 @@ export function CreditCardList({ creditCards, onEdit, onDelete }: CreditCardList
               </div>
             )}
 
+            {(() => {
+              const usage = card.credit_limit_cents ? limitUsages[card.id] : undefined
+              if (!usage) return null
+
+              const percentage = Math.min((usage.used_cents / usage.credit_limit_cents) * 100, 100)
+              const barColor = getUsageColor(percentage)
+
+              return (
+                <div className="mt-2 space-y-1">
+                  <p className="text-[11px] text-muted-foreground">
+                    Usado: {formatBRL(usage.used_cents)} / Disponível:{' '}
+                    {formatBRL(usage.available_cents)}
+                  </p>
+                  <div className="h-2 w-full rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full transition-all ${barColor}`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Limite: {formatBRL(usage.credit_limit_cents)}
+                  </p>
+                </div>
+              )
+            })()}
+
             {/* Actions dropdown - positioned on top right of card */}
             <div className="absolute right-1 top-1">
               <DropdownMenu>
@@ -84,6 +125,14 @@ export function CreditCardList({ creditCards, onEdit, onDelete }: CreditCardList
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {card.closing_day && (
+                    <DropdownMenuItem
+                      onClick={() => navigate({ to: `/credit-cards/${card.id}/invoices` })}
+                    >
+                      <Receipt className="mr-2 h-4 w-4" />
+                      Ver faturas
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => onEdit(card)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Editar
