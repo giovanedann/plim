@@ -201,6 +201,31 @@ await db.transaction(async (tx) => {
 - Use EXPLAIN ANALYZE for complex queries
 - Prefer single queries over N+1 patterns
 
+## Database Migrations
+
+### Write-First, Apply-Last
+
+When creating database migrations:
+
+1. **Write the `.sql` file** to `supabase/migrations/` using timestamp naming: `YYYYMMDDHHmmss_descriptive_name.sql`
+2. **Do NOT execute** the migration via `apply_migration` or any MCP tool
+3. Migrations are applied manually by the user at the end of the sprint after all code is reviewed
+
+### Naming Convention
+
+```
+YYYYMMDDHHmmss_descriptive_name.sql
+```
+
+Example: `20260223000001_add_type_column_to_expense.sql`
+
+### Migration Content
+
+- Well-commented SQL explaining purpose
+- Include RLS policy updates if adding tables/columns
+- Include constraint definitions
+- Add verification queries as SQL comments at the bottom
+
 ## API Response Format
 
 All API responses MUST use the standardized response types from `@plim/shared` and the response helper functions from `apps/api/src/lib/responses.ts`.
