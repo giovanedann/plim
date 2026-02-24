@@ -10,6 +10,7 @@ import { categoriesController } from './modules/categories/categories.controller
 import { creditCardsController } from './modules/credit-cards/credit-cards.controller'
 import { dashboardController } from './modules/dashboard/dashboard.controller'
 import { expensesRouter } from './modules/expenses/expenses.routes'
+import { invoicesController } from './modules/invoices/invoices.controller'
 import { paymentRouter, webhookRouter } from './modules/payment/payment.routes'
 import { profileController } from './modules/profile/profile.controller'
 import { referralPublicRouter, referralRouter } from './modules/referral/referral.routes'
@@ -57,6 +58,7 @@ api.route('/salary', salaryController)
 api.route('/spending-limits', spendingLimitsController)
 api.route('/dashboard', dashboardController)
 api.route('/credit-cards', creditCardsController)
+api.route('/invoices', invoicesController)
 api.route('/account', accountController)
 api.route('/ai', aiRouter)
 api.route('/payment', paymentRouter)
