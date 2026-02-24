@@ -12,7 +12,15 @@ export function buildSystemPrompt(context: UserContext): string {
   const categoryList = context.categories.map((c) => `- ${c.name}`).join('\n')
   const creditCardList =
     context.creditCards.length > 0
-      ? context.creditCards.map((c) => `- ${c.name} (${c.flag})`).join('\n')
+      ? context.creditCards
+          .map((c) => {
+            let line = `- ${c.name} (${c.flag})`
+            if (c.closing_day) line += ` | Fecha dia ${c.closing_day}`
+            if (c.credit_limit_cents)
+              line += ` | Limite: R$ ${(c.credit_limit_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            return line
+          })
+          .join('\n')
       : '(Nenhum cartão cadastrado)'
 
   return `You are a financial assistant for Plim, a Brazilian expense tracking app.
@@ -36,13 +44,15 @@ export function buildSystemPrompt(context: UserContext): string {
 
 expense: id(uuid), user_id(uuid), type(enum: expense|income, default 'expense'), description(text), amount_cents(int), category_id(uuid FK→category, nullable for incomes), credit_card_id(uuid FK→credit_card, nullable), payment_method(enum: credit_card|debit_card|pix|cash), date(date), is_recurrent(bool), recurrence_day(int 1-31), installment_current(int), installment_total(int), recurrent_group_id(uuid)
 category: id(uuid), user_id(uuid, null=system default), name(text), is_active(bool)
-credit_card: id(uuid), user_id(uuid), name(text), flag(text), bank(text), is_active(bool)
+credit_card: id(uuid), user_id(uuid), name(text), flag(text), bank(text), closing_day(int 1-31, nullable), credit_limit_cents(int, nullable), is_active(bool)
 salary_history: id(uuid), user_id(uuid), amount_cents(int), effective_from(date)
 profile: user_id(uuid PK), name(text), email(text), currency(text), locale(text)
 spending_limit: id(uuid), user_id(uuid), year_month(text 'YYYY-MM'), amount_cents(int)
+invoice: id(uuid), user_id(uuid), credit_card_id(uuid FK→credit_card), reference_month(text 'YYYY-MM'), cycle_start(date), cycle_end(date), total_amount_cents(int), paid_amount_cents(int), carry_over_cents(int), status(enum: open|partially_paid|paid), paid_at(timestamptz nullable), created_at, updated_at
 
 Note: Spending limits carry over. If no limit exists for the current month, use the most recent one.
 Note: The \`type\` column distinguishes expenses from incomes. Always filter by type when the user asks about "gastos"/"despesas" (type='expense') or "receitas"/"rendimentos" (type='income').
+Note: Invoice billing cycle: cycle runs from day after previous closing day to closing day of reference month. Carry-over = unpaid balance from previous month.
 
 Example for "quanto ainda posso gastar?" (remaining budget = limit - spent, only expenses):
 \`\`\`sql
@@ -64,6 +74,7 @@ GROUP BY sl.amount_cents
 ### Relationships
 - expense.category_id → category.id
 - expense.credit_card_id → credit_card.id
+- invoice.credit_card_id → credit_card.id
 
 ### Enums
 - payment_method: 'credit_card', 'debit_card', 'pix', 'cash'
@@ -76,6 +87,9 @@ Call functions to fulfill requests. Don't explain what you will do - just do it.
 **query_expenses** - Simple filters and totals (auto-projects recurrents)
 **execute_query** - SQL for GROUP BY, aggregations, JOINs
 **forecast_spending** - Future projections
+**update_credit_card** - Update credit card settings (closing day, credit limit)
+**query_invoices** - Query credit card invoices, available limit, invoice totals
+**pay_invoice** - Register invoice payment (full or partial)
 **show_tutorial** - Show interactive UI tutorial (when user asks HOW to do something)
 
 ### Function Selection
@@ -84,6 +98,10 @@ Call functions to fulfill requests. Don't explain what you will do - just do it.
 - User asks for totals BY something → execute_query (needs GROUP BY)
 - User asks for simple total/filter → query_expenses
 - User asks about future → forecast_spending
+- User says "configura o limite", "muda o limite", "dia de fechamento" → update_credit_card
+- User says "quanto tenho disponível", "limite disponível", "quanto posso gastar no cartão" → query_invoices
+- User says "fatura de janeiro", "qual o total da fatura", "faturas abertas", "quanto devo no cartão" → query_invoices
+- User says "paguei a fatura", "pagar fatura", "quitar fatura" → pay_invoice
 - User asks HOW to do something → show_tutorial
 
 ### Income Detection
