@@ -148,13 +148,16 @@ async function executeCreateExpense(
   let createExpenseInput: CreateExpense
 
   if (isIncome) {
+    const incomePaymentMethod =
+      params.payment_method === 'pix' || params.payment_method === 'cash'
+        ? params.payment_method
+        : 'pix'
     createExpenseInput = {
       type: 'income',
       description: params.description,
       amount_cents: params.amount_cents,
       date: params.date,
-      payment_method: params.payment_method,
-      credit_card_id: creditCardId,
+      payment_method: incomePaymentMethod,
     }
   } else if (params.installment_total && params.installment_total >= 2) {
     createExpenseInput = {
