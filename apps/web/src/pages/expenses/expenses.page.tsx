@@ -21,6 +21,8 @@ export function ExpensesPage() {
     spendingLimit,
     isLoading,
     totalExpenses,
+    totalIncomes,
+    netCost,
     balance,
     comparison,
     setPage,
@@ -30,7 +32,7 @@ export function ExpensesPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
       <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
-        <p className="text-sm text-muted-foreground">Gerencie suas despesas mensais</p>
+        <p className="text-sm text-muted-foreground">Gerencie suas transações mensais</p>
         <MonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
       </div>
 
@@ -38,6 +40,8 @@ export function ExpensesPage() {
         <SalaryDisplay
           salary={salary}
           totalExpenses={totalExpenses}
+          totalIncomes={totalIncomes}
+          netCost={netCost}
           balance={balance}
           selectedMonth={selectedMonth}
           isLoading={isLoading}
@@ -48,7 +52,7 @@ export function ExpensesPage() {
       <div className="px-4 lg:px-6">
         <SpendingLimitCard
           spendingLimit={spendingLimit}
-          totalExpenses={totalExpenses}
+          netCost={netCost}
           selectedMonth={selectedMonth}
           isLoading={isLoading}
         />
@@ -66,7 +70,7 @@ export function ExpensesPage() {
           creditCards={creditCards}
           selectedMonth={selectedMonth}
           spendingLimit={spendingLimit}
-          totalExpenses={totalExpenses}
+          netCost={netCost}
         />
       </div>
 
@@ -78,7 +82,7 @@ export function ExpensesPage() {
           isLoading={isLoading}
           selectedMonth={selectedMonth}
           spendingLimit={spendingLimit}
-          totalExpenses={totalExpenses}
+          netCost={netCost}
         />
       </div>
 

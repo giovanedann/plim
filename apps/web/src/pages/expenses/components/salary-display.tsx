@@ -12,7 +12,10 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  DollarSign,
+  Minus,
   Pencil,
+  PiggyBank,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -23,12 +26,16 @@ import { toast } from 'sonner'
 
 interface ComparisonData {
   previousExpenses: number | null
+  previousIncomes: number | null
+  previousNetCost: number | null
   previousBalance: number | null
 }
 
 interface SalaryDisplayProps {
   salary: SalaryHistory | null
   totalExpenses: number
+  totalIncomes: number
+  netCost: number
   balance: number
   selectedMonth: string
   isLoading: boolean
@@ -52,6 +59,8 @@ function calculatePercentageChange(
 export function SalaryDisplay({
   salary,
   totalExpenses,
+  totalIncomes,
+  netCost,
   balance,
   selectedMonth,
   isLoading,
@@ -65,9 +74,13 @@ export function SalaryDisplay({
   const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
+  const hasIncomes = totalIncomes > 0
+
   // Animated values
   const animatedSalary = useCountUp(salary?.amount_cents ?? 0)
   const animatedExpenses = useCountUp(totalExpenses)
+  const animatedIncomes = useCountUp(totalIncomes)
+  const animatedNetCost = useCountUp(netCost)
   const animatedBalance = useCountUp(balance)
 
   // Comparison calculations
@@ -75,6 +88,11 @@ export function SalaryDisplay({
     totalExpenses,
     comparison?.previousExpenses ?? null
   )
+  const incomeComparison = calculatePercentageChange(
+    totalIncomes,
+    comparison?.previousIncomes ?? null
+  )
+  const netCostComparison = calculatePercentageChange(netCost, comparison?.previousNetCost ?? null)
   const balanceComparison = calculatePercentageChange(balance, comparison?.previousBalance ?? null)
 
   const handleStartEdit = () => {
@@ -134,11 +152,12 @@ export function SalaryDisplay({
   }
 
   const hasSalary = salary && salary.amount_cents > 0
+  const savingsRate = hasSalary ? ((salary.amount_cents - netCost) / salary.amount_cents) * 100 : 0
 
   if (isLoading) {
     return (
-      <div className={`grid gap-4 ${hasSalary ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-        {[1, 2, 3].map((i) => (
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
             <CardContent className="pt-6">
               <div className="h-16 animate-pulse rounded bg-muted" />
@@ -151,7 +170,7 @@ export function SalaryDisplay({
 
   return (
     <div
-      className={`grid gap-4 ${hasSalary ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}
+      className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
       data-tutorial-id="expense-monthly-total"
     >
       <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
@@ -224,7 +243,7 @@ export function SalaryDisplay({
         <CardContent className="pt-6">
           <div className="flex items-center gap-2">
             <TrendingDown className="h-5 w-5 text-red-500" />
-            <span className="text-sm font-medium text-muted-foreground">Total de Despesas</span>
+            <span className="text-sm font-medium text-muted-foreground">Despesas</span>
           </div>
           <p className="mt-2 text-2xl font-bold text-red-500">{maskValue(animatedExpenses)}</p>
           {comparison && (
@@ -249,6 +268,70 @@ export function SalaryDisplay({
           )}
         </CardContent>
       </Card>
+
+      {hasIncomes && (
+        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+              <span className="text-sm font-medium text-muted-foreground">Receitas</span>
+            </div>
+            <p className="mt-2 text-2xl font-bold text-emerald-500">{maskValue(animatedIncomes)}</p>
+            {comparison && (
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {incomeComparison.value !== null ? (
+                  <>
+                    {incomeComparison.value > 0 ? (
+                      <ArrowUp className="h-3 w-3 text-emerald-500" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={incomeComparison.value > 0 ? 'text-emerald-500' : 'text-red-500'}
+                    >
+                      {incomeComparison.label}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">{incomeComparison.label}</span>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {hasIncomes && (
+        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Minus className="h-5 w-5 text-blue-500" />
+              <span className="text-sm font-medium text-muted-foreground">Custo Líquido</span>
+            </div>
+            <p className="mt-2 text-2xl font-bold text-blue-500">{maskValue(animatedNetCost)}</p>
+            {comparison && (
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {netCostComparison.value !== null ? (
+                  <>
+                    {netCostComparison.value > 0 ? (
+                      <ArrowUp className="h-3 w-3 text-red-500" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 text-emerald-500" />
+                    )}
+                    <span
+                      className={netCostComparison.value > 0 ? 'text-red-500' : 'text-emerald-500'}
+                    >
+                      {netCostComparison.label}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">{netCostComparison.label}</span>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {hasSalary && (
         <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
@@ -284,6 +367,33 @@ export function SalaryDisplay({
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {hasSalary && (
+        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <PiggyBank
+                className={`h-5 w-5 ${savingsRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+              />
+              <span className="text-sm font-medium text-muted-foreground">Taxa de Economia</span>
+            </div>
+            <p
+              className={`mt-2 text-2xl font-bold ${savingsRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+            >
+              {hideValues ? '••••••' : `${savingsRate.toFixed(1)}%`}
+            </p>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {savingsRate >= 20
+                ? 'Excelente!'
+                : savingsRate >= 10
+                  ? 'Bom ritmo'
+                  : savingsRate >= 0
+                    ? 'Pode melhorar'
+                    : 'Gastos acima do salário'}
+            </div>
           </CardContent>
         </Card>
       )}

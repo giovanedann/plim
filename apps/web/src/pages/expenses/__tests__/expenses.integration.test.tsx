@@ -70,7 +70,7 @@ describe('ExpensesPage Integration', () => {
       render(<ExpensesPage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText(/Gerencie suas despesas mensais/i)).toBeInTheDocument()
+        expect(screen.getByText(/Gerencie suas transações mensais/i)).toBeInTheDocument()
       })
     })
 

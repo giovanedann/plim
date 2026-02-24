@@ -58,7 +58,7 @@ interface ExpenseTableProps {
   isLoading: boolean
   selectedMonth: string
   spendingLimit?: EffectiveSpendingLimit | null
-  totalExpenses?: number
+  netCost?: number
 }
 
 const PAYMENT_METHOD_CONFIG: Record<string, { label: string; className: string }> = {
@@ -89,7 +89,7 @@ export function ExpenseTable({
   isLoading,
   selectedMonth,
   spendingLimit,
-  totalExpenses,
+  netCost,
 }: ExpenseTableProps) {
   const hideValues = useUIStore((state) => state.hideValues)
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
@@ -406,7 +406,7 @@ export function ExpenseTable({
                     </Badge>
                   </TableCell>
                   <TableCell
-                    className={`py-2 px-4 text-right font-medium ${hideValues ? '' : getAmountClassName(expense.type)}`}
+                    className={`py-2 px-4 text-right font-medium whitespace-nowrap ${hideValues ? '' : getAmountClassName(expense.type)}`}
                   >
                     {hideValues ? '••••••' : formatSignedAmount(expense.amount_cents, expense.type)}
                   </TableCell>
@@ -454,7 +454,7 @@ export function ExpenseTable({
         selectedMonth={selectedMonth}
         expense={expenseToEdit ?? undefined}
         spendingLimit={spendingLimit}
-        totalExpenses={totalExpenses}
+        netCost={netCost}
       />
 
       <AlertDialog

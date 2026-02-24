@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 
 interface SpendingLimitCardProps {
   spendingLimit: EffectiveSpendingLimit | null
-  totalExpenses: number
+  netCost: number
   selectedMonth: string
   isLoading: boolean
 }
@@ -53,7 +53,7 @@ function getThresholdStatus(percentage: number) {
 
 export function SpendingLimitCard({
   spendingLimit,
-  totalExpenses,
+  netCost,
   selectedMonth,
   isLoading,
 }: SpendingLimitCardProps) {
@@ -187,9 +187,10 @@ export function SpendingLimitCard({
     )
   }
 
-  // Calculate percentage and status
-  const percentage = Math.round((totalExpenses / spendingLimit.amount_cents) * 100)
-  const remaining = spendingLimit.amount_cents - totalExpenses
+  // Calculate percentage and status using netCost (expenses minus incomes)
+  const effectiveNetCost = Math.max(0, netCost)
+  const percentage = Math.round((effectiveNetCost / spendingLimit.amount_cents) * 100)
+  const remaining = spendingLimit.amount_cents - effectiveNetCost
   const status = getThresholdStatus(percentage)
 
   return (
@@ -262,7 +263,7 @@ export function SpendingLimitCard({
           <>
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className={status.color}>{maskValue(totalExpenses)}</span>
+                <span className={status.color}>{maskValue(effectiveNetCost)}</span>
                 <span className="text-muted-foreground">
                   de {maskValue(spendingLimit.amount_cents)}
                 </span>

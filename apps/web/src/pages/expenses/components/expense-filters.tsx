@@ -27,7 +27,7 @@ interface ExpenseFiltersProps {
   creditCards: CreditCard[]
   selectedMonth: string
   spendingLimit?: EffectiveSpendingLimit | null
-  totalExpenses?: number
+  netCost?: number
 }
 
 export function ExpenseFilters({
@@ -37,7 +37,7 @@ export function ExpenseFilters({
   creditCards,
   selectedMonth,
   spendingLimit,
-  totalExpenses,
+  netCost,
 }: ExpenseFiltersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { hideValues, toggleHideValues } = useUIStore()
@@ -228,7 +228,7 @@ export function ExpenseFilters({
         creditCards={creditCards}
         selectedMonth={selectedMonth}
         spendingLimit={spendingLimit}
-        totalExpenses={totalExpenses}
+        netCost={netCost}
       />
     </Card>
   )
