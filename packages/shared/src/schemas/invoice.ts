@@ -29,7 +29,9 @@ export const createInvoiceSchema = z.object({
   status: invoiceStatusSchema.default('open'),
 })
 
-export const updateInvoiceSchema = createInvoiceSchema.partial()
+export const updateInvoiceSchema = createInvoiceSchema
+  .partial()
+  .extend({ paid_at: z.string().datetime().nullable().optional() })
 
 export const payInvoiceSchema = z.object({
   amount_cents: z.number().int().min(1),
