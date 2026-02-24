@@ -442,9 +442,10 @@ describe('createExpenseSchema', () => {
       description: 'Salary payment',
       amount_cents: 500000,
       date: '2024-01-15',
+      payment_method: 'pix' as const,
     }
 
-    it('accepts valid income with minimal fields', () => {
+    it('accepts valid income', () => {
       const result = sut.safeParse(validIncome)
 
       expect(result.success).toBe(true)
@@ -453,10 +454,10 @@ describe('createExpenseSchema', () => {
       }
     })
 
-    it('accepts income with optional payment_method', () => {
+    it('accepts income with cash payment method', () => {
       const income = {
         ...validIncome,
-        payment_method: 'pix' as const,
+        payment_method: 'cash' as const,
       }
 
       const result = sut.safeParse(income)
@@ -464,15 +465,15 @@ describe('createExpenseSchema', () => {
       expect(result.success).toBe(true)
     })
 
-    it('accepts income with optional credit_card_id', () => {
+    it('rejects income with credit_card payment method', () => {
       const income = {
         ...validIncome,
-        credit_card_id: '550e8400-e29b-41d4-a716-446655440001',
+        payment_method: 'credit_card',
       }
 
       const result = sut.safeParse(income)
 
-      expect(result.success).toBe(true)
+      expect(result.success).toBe(false)
     })
 
     it('does not require category_id', () => {
@@ -546,6 +547,7 @@ describe('createIncomeSchema', () => {
     description: 'Freelance work',
     amount_cents: 250000,
     date: '2024-01-15',
+    payment_method: 'pix' as const,
   }
 
   it('accepts valid income', () => {
@@ -557,26 +559,23 @@ describe('createIncomeSchema', () => {
     }
   })
 
-  it('accepts income with optional payment_method', () => {
-    const income = { ...validIncome, payment_method: 'pix' as const }
+  it('accepts income with cash payment method', () => {
+    const income = { ...validIncome, payment_method: 'cash' as const }
 
     const result = sut.safeParse(income)
 
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.payment_method).toBe('pix')
+      expect(result.data.payment_method).toBe('cash')
     }
   })
 
-  it('accepts income with optional credit_card_id', () => {
-    const income = {
-      ...validIncome,
-      credit_card_id: '550e8400-e29b-41d4-a716-446655440001',
-    }
+  it('rejects income with credit_card payment method', () => {
+    const income = { ...validIncome, payment_method: 'credit_card' }
 
     const result = sut.safeParse(income)
 
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
   })
 
   it('rejects income with wrong type literal', () => {
