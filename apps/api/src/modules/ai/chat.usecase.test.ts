@@ -1,7 +1,13 @@
 import { createMockCategory, createMockChatOutput } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { CreditCardsRepository } from '../credit-cards/credit-cards.repository'
+import type { UpdateCreditCardUseCase } from '../credit-cards/update-credit-card.usecase'
 import type { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../expenses/expenses.repository'
+import type { GetCreditCardLimitUsageUseCase } from '../invoices/get-credit-card-limit-usage.usecase'
+import type { GetOrCreateInvoiceUseCase } from '../invoices/get-or-create-invoice.usecase'
+import type { InvoicesRepository } from '../invoices/invoices.repository'
+import type { PayInvoiceUseCase } from '../invoices/pay-invoice.usecase'
 import type { AIRepository, CachedResponse } from './ai.repository'
 import { ChatUseCase, type ChatUseCaseDependencies, type ChatUseCaseInput } from './chat.usecase'
 import type { AIClient, ChatOutput } from './client'
@@ -91,6 +97,12 @@ describe('ChatUseCase', () => {
       supabase: mockSupabase as never,
       createExpenseUseCase: mockCreateExpenseUseCase as unknown as CreateExpenseUseCase,
       expensesRepository: mockExpensesRepository as unknown as ExpensesRepository,
+      updateCreditCardUseCase: {} as unknown as UpdateCreditCardUseCase,
+      getOrCreateInvoiceUseCase: {} as unknown as GetOrCreateInvoiceUseCase,
+      getCreditCardLimitUsageUseCase: {} as unknown as GetCreditCardLimitUsageUseCase,
+      payInvoiceUseCase: {} as unknown as PayInvoiceUseCase,
+      invoicesRepository: {} as unknown as InvoicesRepository,
+      creditCardsRepository: {} as unknown as CreditCardsRepository,
     }
 
     sut = new ChatUseCase(deps)
