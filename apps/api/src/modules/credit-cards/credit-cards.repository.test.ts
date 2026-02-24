@@ -136,6 +136,8 @@ describe('CreditCardsRepository', () => {
         flag: 'visa',
         bank: 'itau',
         last_4_digits: '5678',
+        closing_day: 10,
+        credit_limit_cents: 500000,
       }
       const createdCard = createMockCreditCard({
         name: 'New Card',
@@ -143,6 +145,8 @@ describe('CreditCardsRepository', () => {
         flag: 'visa',
         bank: 'itau',
         last_4_digits: '5678',
+        closing_day: 10,
+        credit_limit_cents: 500000,
       })
       mockSupabase.from.mockReturnValue({
         insert: vi.fn().mockReturnValue({
@@ -207,8 +211,18 @@ describe('CreditCardsRepository', () => {
 
   describe('update', () => {
     it('updates and returns credit card', async () => {
-      const input: UpdateCreditCard = { name: 'Updated Card', color: 'gold' }
-      const updatedCard = createMockCreditCard({ name: 'Updated Card', color: 'gold' })
+      const input: UpdateCreditCard = {
+        name: 'Updated Card',
+        color: 'gold',
+        closing_day: 15,
+        credit_limit_cents: 1000000,
+      }
+      const updatedCard = createMockCreditCard({
+        name: 'Updated Card',
+        color: 'gold',
+        closing_day: 15,
+        credit_limit_cents: 1000000,
+      })
       mockSupabase.from.mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({

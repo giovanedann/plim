@@ -2,7 +2,7 @@ import type { CreateCreditCard, CreditCard, UpdateCreditCard } from '@plim/share
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const CREDIT_CARD_COLUMNS =
-  'id, user_id, name, color, flag, bank, last_4_digits, expiration_day, is_active, created_at, updated_at'
+  'id, user_id, name, color, flag, bank, last_4_digits, expiration_day, closing_day, credit_limit_cents, is_active, created_at, updated_at'
 
 export class CreditCardsRepository {
   constructor(private supabase: SupabaseClient) {}
@@ -54,6 +54,8 @@ export class CreditCardsRepository {
         bank: input.bank,
         last_4_digits: input.last_4_digits ?? null,
         expiration_day: input.expiration_day ?? null,
+        closing_day: input.closing_day ?? null,
+        credit_limit_cents: input.credit_limit_cents ?? null,
       })
       .select(CREDIT_CARD_COLUMNS)
       .single()
