@@ -107,6 +107,8 @@ describe('creditCardSchema', () => {
     bank: 'nubank' as const,
     last_4_digits: '1234',
     expiration_day: 15,
+    closing_day: 10,
+    credit_limit_cents: 500000,
     is_active: true,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
