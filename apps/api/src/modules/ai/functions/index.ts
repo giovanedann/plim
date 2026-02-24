@@ -4,6 +4,9 @@ export {
   forecastSpendingParameters,
   queryExpensesParameters,
   executeQueryParameters,
+  queryInvoicesParameters,
+  updateCreditCardParameters,
+  payInvoiceParameters,
 } from './function-definitions'
 
 export {

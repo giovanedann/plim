@@ -3,13 +3,23 @@ import {
   type CreateExpense,
   type CreditCard,
   type Expense,
+  type UpdateCreditCard,
   createExpenseFunctionParamsSchema,
   forecastSpendingFunctionParamsSchema,
+  payInvoiceFunctionParamsSchema,
   queryExpensesFunctionParamsSchema,
+  queryInvoicesFunctionParamsSchema,
+  updateCreditCardFunctionParamsSchema,
 } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { CreditCardsRepository } from '../../credit-cards/credit-cards.repository'
+import type { UpdateCreditCardUseCase } from '../../credit-cards/update-credit-card.usecase'
 import type { CreateExpenseUseCase } from '../../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../../expenses/expenses.repository'
+import type { GetCreditCardLimitUsageUseCase } from '../../invoices/get-credit-card-limit-usage.usecase'
+import type { GetOrCreateInvoiceUseCase } from '../../invoices/get-or-create-invoice.usecase'
+import type { InvoicesRepository } from '../../invoices/invoices.repository'
+import type { PayInvoiceUseCase } from '../../invoices/pay-invoice.usecase'
 import type { FunctionCall } from '../client'
 import { executeQuery } from './execute-query'
 
@@ -18,13 +28,27 @@ export interface FunctionExecutionContext {
   supabase: SupabaseClient
   createExpenseUseCase: CreateExpenseUseCase
   expensesRepository: ExpensesRepository
+  updateCreditCardUseCase: UpdateCreditCardUseCase
+  getOrCreateInvoiceUseCase: GetOrCreateInvoiceUseCase
+  getCreditCardLimitUsageUseCase: GetCreditCardLimitUsageUseCase
+  payInvoiceUseCase: PayInvoiceUseCase
+  invoicesRepository: InvoicesRepository
+  creditCardsRepository: CreditCardsRepository
 }
 
 export interface FunctionExecutionResult {
   success: boolean
   message: string
   data?: unknown
-  actionType: 'expense_created' | 'query_result' | 'forecast_result' | 'show_tutorial' | 'error'
+  actionType:
+    | 'expense_created'
+    | 'query_result'
+    | 'forecast_result'
+    | 'show_tutorial'
+    | 'credit_card_updated'
+    | 'invoice_result'
+    | 'invoice_paid'
+    | 'error'
 }
 
 export async function executeFunction(
@@ -40,6 +64,12 @@ export async function executeFunction(
       return executeForecastSpending(functionCall.args, context)
     case 'execute_query':
       return executeQuery(functionCall.args, context.userId, context.supabase)
+    case 'query_invoices':
+      return executeQueryInvoices(functionCall.args, context)
+    case 'update_credit_card':
+      return executeUpdateCreditCard(functionCall.args, context)
+    case 'pay_invoice':
+      return executePayInvoice(functionCall.args, context)
     case 'show_tutorial':
       return executeShowTutorial(functionCall.args)
     default:
@@ -85,6 +115,432 @@ function executeShowTutorial(args: Record<string, unknown>): FunctionExecutionRe
     message: TUTORIAL_MESSAGES[tutorialId] ?? 'Vou te mostrar como fazer isso!',
     data: { tutorial_id: tutorialId },
     actionType: 'show_tutorial',
+  }
+}
+
+async function executeUpdateCreditCard(
+  args: Record<string, unknown>,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  const parseResult = updateCreditCardFunctionParamsSchema.safeParse(args)
+
+  if (!parseResult.success) {
+    return {
+      success: false,
+      message: 'Não consegui entender os dados para atualizar o cartão. Pode repetir?',
+      actionType: 'error',
+    }
+  }
+
+  const params = parseResult.data
+
+  const creditCard = await findCreditCardByName(
+    context.supabase,
+    context.userId,
+    params.credit_card_name
+  )
+
+  if (!creditCard) {
+    return {
+      success: false,
+      message: `Não encontrei o cartão "${params.credit_card_name}". Verifique o nome e tente novamente.`,
+      actionType: 'error',
+    }
+  }
+
+  const updateInput: UpdateCreditCard = {}
+
+  if (params.closing_day !== undefined) {
+    updateInput.closing_day = params.closing_day
+  }
+
+  if (params.credit_limit_cents !== undefined) {
+    updateInput.credit_limit_cents = params.credit_limit_cents
+  }
+
+  if (Object.keys(updateInput).length === 0) {
+    return {
+      success: false,
+      message:
+        'Nenhuma alteração foi informada. Informe o dia de fechamento ou o limite de crédito.',
+      actionType: 'error',
+    }
+  }
+
+  try {
+    const updated = await context.updateCreditCardUseCase.execute(
+      context.userId,
+      creditCard.id,
+      updateInput
+    )
+
+    const details: string[] = []
+    if (params.closing_day !== undefined) {
+      details.push(`dia de fechamento para ${params.closing_day}`)
+    }
+    if (params.credit_limit_cents !== undefined) {
+      details.push(`limite para ${formatCurrency(params.credit_limit_cents)}`)
+    }
+
+    return {
+      success: true,
+      message: `Cartão ${updated.name} atualizado: ${details.join(' e ')}.`,
+      data: updated,
+      actionType: 'credit_card_updated',
+    }
+  } catch {
+    return {
+      success: false,
+      message: 'Não consegui atualizar o cartão. Tente novamente.',
+      actionType: 'error',
+    }
+  }
+}
+
+async function executePayInvoice(
+  args: Record<string, unknown>,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  const parseResult = payInvoiceFunctionParamsSchema.safeParse(args)
+
+  if (!parseResult.success) {
+    return {
+      success: false,
+      message: 'Não consegui entender os dados do pagamento. Pode repetir?',
+      actionType: 'error',
+    }
+  }
+
+  const params = parseResult.data
+
+  let creditCardId: string | undefined
+  let cardName: string | undefined
+
+  if (params.credit_card_name) {
+    const creditCard = await findCreditCardByName(
+      context.supabase,
+      context.userId,
+      params.credit_card_name
+    )
+    if (!creditCard) {
+      return {
+        success: false,
+        message: `Não encontrei o cartão "${params.credit_card_name}". Verifique o nome e tente novamente.`,
+        actionType: 'error',
+      }
+    }
+    creditCardId = creditCard.id
+    cardName = creditCard.name
+  } else {
+    const activeCards = await context.creditCardsRepository.findByUserId(context.userId)
+    if (activeCards.length === 0) {
+      return {
+        success: false,
+        message: 'Você não tem cartões de crédito cadastrados.',
+        actionType: 'error',
+      }
+    }
+    if (activeCards.length > 1) {
+      return {
+        success: false,
+        message: 'Você tem mais de um cartão. Qual cartão deseja pagar a fatura?',
+        actionType: 'error',
+      }
+    }
+    creditCardId = activeCards[0]!.id
+    cardName = activeCards[0]!.name
+  }
+
+  try {
+    const { invoice } = await context.getOrCreateInvoiceUseCase.execute(
+      context.userId,
+      creditCardId,
+      params.reference_month
+    )
+
+    const effectiveTotal = invoice.total_amount_cents + invoice.carry_over_cents
+    const remaining = effectiveTotal - invoice.paid_amount_cents
+
+    if (remaining <= 0) {
+      return {
+        success: true,
+        message: `A fatura de ${params.reference_month} do cartão ${cardName} já está paga.`,
+        data: invoice,
+        actionType: 'invoice_paid',
+      }
+    }
+
+    let amountCents: number
+
+    if (params.pay_full || !params.amount_cents) {
+      amountCents = remaining
+    } else {
+      amountCents = params.amount_cents
+    }
+
+    const updatedInvoice = await context.payInvoiceUseCase.execute(
+      context.userId,
+      invoice.id,
+      amountCents
+    )
+
+    const formattedAmount = formatCurrency(amountCents)
+    const isFullyPaid = updatedInvoice.status === 'paid'
+
+    const message = isFullyPaid
+      ? `Fatura de ${params.reference_month} do cartão ${cardName} paga integralmente: ${formattedAmount}.`
+      : `Pagamento de ${formattedAmount} registrado na fatura de ${params.reference_month} do cartão ${cardName}. Restante: ${formatCurrency(remaining - amountCents)}.`
+
+    return {
+      success: true,
+      message,
+      data: updatedInvoice,
+      actionType: 'invoice_paid',
+    }
+  } catch {
+    return {
+      success: false,
+      message: 'Não consegui registrar o pagamento da fatura. Tente novamente.',
+      actionType: 'error',
+    }
+  }
+}
+
+async function executeQueryInvoices(
+  args: Record<string, unknown>,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  const parseResult = queryInvoicesFunctionParamsSchema.safeParse(args)
+
+  if (!parseResult.success) {
+    return {
+      success: false,
+      message: 'Não consegui entender sua pergunta sobre faturas. Pode reformular?',
+      actionType: 'error',
+    }
+  }
+
+  const params = parseResult.data
+
+  switch (params.query_type) {
+    case 'invoice_details':
+      return executeInvoiceDetails(params.credit_card_name, params.reference_month, context)
+    case 'limit_usage':
+      return executeLimitUsage(params.credit_card_name, context)
+    case 'open_invoices':
+      return executeOpenInvoices(params.credit_card_name, context)
+    default:
+      return {
+        success: false,
+        message: 'Tipo de consulta de fatura não reconhecido.',
+        actionType: 'error',
+      }
+  }
+}
+
+async function executeInvoiceDetails(
+  creditCardName: string | undefined,
+  referenceMonth: string | undefined,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  if (!creditCardName) {
+    return {
+      success: false,
+      message: 'Qual cartão de crédito você quer consultar a fatura?',
+      actionType: 'error',
+    }
+  }
+
+  const creditCard = await findCreditCardByName(context.supabase, context.userId, creditCardName)
+
+  if (!creditCard) {
+    return {
+      success: false,
+      message: `Não encontrei o cartão "${creditCardName}". Verifique o nome e tente novamente.`,
+      actionType: 'error',
+    }
+  }
+
+  const month = referenceMonth ?? new Date().toISOString().slice(0, 7)
+
+  try {
+    const result = await context.getOrCreateInvoiceUseCase.execute(
+      context.userId,
+      creditCard.id,
+      month
+    )
+
+    const { invoice, transactions } = result
+    const remaining =
+      invoice.total_amount_cents + invoice.carry_over_cents - invoice.paid_amount_cents
+
+    const statusLabels: Record<string, string> = {
+      open: 'Aberta',
+      partially_paid: 'Parcialmente paga',
+      paid: 'Paga',
+    }
+
+    const message = [
+      `Fatura ${creditCard.name} - ${month}:`,
+      `Total: ${formatCurrency(invoice.total_amount_cents)}`,
+      `Pago: ${formatCurrency(invoice.paid_amount_cents)}`,
+      `Saldo anterior: ${formatCurrency(invoice.carry_over_cents)}`,
+      `Restante: ${formatCurrency(remaining)}`,
+      `Status: ${statusLabels[invoice.status] ?? invoice.status}`,
+      `Transações: ${transactions.length}`,
+    ].join('\n')
+
+    return {
+      success: true,
+      message,
+      data: {
+        invoice,
+        transaction_count: transactions.length,
+        remaining_cents: remaining,
+      },
+      actionType: 'invoice_result',
+    }
+  } catch {
+    return {
+      success: false,
+      message:
+        'Não consegui consultar a fatura. Verifique se o cartão tem dia de fechamento configurado.',
+      actionType: 'error',
+    }
+  }
+}
+
+async function executeLimitUsage(
+  creditCardName: string | undefined,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  if (!creditCardName) {
+    return {
+      success: false,
+      message: 'Qual cartão de crédito você quer consultar o limite?',
+      actionType: 'error',
+    }
+  }
+
+  const creditCard = await findCreditCardByName(context.supabase, context.userId, creditCardName)
+
+  if (!creditCard) {
+    return {
+      success: false,
+      message: `Não encontrei o cartão "${creditCardName}". Verifique o nome e tente novamente.`,
+      actionType: 'error',
+    }
+  }
+
+  try {
+    const usage = await context.getCreditCardLimitUsageUseCase.execute(
+      context.userId,
+      creditCard.id
+    )
+
+    const message = [
+      `Limite do ${creditCard.name}:`,
+      `Limite total: ${formatCurrency(usage.credit_limit_cents)}`,
+      `Utilizado: ${formatCurrency(usage.used_cents)}`,
+      `Disponível: ${formatCurrency(usage.available_cents)}`,
+    ].join('\n')
+
+    return {
+      success: true,
+      message,
+      data: usage,
+      actionType: 'invoice_result',
+    }
+  } catch {
+    return {
+      success: false,
+      message: 'Não consegui consultar o limite. Verifique se o cartão tem limite configurado.',
+      actionType: 'error',
+    }
+  }
+}
+
+async function executeOpenInvoices(
+  creditCardName: string | undefined,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  let cards: CreditCard[]
+
+  if (creditCardName) {
+    const creditCard = await findCreditCardByName(context.supabase, context.userId, creditCardName)
+
+    if (!creditCard) {
+      return {
+        success: false,
+        message: `Não encontrei o cartão "${creditCardName}". Verifique o nome e tente novamente.`,
+        actionType: 'error',
+      }
+    }
+
+    cards = [creditCard]
+  } else {
+    cards = await context.creditCardsRepository.findByUserId(context.userId)
+  }
+
+  if (cards.length === 0) {
+    return {
+      success: true,
+      message: 'Você não tem cartões de crédito cadastrados.',
+      data: { invoices: [] },
+      actionType: 'invoice_result',
+    }
+  }
+
+  const allOpenInvoices: Array<{
+    card_name: string
+    reference_month: string
+    total_cents: number
+    remaining_cents: number
+    status: string
+  }> = []
+
+  for (const card of cards) {
+    const unpaid = await context.invoicesRepository.findUnpaidByCard(card.id, context.userId)
+
+    for (const invoice of unpaid) {
+      const remaining =
+        invoice.total_amount_cents + invoice.carry_over_cents - invoice.paid_amount_cents
+      allOpenInvoices.push({
+        card_name: card.name,
+        reference_month: invoice.reference_month,
+        total_cents: invoice.total_amount_cents,
+        remaining_cents: remaining,
+        status: invoice.status,
+      })
+    }
+  }
+
+  if (allOpenInvoices.length === 0) {
+    return {
+      success: true,
+      message: 'Você não tem faturas em aberto.',
+      data: { invoices: [] },
+      actionType: 'invoice_result',
+    }
+  }
+
+  const totalRemaining = allOpenInvoices.reduce((sum, inv) => sum + inv.remaining_cents, 0)
+
+  const lines = allOpenInvoices.map(
+    (inv) => `${inv.card_name} - ${inv.reference_month}: ${formatCurrency(inv.remaining_cents)}`
+  )
+
+  const message = [
+    `Faturas em aberto (${allOpenInvoices.length}):`,
+    ...lines,
+    `Total pendente: ${formatCurrency(totalRemaining)}`,
+  ].join('\n')
+
+  return {
+    success: true,
+    message,
+    data: { invoices: allOpenInvoices, total_remaining_cents: totalRemaining },
+    actionType: 'invoice_result',
   }
 }
 

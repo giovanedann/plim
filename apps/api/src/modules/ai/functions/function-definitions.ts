@@ -119,6 +119,73 @@ const executeQueryParameters: JsonSchema = {
   required: ['sql', 'description'],
 }
 
+const queryInvoicesParameters: JsonSchema = {
+  type: 'object',
+  description: 'Query credit card invoices, check available credit limit, or list open invoices',
+  properties: {
+    credit_card_name: {
+      type: 'string',
+      description: 'Name of the credit card to query',
+    },
+    reference_month: {
+      type: 'string',
+      description: 'Invoice reference month (YYYY-MM)',
+    },
+    query_type: {
+      type: 'string',
+      description: 'Type of invoice query',
+      enum: ['invoice_details', 'limit_usage', 'open_invoices'],
+    },
+  },
+  required: ['query_type'],
+}
+
+const updateCreditCardParameters: JsonSchema = {
+  type: 'object',
+  description: 'Update credit card settings like closing day or credit limit',
+  properties: {
+    credit_card_name: {
+      type: 'string',
+      description: 'Name of the credit card to update',
+    },
+    closing_day: {
+      type: 'integer',
+      description: 'Invoice closing day of the month (1-31)',
+    },
+    credit_limit_cents: {
+      type: 'integer',
+      description: 'Credit limit in cents (R$5000 = 500000)',
+    },
+  },
+  required: ['credit_card_name'],
+}
+
+const payInvoiceParameters: JsonSchema = {
+  type: 'object',
+  description:
+    'Pay a credit card invoice (full or partial). Use when user says they paid an invoice.',
+  properties: {
+    credit_card_name: {
+      type: 'string',
+      description: 'Name of the credit card (optional if user has only one card)',
+    },
+    reference_month: {
+      type: 'string',
+      description: 'Invoice reference month (YYYY-MM)',
+    },
+    amount_cents: {
+      type: 'integer',
+      description: 'Payment amount in cents (R$2000 = 200000). Omit for full payment.',
+    },
+    pay_full: {
+      type: 'boolean',
+      description:
+        'True when user wants to pay the full invoice (e.g., "integralmente", "total", "toda")',
+    },
+  },
+  required: ['reference_month'],
+}
+
 const showTutorialParameters: JsonSchema = {
   type: 'object',
   description:
@@ -162,6 +229,21 @@ export const aiFunctionDefinitions: FunctionDefinition[] = [
     parameters: executeQueryParameters,
   },
   {
+    name: 'query_invoices',
+    description: 'Query invoice details, check available credit limit, or list open invoices',
+    parameters: queryInvoicesParameters,
+  },
+  {
+    name: 'update_credit_card',
+    description: 'Update credit card settings (closing day, credit limit)',
+    parameters: updateCreditCardParameters,
+  },
+  {
+    name: 'pay_invoice',
+    description: 'Pay a credit card invoice (full or partial)',
+    parameters: payInvoiceParameters,
+  },
+  {
     name: 'show_tutorial',
     description:
       'Show interactive UI tutorial when user asks HOW to do something (not when requesting an action)',
@@ -174,5 +256,8 @@ export {
   queryExpensesParameters,
   forecastSpendingParameters,
   executeQueryParameters,
+  queryInvoicesParameters,
+  updateCreditCardParameters,
+  payInvoiceParameters,
   showTutorialParameters,
 }
