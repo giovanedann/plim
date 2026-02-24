@@ -117,7 +117,7 @@ describe('Sidebar Integration', () => {
       expect(dashboardLink).toHaveAttribute('href', '/dashboard')
 
       const expensesLink = screen.getByRole('link', { name: /transações/i })
-      expect(expensesLink).toHaveAttribute('href', '/expenses')
+      expect(expensesLink).toHaveAttribute('href', '/transactions')
     })
   })
 

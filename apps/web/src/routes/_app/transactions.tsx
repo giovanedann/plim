@@ -6,7 +6,7 @@ const ExpensesPage = lazy(() =>
   import('@/pages/expenses/expenses.page').then((m) => ({ default: m.ExpensesPage }))
 )
 
-export const Route = createFileRoute('/_app/expenses')({
+export const Route = createFileRoute('/_app/transactions')({
   component: () => (
     <Suspense fallback={<PageLoader />}>
       <ExpensesPage />

@@ -161,7 +161,7 @@ describe('AppSidebar', () => {
       const cardsLink = screen.getByText('Cartões').closest('a')
 
       expect(dashboardLink).toHaveAttribute('href', '/dashboard')
-      expect(expensesLink).toHaveAttribute('href', '/expenses')
+      expect(expensesLink).toHaveAttribute('href', '/transactions')
       expect(categoriesLink).toHaveAttribute('href', '/categories')
       expect(cardsLink).toHaveAttribute('href', '/credit-cards')
     })
@@ -189,8 +189,8 @@ describe('AppSidebar', () => {
       expect(dashboardWrapper).toHaveAttribute('data-active', 'true')
     })
 
-    it('highlights expenses as active when on expenses route', () => {
-      mockUseLocation.mockReturnValue({ pathname: '/expenses' })
+    it('highlights transactions as active when on transactions route', () => {
+      mockUseLocation.mockReturnValue({ pathname: '/transactions' })
 
       render(<AppSidebar />)
 

@@ -46,8 +46,8 @@ export function LandingHeader() {
               size="sm"
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <Link to="/dashboard" className="flex items-center gap-2">
-                Ir para Dashboard
+              <Link to="/home" className="flex items-center gap-2">
+                Acessar app
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

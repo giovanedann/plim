@@ -62,10 +62,10 @@ describe('NotFoundPage Integration', () => {
   })
 
   describe('navigation buttons', () => {
-    it('renders dashboard navigation button', () => {
+    it('renders home navigation button', () => {
       render(<NotFoundPage />, { wrapper: TestWrapper })
 
-      expect(screen.getByRole('link', { name: /Ir para Dashboard/i })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /Ir para o início/i })).toBeInTheDocument()
     })
 
     it('renders back button', () => {
@@ -74,11 +74,11 @@ describe('NotFoundPage Integration', () => {
       expect(screen.getByRole('link', { name: /Voltar/i })).toBeInTheDocument()
     })
 
-    it('dashboard button links to correct route', () => {
+    it('home button links to correct route', () => {
       render(<NotFoundPage />, { wrapper: TestWrapper })
 
-      const dashboardLink = screen.getByRole('link', { name: /Ir para Dashboard/i })
-      expect(dashboardLink).toHaveAttribute('href', '/dashboard')
+      const homeLink = screen.getByRole('link', { name: /Ir para o início/i })
+      expect(homeLink).toHaveAttribute('href', '/home')
     })
   })
 
@@ -138,7 +138,7 @@ describe('NotFoundPage Integration', () => {
     it('navigation buttons are accessible links', () => {
       render(<NotFoundPage />, { wrapper: TestWrapper })
 
-      const dashboardLink = screen.getByRole('link', { name: /Ir para Dashboard/i })
+      const dashboardLink = screen.getByRole('link', { name: /Ir para o início/i })
       const backLink = screen.getByRole('link', { name: /Voltar/i })
 
       expect(dashboardLink).toBeInTheDocument()
@@ -152,7 +152,7 @@ describe('NotFoundPage Integration', () => {
 
       expect(screen.getByText('404')).toBeInTheDocument()
       expect(screen.getByText(/Página não encontrada/i)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: /Ir para Dashboard/i })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /Ir para o início/i })).toBeInTheDocument()
       expect(screen.getByRole('link', { name: /Voltar/i })).toBeInTheDocument()
     })
   })

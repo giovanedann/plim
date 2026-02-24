@@ -10,11 +10,11 @@ const navCards = [
     title: 'Dashboard',
     url: '/dashboard',
     icon: LayoutDashboard,
-    description: 'Visao geral',
+    description: 'Visão geral',
   },
   {
     title: 'Transações',
-    url: '/expenses',
+    url: '/transactions',
     icon: Receipt,
     description: 'Suas transações',
   },
@@ -25,10 +25,10 @@ const navCards = [
     description: 'Organizar gastos',
   },
   {
-    title: 'Cartoes',
+    title: 'Cartões',
     url: '/credit-cards',
     icon: CreditCard,
-    description: 'Seus cartoes',
+    description: 'Seus cartões',
   },
 ] as const
 
@@ -41,8 +41,8 @@ export function HomePage(): React.ReactElement {
   return (
     <div className="flex flex-1 flex-col gap-6 px-4 py-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Ola, {firstName}!</h1>
-        <p className="text-sm text-muted-foreground mt-1">O que voce quer fazer hoje?</p>
+        <h1 className="text-2xl font-bold tracking-tight">Olá, {firstName}!</h1>
+        <p className="text-sm text-muted-foreground mt-1">O que você quer fazer hoje?</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

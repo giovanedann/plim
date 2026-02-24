@@ -102,7 +102,7 @@ describe('PostHogProvider', () => {
       </PostHogProvider>
     )
 
-    mockLocation.pathname = '/expenses'
+    mockLocation.pathname = '/transactions'
     rerender(
       <PostHogProvider>
         <div>Test</div>

@@ -121,8 +121,8 @@ function ResetPasswordContent() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={() => navigate({ to: '/dashboard' })}>
-              Ir para o Dashboard
+            <Button className="w-full" onClick={() => navigate({ to: '/home' })}>
+              Ir para o início
             </Button>
           </CardFooter>
         </Card>

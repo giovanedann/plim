@@ -13,8 +13,9 @@ import { AppSidebar } from './app-sidebar'
 import { SiteHeader } from './site-header'
 
 const PAGE_TITLES: Record<string, string> = {
+  '/home': 'Início',
   '/dashboard': 'Dashboard',
-  '/expenses': 'Transações',
+  '/transactions': 'Transações',
 }
 
 interface AppLayoutProps {

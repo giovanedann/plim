@@ -11,7 +11,7 @@ export const TUTORIALS: Tutorial[] = [
         title: 'Página de Transações',
         description: 'Clique em "Transações" no menu lateral para acessar a página de transações.',
         action: 'navigate',
-        navigateTo: '/expenses',
+        navigateTo: '/transactions',
       },
       {
         elementId: 'expense-add-button',

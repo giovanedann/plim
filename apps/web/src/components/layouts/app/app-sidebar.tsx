@@ -42,7 +42,7 @@ import {
 
 const navigation = [
   {
-    title: 'Home',
+    title: 'Início',
     url: '/home',
     icon: Home,
     tutorialId: 'sidebar-nav-home',
@@ -55,7 +55,7 @@ const navigation = [
   },
   {
     title: 'Transações',
-    url: '/expenses',
+    url: '/transactions',
     icon: Receipt,
     tutorialId: 'sidebar-nav-expenses',
   },
@@ -90,7 +90,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/dashboard">
+              <Link to="/home">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
                   <PlimIcon className="size-8" />
                 </div>

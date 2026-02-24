@@ -165,8 +165,8 @@ describe('AppLayout', () => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
     })
 
-    it('displays expenses title on expenses route', () => {
-      mockUseLocation.mockReturnValue({ pathname: '/expenses' })
+    it('displays expenses title on transactions route', () => {
+      mockUseLocation.mockReturnValue({ pathname: '/transactions' })
 
       render(
         <AppLayout>
