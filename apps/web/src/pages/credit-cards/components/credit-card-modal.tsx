@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { CardBank, CardColor, CardFlag, CreateCreditCard, CreditCard } from '@plim/shared'
+import { centsToDecimal, decimalToCents } from '@plim/shared'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { CreditCard3D } from './credit-card-3d'
@@ -63,6 +64,21 @@ const BANKS: { value: CardBank; label: string }[] = [
   { value: 'other', label: 'Outro' },
 ]
 
+function formatCurrencyInput(decimal: string): string {
+  const parts = decimal.split('.')
+  const intPart = parts[0] ?? '0'
+  const decPart = parts[1] ?? '00'
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `${formatted},${decPart}`
+}
+
+function parseCurrencyInputToCents(value: string): number {
+  const cleaned = value.replace(/\./g, '').replace(',', '.')
+  const decimal = Number.parseFloat(cleaned)
+  if (Number.isNaN(decimal)) return 0
+  return decimalToCents(decimal)
+}
+
 interface CreditCardModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -84,6 +100,8 @@ export function CreditCardModal({
   const [bank, setBank] = useState<CardBank>('nubank')
   const [last4Digits, setLast4Digits] = useState('')
   const [expirationDay, setExpirationDay] = useState('')
+  const [closingDay, setClosingDay] = useState('')
+  const [creditLimit, setCreditLimit] = useState('')
 
   const isEditing = !!creditCard
 
@@ -95,6 +113,12 @@ export function CreditCardModal({
       setBank(creditCard.bank)
       setLast4Digits(creditCard.last_4_digits || '')
       setExpirationDay(creditCard.expiration_day?.toString() || '')
+      setClosingDay(creditCard.closing_day?.toString() || '')
+      setCreditLimit(
+        creditCard.credit_limit_cents != null
+          ? formatCurrencyInput(centsToDecimal(creditCard.credit_limit_cents).toFixed(2))
+          : ''
+      )
     } else {
       setName('')
       setColor('black')
@@ -102,6 +126,8 @@ export function CreditCardModal({
       setBank('nubank')
       setLast4Digits('')
       setExpirationDay('')
+      setClosingDay('')
+      setCreditLimit('')
     }
   }, [creditCard])
 
@@ -110,14 +136,28 @@ export function CreditCardModal({
 
     if (!name.trim()) return
 
-    const parsedDay = expirationDay ? Number.parseInt(expirationDay, 10) : undefined
+    const parsedExpirationDay = expirationDay ? Number.parseInt(expirationDay, 10) : undefined
+    const parsedClosingDay = closingDay ? Number.parseInt(closingDay, 10) : undefined
+    const parsedCreditLimitCents = creditLimit ? parseCurrencyInputToCents(creditLimit) : undefined
+
     await onSubmit({
       name: name.trim(),
       color,
       flag,
       bank,
       last_4_digits: last4Digits || undefined,
-      expiration_day: parsedDay && parsedDay >= 1 && parsedDay <= 31 ? parsedDay : undefined,
+      expiration_day:
+        parsedExpirationDay && parsedExpirationDay >= 1 && parsedExpirationDay <= 31
+          ? parsedExpirationDay
+          : undefined,
+      closing_day:
+        parsedClosingDay && parsedClosingDay >= 1 && parsedClosingDay <= 31
+          ? parsedClosingDay
+          : undefined,
+      credit_limit_cents:
+        parsedCreditLimitCents != null && parsedCreditLimitCents >= 0
+          ? parsedCreditLimitCents
+          : undefined,
     })
   }
 
@@ -132,6 +172,25 @@ export function CreditCardModal({
     if (digits === '' || (num >= 0 && num <= 31)) {
       setExpirationDay(digits)
     }
+  }
+
+  const handleClosingDayChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 2)
+    const num = Number.parseInt(digits, 10)
+    if (digits === '' || (num >= 0 && num <= 31)) {
+      setClosingDay(digits)
+    }
+  }
+
+  const handleCreditLimitChange = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (digits === '') {
+      setCreditLimit('')
+      return
+    }
+    const cents = Number.parseInt(digits, 10)
+    const decimal = (cents / 100).toFixed(2)
+    setCreditLimit(formatCurrencyInput(decimal))
   }
 
   return (
@@ -264,6 +323,41 @@ export function CreditCardModal({
                   inputMode="numeric"
                 />
                 <p className="text-xs text-muted-foreground">Dia do mês que a fatura vence.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Closing Day */}
+              <div className="space-y-2">
+                <Label htmlFor="closingDay">Dia de fechamento (opcional)</Label>
+                <Input
+                  id="closingDay"
+                  value={closingDay}
+                  onChange={(e) => handleClosingDayChange(e.target.value)}
+                  placeholder="10"
+                  maxLength={2}
+                  inputMode="numeric"
+                />
+                <p className="text-xs text-muted-foreground">Dia em que a fatura fecha.</p>
+              </div>
+
+              {/* Credit Limit */}
+              <div className="space-y-2">
+                <Label htmlFor="creditLimit">Limite de crédito (opcional)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    R$
+                  </span>
+                  <Input
+                    id="creditLimit"
+                    value={creditLimit}
+                    onChange={(e) => handleCreditLimitChange(e.target.value)}
+                    placeholder="0,00"
+                    inputMode="numeric"
+                    className="pl-9"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Limite total do cartão.</p>
               </div>
             </div>
           </div>
