@@ -408,7 +408,7 @@ describe('SignUpPage Integration', () => {
 
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).toHaveValue('giovane-daniel-a7x9')
     })
 
@@ -417,7 +417,7 @@ describe('SignUpPage Integration', () => {
 
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).toHaveAttribute('readonly')
     })
 
@@ -440,7 +440,7 @@ describe('SignUpPage Integration', () => {
 
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).toHaveValue('stored-code-x1y2')
     })
 
@@ -449,7 +449,7 @@ describe('SignUpPage Integration', () => {
 
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).toHaveAttribute('readonly')
     })
 
@@ -459,14 +459,14 @@ describe('SignUpPage Integration', () => {
 
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).toHaveValue('url-code-a7x9')
     })
 
     it('allows editing referral field when not pre-filled', async () => {
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).not.toHaveAttribute('readonly')
 
       await user.type(referralInput, 'manual-code')
@@ -518,7 +518,7 @@ describe('SignUpPage Integration', () => {
     it('renders correct placeholder text', () => {
       render(<SignUpPage />, { wrapper: TestWrapper })
 
-      const referralInput = screen.getByLabelText(/Codigo de indicacao/i)
+      const referralInput = screen.getByLabelText(/Código de indicação/i)
       expect(referralInput).toHaveAttribute('placeholder', 'ex: giovane-daniel-a7x9')
     })
   })

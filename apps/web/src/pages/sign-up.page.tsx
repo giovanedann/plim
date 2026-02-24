@@ -240,7 +240,7 @@ export function SignUpPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="referredBy">Codigo de indicacao</Label>
+              <Label htmlFor="referredBy">Código de indicação</Label>
               <Input
                 id="referredBy"
                 type="text"

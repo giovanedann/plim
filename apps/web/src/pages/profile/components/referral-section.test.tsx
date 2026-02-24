@@ -362,7 +362,7 @@ describe('ReferralSection', () => {
 
       renderWithTheme(<ReferralSection />)
 
-      expect(screen.getByText('Compartilhe seu link e ganhe Pro gratis!')).toBeInTheDocument()
+      expect(screen.getByText('Compartilhe seu link e ganhe Pro grátis!')).toBeInTheDocument()
     })
 
     it('does not render list when there are no referrals', () => {

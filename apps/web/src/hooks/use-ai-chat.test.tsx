@@ -230,9 +230,9 @@ describe('useAIChat', () => {
         await result.current.sendMessage([{ type: 'text', text: 'Hello' }])
       })
 
-      expect(result.current.error).toBe('Voce atingiu o limite semanal. Atualize para o Pro!')
+      expect(result.current.error).toBe('Você atingiu o limite semanal. Atualize para o Pro!')
       expect(toast.error).toHaveBeenCalledWith(
-        'Voce atingiu o limite semanal. Atualize para o Pro!',
+        'Você atingiu o limite semanal. Atualize para o Pro!',
         expect.objectContaining({
           action: expect.objectContaining({ label: 'Ver planos' }),
         })

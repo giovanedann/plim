@@ -41,8 +41,8 @@ export function ReferralLandingPage(): React.ReactElement {
 
   useEffect(() => {
     if (isInitialized && user) {
-      toast.info('Voce ja esta logado!')
-      navigate({ to: '/dashboard' })
+      toast.info('Você já está logado!')
+      navigate({ to: '/home' })
       return
     }
   }, [isInitialized, user, navigate])
@@ -141,17 +141,17 @@ function ValidReferralCard({ referrerName, code }: ValidReferralCardProps): Reac
             </div>
             <CardTitle className="text-xl">{referrerName} te convidou para o Plim!</CardTitle>
             <CardDescription className="text-base">
-              Crie sua conta e ganhe 7 dias de Pro gratis
+              Crie sua conta e ganhe 7 dias de Pro grátis
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <Button asChild className="w-full" size="lg">
-              <a href={`/sign-up?ref=${encodeURIComponent(code)}`}>Criar conta gratis</a>
+              <a href={`/sign-up?ref=${encodeURIComponent(code)}`}>Criar conta grátis</a>
             </Button>
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
-              Ja tenho conta{' '}
+              Já tenho conta{' '}
               <Link to="/sign-in" className="text-primary hover:underline">
                 Entrar
               </Link>
@@ -176,19 +176,19 @@ function GenericInviteCard(): React.ReactElement {
             <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
               <Users className="size-6 text-primary" />
             </div>
-            <CardTitle className="text-xl">Voce foi convidado para o Plim!</CardTitle>
+            <CardTitle className="text-xl">Você foi convidado para o Plim!</CardTitle>
             <CardDescription className="text-base">
-              Crie sua conta e comece a gerenciar suas financas
+              Crie sua conta e comece a gerenciar suas finanças
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <Button asChild className="w-full" size="lg">
-              <Link to="/sign-up">Criar conta gratis</Link>
+              <Link to="/sign-up">Criar conta grátis</Link>
             </Button>
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
-              Ja tenho conta{' '}
+              Já tenho conta{' '}
               <Link to="/sign-in" className="text-primary hover:underline">
                 Entrar
               </Link>

@@ -255,7 +255,7 @@ describe('AuthCallbackPage Integration', () => {
       useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith('Voce ganhou 7 dias de Pro gratis!')
+        expect(toast.success).toHaveBeenCalledWith('Você ganhou 7 dias de Pro grátis!')
       })
     })
 
@@ -348,14 +348,14 @@ describe('AuthCallbackPage Integration', () => {
       useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith({ to: '/dashboard' })
+        expect(mockNavigate).toHaveBeenCalledWith({ to: '/home' })
       })
 
       expect(referralService.claimReferral).not.toHaveBeenCalled()
       expect(toast.success).not.toHaveBeenCalled()
     })
 
-    it('navigates to dashboard after referral claim completes', async () => {
+    it('navigates to home after referral claim completes', async () => {
       localStorage.setItem('plim_referral_code', 'test-referral')
       vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
         data: { session: null, user: null },
@@ -370,7 +370,7 @@ describe('AuthCallbackPage Integration', () => {
       useAuthStore.setState({ user: { id: 'user-123', email: 'test@test.com' } as any })
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith({ to: '/dashboard' })
+        expect(mockNavigate).toHaveBeenCalledWith({ to: '/home' })
       })
     })
   })
