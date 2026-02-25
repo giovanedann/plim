@@ -62,6 +62,8 @@ export const creditCardSchema = z.object({
     .regex(/^\d{4}$/, 'Deve conter apenas números')
     .nullable(),
   expiration_day: z.number().int().min(1).max(31).nullable(),
+  closing_day: z.number().int().min(1).max(31).nullable(),
+  credit_limit_cents: z.number().int().min(0).nullable(),
   is_active: z.boolean(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -78,6 +80,8 @@ export const createCreditCardSchema = z.object({
     .regex(/^\d{4}$/, 'Deve conter apenas números')
     .optional(),
   expiration_day: z.number().int().min(1).max(31).optional(),
+  closing_day: z.number().int().min(1).max(31).optional(),
+  credit_limit_cents: z.number().int().min(0).optional(),
 })
 
 export const updateCreditCardSchema = z.object({
@@ -96,6 +100,8 @@ export const updateCreditCardSchema = z.object({
     .nullable()
     .optional(),
   expiration_day: z.number().int().min(1).max(31).nullable().optional(),
+  closing_day: z.number().int().min(1).max(31).nullable().optional(),
+  credit_limit_cents: z.number().int().min(0).nullable().optional(),
   is_active: z.boolean().optional(),
 })
 

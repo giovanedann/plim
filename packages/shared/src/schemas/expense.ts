@@ -33,6 +33,7 @@ export const expenseSchema = z.object({
   installment_group_id: z.uuid().nullable(),
   recurrent_group_id: z.uuid().nullable(),
   credit_card_id: z.uuid().nullable(),
+  invoice_id: z.uuid().nullable(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
   is_projected: z.boolean().optional(),

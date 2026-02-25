@@ -1,7 +1,7 @@
 import type { ExpenseType, IncomePaymentMethod, PaymentMethod, TransactionType } from '../schemas'
 
-export { PLAN_LIMITS } from './limits'
-export type { PlanTier, TierLimits } from './limits'
+export { PLAN_LIMITS, PRO_FEATURES } from './limits'
+export type { PlanTier, ProFeatureKey, ProFeatures, TierLimits } from './limits'
 
 export interface PaymentMethodOption {
   value: PaymentMethod

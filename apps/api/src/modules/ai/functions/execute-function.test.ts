@@ -1,7 +1,13 @@
 import { createMockCategory, createMockCreditCard, createMockExpense } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { CreditCardsRepository } from '../../credit-cards/credit-cards.repository'
+import type { UpdateCreditCardUseCase } from '../../credit-cards/update-credit-card.usecase'
 import type { CreateExpenseUseCase } from '../../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../../expenses/expenses.repository'
+import type { GetCreditCardLimitUsageUseCase } from '../../invoices/get-credit-card-limit-usage.usecase'
+import type { GetOrCreateInvoiceUseCase } from '../../invoices/get-or-create-invoice.usecase'
+import type { InvoicesRepository } from '../../invoices/invoices.repository'
+import type { PayInvoiceUseCase } from '../../invoices/pay-invoice.usecase'
 import { type FunctionExecutionContext, executeFunction } from './execute-function'
 
 function createMockSupabase(): {
@@ -26,10 +32,17 @@ function createMockExpensesRepository(): { findByUserId: ReturnType<typeof vi.fn
   }
 }
 
+function createMockUpdateCreditCardUseCase(): { execute: ReturnType<typeof vi.fn> } {
+  return {
+    execute: vi.fn(),
+  }
+}
+
 describe('executeFunction', () => {
   let mockSupabase: ReturnType<typeof createMockSupabase>
   let mockCreateExpenseUseCase: ReturnType<typeof createMockCreateExpenseUseCase>
   let mockExpensesRepository: ReturnType<typeof createMockExpensesRepository>
+  let mockUpdateCreditCardUseCase: ReturnType<typeof createMockUpdateCreditCardUseCase>
   let context: FunctionExecutionContext
 
   const userId = '550e8400-e29b-41d4-a716-446655440000'
@@ -40,12 +53,19 @@ describe('executeFunction', () => {
     mockSupabase = createMockSupabase()
     mockCreateExpenseUseCase = createMockCreateExpenseUseCase()
     mockExpensesRepository = createMockExpensesRepository()
+    mockUpdateCreditCardUseCase = createMockUpdateCreditCardUseCase()
 
     context = {
       userId,
       supabase: mockSupabase as never,
       createExpenseUseCase: mockCreateExpenseUseCase as unknown as CreateExpenseUseCase,
       expensesRepository: mockExpensesRepository as unknown as ExpensesRepository,
+      updateCreditCardUseCase: mockUpdateCreditCardUseCase as unknown as UpdateCreditCardUseCase,
+      getOrCreateInvoiceUseCase: {} as unknown as GetOrCreateInvoiceUseCase,
+      getCreditCardLimitUsageUseCase: {} as unknown as GetCreditCardLimitUsageUseCase,
+      payInvoiceUseCase: {} as unknown as PayInvoiceUseCase,
+      invoicesRepository: {} as unknown as InvoicesRepository,
+      creditCardsRepository: {} as unknown as CreditCardsRepository,
     }
   })
 

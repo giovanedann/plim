@@ -32,6 +32,7 @@ import {
   CreditCard,
   Crown,
   Download,
+  FileText,
   Home,
   LayoutDashboard,
   LogOut,
@@ -71,7 +72,14 @@ const navigation = [
     icon: CreditCard,
     tutorialId: 'sidebar-nav-credit-cards',
   },
-]
+  {
+    title: 'Faturas',
+    url: '/invoices',
+    icon: FileText,
+    tutorialId: 'sidebar-nav-invoices',
+    proOnly: true,
+  },
+] as const
 
 export function AppSidebar() {
   const location = useLocation()
@@ -119,6 +127,14 @@ export function AppSidebar() {
                     <Link to={item.url} data-tutorial-id={item.tutorialId}>
                       <item.icon />
                       <span>{item.title}</span>
+                      {'proOnly' in item && item.proOnly && !isPro && (
+                        <Badge
+                          variant="outline"
+                          className="ml-auto shrink-0 border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] font-bold text-amber-500"
+                        >
+                          PRO
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

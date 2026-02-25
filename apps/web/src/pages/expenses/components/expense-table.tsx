@@ -385,6 +385,10 @@ export function ExpenseTable({
                       <Badge variant="outline" className="border-emerald-500/50 text-emerald-500">
                         Receita
                       </Badge>
+                    ) : expense.invoice_id ? (
+                      <Badge variant="outline" className="border-amber-500/50 text-amber-400">
+                        Saldo fatura
+                      </Badge>
                     ) : (
                       <Badge
                         variant="secondary"
@@ -411,33 +415,35 @@ export function ExpenseTable({
                     {hideValues ? '••••••' : formatSignedAmount(expense.amount_cents, expense.type)}
                   </TableCell>
                   <TableCell className="py-2 px-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Abrir menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {expense.installment_group_id && (
-                          <DropdownMenuItem onClick={() => setInstallmentExpense(expense)}>
-                            <CalendarClock className="mr-2 h-4 w-4" />
-                            Ver parcelas
+                    {expense.invoice_id ? null : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {expense.installment_group_id && (
+                            <DropdownMenuItem onClick={() => setInstallmentExpense(expense)}>
+                              <CalendarClock className="mr-2 h-4 w-4" />
+                              Ver parcelas
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => setExpenseToEdit(expense)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => setExpenseToEdit(expense)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => setExpenseToDelete(expense)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => setExpenseToDelete(expense)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               )

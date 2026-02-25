@@ -3,7 +3,7 @@
  *
  * Stale times are tuned based on how frequently data changes:
  * - Static data (categories, profile, credit cards): 5+ minutes
- * - Dynamic data (expenses): 1 minute
+ * - Dynamic data (expenses, invoices): 1-2 minutes
  * - Aggregated data (dashboard): 2 minutes
  */
 
@@ -17,6 +17,8 @@ export const queryConfig = {
     salary: MINUTE * 5,
     spendingLimit: MINUTE * 5,
     expenses: MINUTE * 1,
+    invoices: MINUTE * 2,
+    limitUsage: MINUTE * 2,
     dashboard: MINUTE * 2,
   },
   gcTime: {
@@ -32,6 +34,9 @@ export const queryKeys = {
   spendingLimit: (month: string) => ['spending-limit', month] as const,
   expenses: (filters?: Record<string, unknown>) =>
     filters ? (['expenses', filters] as const) : (['expenses'] as const),
+  invoices: (creditCardId: string) => ['invoices', creditCardId] as const,
+  invoice: (creditCardId: string, month: string) => ['invoices', creditCardId, month] as const,
+  limitUsage: (creditCardId: string) => ['limit-usage', creditCardId] as const,
   dashboard: {
     all: ['dashboard'] as const,
     summary: (dateRange: { start_date: string; end_date: string }) =>

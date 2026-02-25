@@ -22,6 +22,7 @@ import { useCreditCardsPage } from './use-credit-cards.page'
 export function CreditCardsPage() {
   const {
     creditCards,
+    limitUsages,
     isLoading,
     isModalOpen,
     setIsModalOpen,
@@ -97,6 +98,7 @@ export function CreditCardsPage() {
       ) : (
         <CreditCardList
           creditCards={creditCards}
+          limitUsages={limitUsages}
           onEdit={openEditModal}
           onDelete={setCardToDelete}
         />

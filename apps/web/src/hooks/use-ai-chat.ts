@@ -135,6 +135,25 @@ export function useAIChat(): UseAIChatReturn {
         })
       }
 
+      if (action?.type === 'credit_card_updated') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+
+        toast.success('Cartão atualizado com sucesso!', {
+          description: 'As informações do cartão foram atualizadas.',
+        })
+      }
+
+      if (action?.type === 'invoice_paid' && action.data) {
+        queryClient.invalidateQueries({ queryKey: ['invoices'] })
+        queryClient.invalidateQueries({ queryKey: ['limit-usage'] })
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+
+        toast.success('Pagamento registrado!', {
+          description: 'O pagamento da fatura foi registrado.',
+        })
+      }
+
       setIsLoading(false)
     },
     [messages, addMessage, setUsage, setPulsing, queryClient]

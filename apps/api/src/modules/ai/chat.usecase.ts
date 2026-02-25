@@ -1,8 +1,14 @@
 import type { Category, CreditCard } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PostHog } from 'posthog-node'
+import type { CreditCardsRepository } from '../credit-cards/credit-cards.repository'
+import type { UpdateCreditCardUseCase } from '../credit-cards/update-credit-card.usecase'
 import type { CreateExpenseUseCase } from '../expenses/create-expense.usecase'
 import type { ExpensesRepository } from '../expenses/expenses.repository'
+import type { GetCreditCardLimitUsageUseCase } from '../invoices/get-credit-card-limit-usage.usecase'
+import type { GetOrCreateInvoiceUseCase } from '../invoices/get-or-create-invoice.usecase'
+import type { InvoicesRepository } from '../invoices/invoices.repository'
+import type { PayInvoiceUseCase } from '../invoices/pay-invoice.usecase'
 import type { AIRepository, IntentCacheEntry } from './ai.repository'
 import type { AIClient, ChatMessage, ChatOutput, ContentPart } from './client'
 import { type FunctionExecutionResult, aiFunctionDefinitions, executeFunction } from './functions'
@@ -26,7 +32,15 @@ export interface ChatUseCaseInput {
 export interface ChatUseCaseOutput {
   message: string
   action?: {
-    type: 'expense_created' | 'query_result' | 'forecast_result' | 'show_tutorial' | 'help'
+    type:
+      | 'expense_created'
+      | 'query_result'
+      | 'forecast_result'
+      | 'show_tutorial'
+      | 'help'
+      | 'credit_card_updated'
+      | 'invoice_result'
+      | 'invoice_paid'
     data?: unknown
   }
   tokensUsed: number
@@ -38,6 +52,12 @@ export interface ChatUseCaseDependencies {
   supabase: SupabaseClient
   createExpenseUseCase: CreateExpenseUseCase
   expensesRepository: ExpensesRepository
+  updateCreditCardUseCase: UpdateCreditCardUseCase
+  getOrCreateInvoiceUseCase: GetOrCreateInvoiceUseCase
+  getCreditCardLimitUsageUseCase: GetCreditCardLimitUsageUseCase
+  payInvoiceUseCase: PayInvoiceUseCase
+  invoicesRepository: InvoicesRepository
+  creditCardsRepository: CreditCardsRepository
   posthog?: PostHog | null
 }
 
@@ -114,6 +134,12 @@ export class ChatUseCase {
         supabase: this.deps.supabase,
         createExpenseUseCase: this.deps.createExpenseUseCase,
         expensesRepository: this.deps.expensesRepository,
+        updateCreditCardUseCase: this.deps.updateCreditCardUseCase,
+        getOrCreateInvoiceUseCase: this.deps.getOrCreateInvoiceUseCase,
+        getCreditCardLimitUsageUseCase: this.deps.getCreditCardLimitUsageUseCase,
+        payInvoiceUseCase: this.deps.payInvoiceUseCase,
+        invoicesRepository: this.deps.invoicesRepository,
+        creditCardsRepository: this.deps.creditCardsRepository,
       })
 
       // If query result with data, use AI to format the response
@@ -217,6 +243,12 @@ export class ChatUseCase {
           supabase: this.deps.supabase,
           createExpenseUseCase: this.deps.createExpenseUseCase,
           expensesRepository: this.deps.expensesRepository,
+          updateCreditCardUseCase: this.deps.updateCreditCardUseCase,
+          getOrCreateInvoiceUseCase: this.deps.getOrCreateInvoiceUseCase,
+          getCreditCardLimitUsageUseCase: this.deps.getCreditCardLimitUsageUseCase,
+          payInvoiceUseCase: this.deps.payInvoiceUseCase,
+          invoicesRepository: this.deps.invoicesRepository,
+          creditCardsRepository: this.deps.creditCardsRepository,
         }
       )
 

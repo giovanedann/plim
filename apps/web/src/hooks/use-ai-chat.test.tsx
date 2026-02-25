@@ -395,6 +395,146 @@ describe('useAIChat', () => {
     })
   })
 
+  describe('credit_card_updated action', () => {
+    it('invalidates credit card queries and shows success toast', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Cartão Nubank atualizado: dia de fechamento para 10.',
+        action: {
+          type: 'credit_card_updated',
+          data: { id: 'cc-1', name: 'Nubank', closing_day: 10 },
+        },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([
+          { type: 'text', text: 'Altere o fechamento do Nubank para dia 10' },
+        ])
+      })
+
+      expect(toast.success).toHaveBeenCalledWith('Cartão atualizado com sucesso!', {
+        description: 'As informações do cartão foram atualizadas.',
+      })
+    })
+
+    it('does not trigger expense_created toast for credit_card_updated action', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Cartão atualizado',
+        action: { type: 'credit_card_updated', data: { id: 'cc-1' } },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Atualize meu cartão' }])
+      })
+
+      expect(toast.success).not.toHaveBeenCalledWith(
+        'Despesa criada com sucesso!',
+        expect.anything()
+      )
+    })
+  })
+
+  describe('invoice_result action', () => {
+    it('does not show any toast for invoice_result action', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Fatura Nubank - 2026-01: Total R$1.500,00',
+        action: {
+          type: 'invoice_result',
+          data: {
+            invoice: { id: 'inv-1', total_amount_cents: 150000 },
+            transaction_count: 5,
+            remaining_cents: 150000,
+          },
+        },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([
+          { type: 'text', text: 'Qual o valor da fatura do Nubank?' },
+        ])
+      })
+
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
+    it('adds assistant message with invoice information', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Fatura Nubank - 2026-01:\nTotal: R$1.500,00\nPago: R$0,00',
+        action: {
+          type: 'invoice_result',
+          data: {
+            invoice: { id: 'inv-1', total_amount_cents: 150000 },
+            transaction_count: 5,
+            remaining_cents: 150000,
+          },
+        },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([
+          { type: 'text', text: 'Qual o valor da fatura do Nubank?' },
+        ])
+      })
+
+      expect(mockStore.addMessage).toHaveBeenCalledWith({
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'Fatura Nubank - 2026-01:\nTotal: R$1.500,00\nPago: R$0,00' },
+        ],
+      })
+    })
+  })
+
+  describe('invoice_paid action', () => {
+    it('invalidates invoice queries and shows success toast', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'Fatura de 2026-01 do cartão Nubank paga integralmente: R$1.500,00.',
+        action: {
+          type: 'invoice_paid',
+          data: { id: 'inv-1', status: 'paid', paid_amount_cents: 150000 },
+        },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Pague a fatura do Nubank' }])
+      })
+
+      expect(toast.success).toHaveBeenCalledWith('Pagamento registrado!', {
+        description: 'O pagamento da fatura foi registrado.',
+      })
+    })
+
+    it('does not show toast when invoice_paid has no data', async () => {
+      const chatResponse = createMockAIChatResponse({
+        message: 'A fatura já está paga.',
+        action: { type: 'invoice_paid' },
+      })
+      vi.mocked(aiService.chat).mockResolvedValue(createSuccessResponse(chatResponse))
+
+      const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })
+
+      await act(async () => {
+        await result.current.sendMessage([{ type: 'text', text: 'Pague a fatura do Nubank' }])
+      })
+
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+  })
+
   describe('error state', () => {
     it('is null initially', () => {
       const { result } = renderHook(() => useAIChat(), { wrapper: createWrapper() })

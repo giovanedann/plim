@@ -59,7 +59,16 @@ export const aiChatResponseSchema = z.object({
   message: z.string(),
   action: z
     .object({
-      type: z.enum(['expense_created', 'query_result', 'forecast_result', 'show_tutorial', 'help']),
+      type: z.enum([
+        'expense_created',
+        'query_result',
+        'forecast_result',
+        'show_tutorial',
+        'help',
+        'credit_card_updated',
+        'invoice_result',
+        'invoice_paid',
+      ]),
       data: z.unknown().optional(),
     })
     .optional(),
@@ -99,6 +108,28 @@ export const forecastSpendingFunctionParamsSchema = z.object({
   include_installments: z.boolean().default(true),
 })
 
+// Query invoices function parameters
+export const queryInvoicesFunctionParamsSchema = z.object({
+  credit_card_name: z.string().optional(),
+  reference_month: z.string().optional(),
+  query_type: z.enum(['invoice_details', 'limit_usage', 'open_invoices']),
+})
+
+// Update credit card function parameters
+export const updateCreditCardFunctionParamsSchema = z.object({
+  credit_card_name: z.string(),
+  closing_day: z.number().int().min(1).max(31).optional(),
+  credit_limit_cents: z.number().int().min(0).optional(),
+})
+
+// Pay invoice function parameters
+export const payInvoiceFunctionParamsSchema = z.object({
+  credit_card_name: z.string().optional(),
+  reference_month: z.string(),
+  amount_cents: z.number().int().min(1).optional(),
+  pay_full: z.boolean().optional(),
+})
+
 // Execute query function parameters (raw SQL execution)
 export const executeQueryFunctionParamsSchema = z.object({
   sql: z.string().min(1),
@@ -118,4 +149,7 @@ export type AIUsageResponse = z.infer<typeof aiUsageResponseSchema>
 export type CreateExpenseFunctionParams = z.infer<typeof createExpenseFunctionParamsSchema>
 export type QueryExpensesFunctionParams = z.infer<typeof queryExpensesFunctionParamsSchema>
 export type ForecastSpendingFunctionParams = z.infer<typeof forecastSpendingFunctionParamsSchema>
+export type QueryInvoicesFunctionParams = z.infer<typeof queryInvoicesFunctionParamsSchema>
+export type UpdateCreditCardFunctionParams = z.infer<typeof updateCreditCardFunctionParamsSchema>
+export type PayInvoiceFunctionParams = z.infer<typeof payInvoiceFunctionParamsSchema>
 export type ExecuteQueryFunctionParams = z.infer<typeof executeQueryFunctionParamsSchema>

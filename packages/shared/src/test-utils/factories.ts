@@ -2,6 +2,7 @@ import type { AIChatResponse, AIUsageResponse } from '../schemas/ai'
 import type { Category } from '../schemas/category'
 import type { CreditCard } from '../schemas/credit-card'
 import type { Expense } from '../schemas/expense'
+import type { Invoice } from '../schemas/invoice'
 import type { Profile } from '../schemas/profile'
 import type { SalaryHistory } from '../schemas/salary'
 import type { SpendingLimit } from '../schemas/spending-limit'
@@ -36,6 +37,7 @@ export function createMockExpense(overrides: Partial<Expense> = {}): Expense {
     installment_group_id: null,
     recurrent_group_id: null,
     credit_card_id: null,
+    invoice_id: null,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),
     ...overrides,
@@ -82,6 +84,8 @@ export function createMockCreditCard(overrides: Partial<CreditCard> = {}): Credi
     bank: 'nubank',
     last_4_digits: '1234',
     expiration_day: null,
+    closing_day: null,
+    credit_limit_cents: null,
     is_active: true,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),
@@ -106,6 +110,25 @@ export function createMockSpendingLimit(overrides: Partial<SpendingLimit> = {}):
     user_id: '00000000-0000-4000-8000-000000000001',
     year_month: '2026-01',
     amount_cents: 300000,
+    created_at: getTimestamp(),
+    updated_at: getTimestamp(),
+    ...overrides,
+  }
+}
+
+export function createMockInvoice(overrides: Partial<Invoice> = {}): Invoice {
+  return {
+    id: generateId(),
+    user_id: '00000000-0000-4000-8000-000000000001',
+    credit_card_id: '00000000-0000-4000-8000-000000000003',
+    reference_month: '2026-01',
+    cycle_start: '2025-12-10',
+    cycle_end: '2026-01-09',
+    total_amount_cents: 150000,
+    paid_amount_cents: 0,
+    carry_over_cents: 0,
+    status: 'open',
+    paid_at: null,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),
     ...overrides,

@@ -3,6 +3,7 @@ export {
   createMockCategory,
   createMockProfile,
   createMockCreditCard,
+  createMockInvoice,
   createMockSalaryHistory,
   createMockSpendingLimit,
   createMockAIUsageResponse,

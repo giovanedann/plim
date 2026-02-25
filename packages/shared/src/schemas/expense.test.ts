@@ -96,6 +96,7 @@ describe('expenseSchema', () => {
       installment_group_id: null,
       recurrent_group_id: null,
       credit_card_id: null,
+      invoice_id: null,
       created_at: '2024-01-15T10:00:00Z',
       updated_at: '2024-01-15T10:00:00Z',
     }
@@ -126,6 +127,7 @@ describe('expenseSchema', () => {
       installment_group_id: null,
       recurrent_group_id: null,
       credit_card_id: null,
+      invoice_id: null,
       created_at: '2024-01-15T10:00:00Z',
       updated_at: '2024-01-15T10:00:00Z',
     }
@@ -157,6 +159,7 @@ describe('expenseSchema', () => {
       installment_group_id: null,
       recurrent_group_id: null,
       credit_card_id: null,
+      invoice_id: null,
       created_at: '2024-01-15T10:00:00Z',
       updated_at: '2024-01-15T10:00:00Z',
     }
