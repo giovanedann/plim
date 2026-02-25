@@ -94,20 +94,35 @@ export function CreditCardList({
               const barColor = getUsageColor(percentage)
 
               return (
-                <div className="mt-2 space-y-1">
-                  <p className="text-[11px] text-muted-foreground">
-                    Usado: {formatBRL(usage.used_cents)} / Disponível:{' '}
-                    {formatBRL(usage.available_cents)}
-                  </p>
+                <div className="mt-3 space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Usado:{' '}
+                      <span className="font-medium text-foreground">
+                        {formatBRL(usage.used_cents)}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Disponível:{' '}
+                      <span className="font-medium text-foreground">
+                        {formatBRL(usage.available_cents)}
+                      </span>
+                    </span>
+                  </div>
                   <div className="h-2 w-full rounded-full bg-muted">
                     <div
                       className={`h-full rounded-full transition-all ${barColor}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Limite: {formatBRL(usage.credit_limit_cents)}
                   </p>
+                  {usage.recurrent_commitment_cents > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatBRL(usage.recurrent_commitment_cents)}/mês em recorrências
+                    </p>
+                  )}
                 </div>
               )
             })()}
@@ -127,7 +142,7 @@ export function CreditCardList({
                 <DropdownMenuContent align="end">
                   {card.closing_day && (
                     <DropdownMenuItem
-                      onClick={() => navigate({ to: `/credit-cards/${card.id}/invoices` })}
+                      onClick={() => navigate({ to: '/invoices', search: { cardId: card.id } })}
                     >
                       <Receipt className="mr-2 h-4 w-4" />
                       Ver faturas

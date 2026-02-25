@@ -24,11 +24,11 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-pa
 import { Route as AppUpgradeRouteImport } from './routes/_app/upgrade'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppInvoicesRouteImport } from './routes/_app/invoices'
 import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCreditCardsRouteImport } from './routes/_app/credit-cards'
 import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
-import { Route as AppCreditCardsCardIdInvoicesRouteImport } from './routes/_app/credit-cards.$cardId.invoices'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -103,6 +103,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInvoicesRoute = AppInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHomeRoute = AppHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -123,12 +128,6 @@ const AppCategoriesRoute = AppCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCreditCardsCardIdInvoicesRoute =
-  AppCreditCardsCardIdInvoicesRouteImport.update({
-    id: '/$cardId/invoices',
-    path: '/$cardId/invoices',
-    getParentRoute: () => AppCreditCardsRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,9 +136,10 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/categories': typeof AppCategoriesRoute
-  '/credit-cards': typeof AppCreditCardsRouteWithChildren
+  '/credit-cards': typeof AppCreditCardsRoute
   '/dashboard': typeof AppDashboardRoute
   '/home': typeof AppHomeRoute
+  '/invoices': typeof AppInvoicesRoute
   '/profile': typeof AppProfileRoute
   '/transactions': typeof AppTransactionsRoute
   '/upgrade': typeof AppUpgradeRoute
@@ -148,7 +148,6 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof AuthSignUpRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/r/$code': typeof RCodeRoute
-  '/credit-cards/$cardId/invoices': typeof AppCreditCardsCardIdInvoicesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -157,9 +156,10 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/categories': typeof AppCategoriesRoute
-  '/credit-cards': typeof AppCreditCardsRouteWithChildren
+  '/credit-cards': typeof AppCreditCardsRoute
   '/dashboard': typeof AppDashboardRoute
   '/home': typeof AppHomeRoute
+  '/invoices': typeof AppInvoicesRoute
   '/profile': typeof AppProfileRoute
   '/transactions': typeof AppTransactionsRoute
   '/upgrade': typeof AppUpgradeRoute
@@ -168,7 +168,6 @@ export interface FileRoutesByTo {
   '/sign-up': typeof AuthSignUpRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/r/$code': typeof RCodeRoute
-  '/credit-cards/$cardId/invoices': typeof AppCreditCardsCardIdInvoicesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -180,9 +179,10 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/_app/categories': typeof AppCategoriesRoute
-  '/_app/credit-cards': typeof AppCreditCardsRouteWithChildren
+  '/_app/credit-cards': typeof AppCreditCardsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/home': typeof AppHomeRoute
+  '/_app/invoices': typeof AppInvoicesRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/upgrade': typeof AppUpgradeRoute
@@ -191,7 +191,6 @@ export interface FileRoutesById {
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/r/$code': typeof RCodeRoute
-  '/_app/credit-cards/$cardId/invoices': typeof AppCreditCardsCardIdInvoicesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,6 +204,7 @@ export interface FileRouteTypes {
     | '/credit-cards'
     | '/dashboard'
     | '/home'
+    | '/invoices'
     | '/profile'
     | '/transactions'
     | '/upgrade'
@@ -213,7 +213,6 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/auth/callback'
     | '/r/$code'
-    | '/credit-cards/$cardId/invoices'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -225,6 +224,7 @@ export interface FileRouteTypes {
     | '/credit-cards'
     | '/dashboard'
     | '/home'
+    | '/invoices'
     | '/profile'
     | '/transactions'
     | '/upgrade'
@@ -233,7 +233,6 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/auth/callback'
     | '/r/$code'
-    | '/credit-cards/$cardId/invoices'
   id:
     | '__root__'
     | '/'
@@ -247,6 +246,7 @@ export interface FileRouteTypes {
     | '/_app/credit-cards'
     | '/_app/dashboard'
     | '/_app/home'
+    | '/_app/invoices'
     | '/_app/profile'
     | '/_app/transactions'
     | '/_app/upgrade'
@@ -255,7 +255,6 @@ export interface FileRouteTypes {
     | '/_auth/sign-up'
     | '/auth/callback'
     | '/r/$code'
-    | '/_app/credit-cards/$cardId/invoices'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -377,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/invoices': {
+      id: '/_app/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof AppInvoicesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/home': {
       id: '/_app/home'
       path: '/home'
@@ -405,33 +411,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/credit-cards/$cardId/invoices': {
-      id: '/_app/credit-cards/$cardId/invoices'
-      path: '/$cardId/invoices'
-      fullPath: '/credit-cards/$cardId/invoices'
-      preLoaderRoute: typeof AppCreditCardsCardIdInvoicesRouteImport
-      parentRoute: typeof AppCreditCardsRoute
-    }
   }
 }
 
-interface AppCreditCardsRouteChildren {
-  AppCreditCardsCardIdInvoicesRoute: typeof AppCreditCardsCardIdInvoicesRoute
-}
-
-const AppCreditCardsRouteChildren: AppCreditCardsRouteChildren = {
-  AppCreditCardsCardIdInvoicesRoute: AppCreditCardsCardIdInvoicesRoute,
-}
-
-const AppCreditCardsRouteWithChildren = AppCreditCardsRoute._addFileChildren(
-  AppCreditCardsRouteChildren,
-)
-
 interface AppRouteChildren {
   AppCategoriesRoute: typeof AppCategoriesRoute
-  AppCreditCardsRoute: typeof AppCreditCardsRouteWithChildren
+  AppCreditCardsRoute: typeof AppCreditCardsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppHomeRoute: typeof AppHomeRoute
+  AppInvoicesRoute: typeof AppInvoicesRoute
   AppProfileRoute: typeof AppProfileRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppUpgradeRoute: typeof AppUpgradeRoute
@@ -439,9 +427,10 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriesRoute: AppCategoriesRoute,
-  AppCreditCardsRoute: AppCreditCardsRouteWithChildren,
+  AppCreditCardsRoute: AppCreditCardsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppHomeRoute: AppHomeRoute,
+  AppInvoicesRoute: AppInvoicesRoute,
   AppProfileRoute: AppProfileRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppUpgradeRoute: AppUpgradeRoute,

@@ -20,7 +20,9 @@ interface UseInvoicePageResult {
   transactions: Expense[]
   invoices: Invoice[]
   creditCard: CreditCard | null
+  eligibleCards: CreditCard[]
   isLoading: boolean
+  isLoadingCards: boolean
   isLoadingInvoices: boolean
   hasClosingDay: boolean
   selectedMonth: string
@@ -47,12 +49,18 @@ export function useInvoicePage(cardId: string, month: string): UseInvoicePageRes
     staleTime: queryConfig.staleTime.creditCards,
   })
 
+  const eligibleCards = useMemo(
+    () => creditCardQuery.data?.filter((c) => c.closing_day != null) ?? [],
+    [creditCardQuery.data]
+  )
+
   const creditCard = useMemo(
     () => creditCardQuery.data?.find((c) => c.id === cardId) ?? null,
     [creditCardQuery.data, cardId]
   )
 
   const hasClosingDay = creditCard?.closing_day !== null && creditCard?.closing_day !== undefined
+  const hasCard = cardId !== ''
 
   const invoiceQuery = useQuery({
     queryKey: queryKeys.invoice(cardId, month),
@@ -62,7 +70,7 @@ export function useInvoicePage(cardId: string, month: string): UseInvoicePageRes
       return response.data
     },
     staleTime: queryConfig.staleTime.invoices,
-    enabled: hasClosingDay,
+    enabled: hasCard && hasClosingDay,
   })
 
   const invoicesListQuery = useQuery({
@@ -73,7 +81,7 @@ export function useInvoicePage(cardId: string, month: string): UseInvoicePageRes
       return response.data
     },
     staleTime: queryConfig.staleTime.invoices,
-    enabled: hasClosingDay,
+    enabled: hasCard && hasClosingDay,
   })
 
   const payMutation = useMutation({
@@ -107,7 +115,9 @@ export function useInvoicePage(cardId: string, month: string): UseInvoicePageRes
     transactions,
     invoices: invoicesListQuery.data ?? [],
     creditCard,
-    isLoading: creditCardQuery.isLoading || invoiceQuery.isLoading,
+    eligibleCards,
+    isLoading: creditCardQuery.isLoading || (hasCard && invoiceQuery.isLoading),
+    isLoadingCards: creditCardQuery.isLoading,
     isLoadingInvoices: invoicesListQuery.isLoading,
     hasClosingDay,
     selectedMonth: month,

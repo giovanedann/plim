@@ -32,6 +32,7 @@ import {
   CreditCard,
   Crown,
   Download,
+  FileText,
   Home,
   LayoutDashboard,
   LogOut,
@@ -70,6 +71,12 @@ const navigation = [
     url: '/credit-cards',
     icon: CreditCard,
     tutorialId: 'sidebar-nav-credit-cards',
+  },
+  {
+    title: 'Faturas',
+    url: '/invoices',
+    icon: FileText,
+    tutorialId: 'sidebar-nav-invoices',
   },
 ]
 

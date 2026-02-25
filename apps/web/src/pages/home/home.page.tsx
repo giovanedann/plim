@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { useProfile } from '@/hooks/use-profile'
 import { useAIStore } from '@/stores/ai.store'
 import { Link } from '@tanstack/react-router'
-import { CreditCard, LayoutDashboard, Receipt, Sparkles, Tags } from 'lucide-react'
+import { CreditCard, FileText, LayoutDashboard, Receipt, Sparkles, Tags } from 'lucide-react'
 
 const navCards = [
   {
@@ -29,6 +29,12 @@ const navCards = [
     url: '/credit-cards',
     icon: CreditCard,
     description: 'Seus cartões',
+  },
+  {
+    title: 'Faturas',
+    url: '/invoices',
+    icon: FileText,
+    description: 'Suas faturas',
   },
 ] as const
 

@@ -1,13 +1,20 @@
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { MonthSelector } from '@/pages/expenses/components/month-selector'
 import { categoryService } from '@/services/category.service'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, CreditCard } from 'lucide-react'
-import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { CreditCard } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { InvoiceSummaryCard } from './components/invoice-summary-card'
 import { InvoiceTransactionsList } from './components/invoice-transactions-list'
 import { PayInvoiceModal } from './components/pay-invoice-modal'
@@ -25,9 +32,9 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
   const {
     invoice,
     transactions,
-    creditCard,
+    eligibleCards,
     isLoading,
-    hasClosingDay,
+    isLoadingCards,
     payInvoice,
     isPayingInvoice,
     effectiveTotal,
@@ -46,12 +53,29 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
     staleTime: queryConfig.staleTime.categories,
   })
 
+  useEffect(() => {
+    const firstCard = eligibleCards[0]
+    if (!cardId && firstCard) {
+      navigate({
+        to: '/invoices',
+        search: { cardId: firstCard.id, month: selectedMonth },
+        replace: true,
+      })
+    }
+  }, [cardId, eligibleCards, navigate, selectedMonth])
+
+  const handleCardChange = (newCardId: string): void => {
+    navigate({
+      to: '/invoices',
+      search: { cardId: newCardId, month: selectedMonth },
+    })
+  }
+
   const handleMonthChange = (month: string): void => {
     setSelectedMonth(month)
     navigate({
-      to: '/credit-cards/$cardId/invoices',
-      params: { cardId },
-      search: { month },
+      to: '/invoices',
+      search: { cardId: cardId || undefined, month },
       replace: true,
     })
   }
@@ -61,7 +85,7 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
     setIsPayModalOpen(false)
   }
 
-  if (isLoading && !creditCard) {
+  if (isLoadingCards) {
     return (
       <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
         <Skeleton className="h-8 w-48" />
@@ -72,31 +96,18 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
     )
   }
 
-  if (creditCard && !hasClosingDay) {
+  if (!isLoadingCards && eligibleCards.length === 0) {
     return (
       <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
-        <div className="flex items-center gap-2">
-          <Link to="/credit-cards">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-semibold">Faturas - {creditCard.name}</h1>
-        </div>
-
+        <h1 className="text-2xl font-semibold">Faturas</h1>
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="rounded-full bg-muted p-4">
             <CreditCard className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="mt-4 text-lg font-medium">
-            Este cartao nao tem dia de fechamento configurado
-          </h3>
+          <h3 className="mt-4 text-lg font-medium">Nenhum cartao com fatura configurado</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Edite o cartao e defina o dia de fechamento para visualizar as faturas.
+            Adicione um cartao com dia de fechamento para visualizar as faturas.
           </p>
-          <Link to="/credit-cards" className="mt-4">
-            <Button variant="outline">Voltar para cartoes</Button>
-          </Link>
         </div>
       </div>
     )
@@ -105,16 +116,20 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:gap-6 md:py-6 lg:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <Link to="/credit-cards">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-semibold">Faturas</h1>
-            {creditCard && <p className="text-sm text-muted-foreground">{creditCard.name}</p>}
-          </div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold">Faturas</h1>
+          <Select value={cardId} onValueChange={handleCardChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Selecione um cartao" />
+            </SelectTrigger>
+            <SelectContent>
+              {eligibleCards.map((card) => (
+                <SelectItem key={card.id} value={card.id}>
+                  {card.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <MonthSelector selectedMonth={selectedMonth} onMonthChange={handleMonthChange} />
       </div>

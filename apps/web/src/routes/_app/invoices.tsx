@@ -13,21 +13,21 @@ function getCurrentMonth(): string {
 }
 
 const invoiceSearchSchema = z.object({
+  cardId: z.string().uuid().optional(),
   month: z.string().optional().default(getCurrentMonth()),
 })
 
-export const Route = createFileRoute('/_app/credit-cards/$cardId/invoices')({
+export const Route = createFileRoute('/_app/invoices')({
   validateSearch: invoiceSearchSchema,
   component: InvoiceRoute,
 })
 
 function InvoiceRoute() {
-  const { cardId } = Route.useParams()
-  const { month } = Route.useSearch()
+  const { cardId, month } = Route.useSearch()
 
   return (
     <Suspense fallback={<PageLoader />}>
-      <InvoicePage cardId={cardId} month={month} />
+      <InvoicePage cardId={cardId ?? ''} month={month} />
     </Suspense>
   )
 }
