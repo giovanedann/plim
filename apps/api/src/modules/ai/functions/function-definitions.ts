@@ -201,6 +201,8 @@ const showTutorialParameters: JsonSchema = {
         'view-dashboard',
         'profile-settings',
         'view-upgrade',
+        'view-invoices',
+        'add-income',
       ],
     },
   },

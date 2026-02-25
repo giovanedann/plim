@@ -88,6 +88,8 @@ const VALID_TUTORIAL_IDS = [
   'view-dashboard',
   'profile-settings',
   'view-upgrade',
+  'view-invoices',
+  'add-income',
 ]
 
 export const TUTORIAL_MESSAGES: Record<string, string> = {
@@ -97,6 +99,8 @@ export const TUTORIAL_MESSAGES: Record<string, string> = {
   'view-dashboard': 'Vou te mostrar como usar o dashboard!',
   'profile-settings': 'Vou te mostrar como editar seu perfil!',
   'view-upgrade': 'Vou te mostrar como assinar o plano Pro!',
+  'view-invoices': 'Vou te mostrar como acompanhar suas faturas!',
+  'add-income': 'Vou te mostrar como registrar receitas!',
 }
 
 function executeShowTutorial(args: Record<string, unknown>): FunctionExecutionResult {

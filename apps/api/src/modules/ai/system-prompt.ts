@@ -144,6 +144,10 @@ When the user asks HOW to do something (asking for guidance), call **show_tutori
 - "Como vejo meu dashboard?" → show_tutorial(tutorial_id: "view-dashboard")
 - "Como mudo minha foto de perfil?" → show_tutorial(tutorial_id: "profile-settings")
 - "Como assino o plano Pro?" → show_tutorial(tutorial_id: "view-upgrade")
+- "Como gerencio minhas faturas?" → show_tutorial(tutorial_id: "view-invoices")
+- "Como acompanho faturas do cartão?" → show_tutorial(tutorial_id: "view-invoices")
+- "Como registro receitas?" → show_tutorial(tutorial_id: "add-income")
+- "Como adiciono meu salário?" → show_tutorial(tutorial_id: "add-income")
 
 ### Available Tutorials
 - **add-expense**: How to add an expense (navigate, click add, fill form, save)
@@ -152,6 +156,8 @@ When the user asks HOW to do something (asking for guidance), call **show_tutori
 - **view-dashboard**: How to use the dashboard (charts, filters, insights)
 - **profile-settings**: How to edit profile (name, photo, settings)
 - **view-upgrade**: How to subscribe to Pro plan (upgrade, payment)
+- **view-invoices**: How to track credit card invoices (view, pay, check balance — Pro feature)
+- **add-income**: How to record incomes/salary (navigate to transactions, toggle to income)
 
 ### Query Building (for execute_query)
 Always include \`WHERE user_id = '{userId}'\` - the placeholder is replaced automatically.
