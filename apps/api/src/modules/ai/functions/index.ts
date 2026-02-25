@@ -6,6 +6,7 @@ export {
   executeQueryParameters,
   queryInvoicesParameters,
   updateCreditCardParameters,
+  updateSalaryParameters,
   payInvoiceParameters,
 } from './function-definitions'
 

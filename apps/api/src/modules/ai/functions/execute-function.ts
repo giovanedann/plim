@@ -10,6 +10,7 @@ import {
   queryExpensesFunctionParamsSchema,
   queryInvoicesFunctionParamsSchema,
   updateCreditCardFunctionParamsSchema,
+  updateSalaryFunctionParamsSchema,
 } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CreditCardsRepository } from '../../credit-cards/credit-cards.repository'
@@ -20,6 +21,7 @@ import type { GetCreditCardLimitUsageUseCase } from '../../invoices/get-credit-c
 import type { GetOrCreateInvoiceUseCase } from '../../invoices/get-or-create-invoice.usecase'
 import type { InvoicesRepository } from '../../invoices/invoices.repository'
 import type { PayInvoiceUseCase } from '../../invoices/pay-invoice.usecase'
+import type { CreateSalaryUseCase } from '../../salary/create-salary.usecase'
 import type { FunctionCall } from '../client'
 import { executeQuery } from './execute-query'
 
@@ -27,6 +29,7 @@ export interface FunctionExecutionContext {
   userId: string
   supabase: SupabaseClient
   createExpenseUseCase: CreateExpenseUseCase
+  createSalaryUseCase: CreateSalaryUseCase
   expensesRepository: ExpensesRepository
   updateCreditCardUseCase: UpdateCreditCardUseCase
   getOrCreateInvoiceUseCase: GetOrCreateInvoiceUseCase
@@ -46,6 +49,7 @@ export interface FunctionExecutionResult {
     | 'forecast_result'
     | 'show_tutorial'
     | 'credit_card_updated'
+    | 'salary_updated'
     | 'invoice_result'
     | 'invoice_paid'
     | 'error'
@@ -68,6 +72,8 @@ export async function executeFunction(
       return executeQueryInvoices(functionCall.args, context)
     case 'update_credit_card':
       return executeUpdateCreditCard(functionCall.args, context)
+    case 'update_salary':
+      return executeUpdateSalary(functionCall.args, context)
     case 'pay_invoice':
       return executePayInvoice(functionCall.args, context)
     case 'show_tutorial':
@@ -196,6 +202,46 @@ async function executeUpdateCreditCard(
     return {
       success: false,
       message: 'Não consegui atualizar o cartão. Tente novamente.',
+      actionType: 'error',
+    }
+  }
+}
+
+async function executeUpdateSalary(
+  args: Record<string, unknown>,
+  context: FunctionExecutionContext
+): Promise<FunctionExecutionResult> {
+  const parseResult = updateSalaryFunctionParamsSchema.safeParse(args)
+
+  if (!parseResult.success) {
+    return {
+      success: false,
+      message: 'Não consegui entender o valor do salário. Pode repetir?',
+      actionType: 'error',
+    }
+  }
+
+  const params = parseResult.data
+  const now = new Date()
+  const firstDayOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const effectiveFrom = params.effective_from ?? firstDayOfMonth
+
+  try {
+    const salary = await context.createSalaryUseCase.execute(context.userId, {
+      amount_cents: params.amount_cents,
+      effective_from: effectiveFrom,
+    })
+
+    return {
+      success: true,
+      message: `Salário atualizado para ${formatCurrency(salary.amount_cents)} a partir de ${effectiveFrom}.`,
+      data: salary,
+      actionType: 'salary_updated',
+    }
+  } catch {
+    return {
+      success: false,
+      message: 'Não consegui atualizar o salário. Tente novamente.',
       actionType: 'error',
     }
   }

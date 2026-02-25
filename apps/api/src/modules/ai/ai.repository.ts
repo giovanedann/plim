@@ -57,6 +57,7 @@ export interface CachedResponse {
       | 'show_tutorial'
       | 'help'
       | 'credit_card_updated'
+      | 'salary_updated'
       | 'invoice_result'
       | 'invoice_paid'
     data?: unknown

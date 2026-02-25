@@ -10,6 +10,8 @@ import { GetCreditCardLimitUsageUseCase } from '../invoices/get-credit-card-limi
 import { GetOrCreateInvoiceUseCase } from '../invoices/get-or-create-invoice.usecase'
 import { InvoicesRepository } from '../invoices/invoices.repository'
 import { PayInvoiceUseCase } from '../invoices/pay-invoice.usecase'
+import { CreateSalaryUseCase } from '../salary/create-salary.usecase'
+import { SalaryRepository } from '../salary/salary.repository'
 import { AIRepository } from './ai.repository'
 import { ChatUseCase } from './chat.usecase'
 import { CheckUsageLimitUseCase } from './check-usage-limit.usecase'
@@ -60,12 +62,15 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
     getOrCreateInvoiceUseCase
   )
   const payInvoiceUseCase = new PayInvoiceUseCase(invoicesRepository, creditCardsRepository)
+  const salaryRepository = new SalaryRepository(supabase)
+  const createSalaryUseCase = new CreateSalaryUseCase(salaryRepository)
 
   const chatUseCase = new ChatUseCase({
     aiClient,
     aiRepository: repository,
     supabase,
     createExpenseUseCase,
+    createSalaryUseCase,
     expensesRepository,
     updateCreditCardUseCase,
     getOrCreateInvoiceUseCase,

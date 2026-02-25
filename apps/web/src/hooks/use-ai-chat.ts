@@ -144,6 +144,15 @@ export function useAIChat(): UseAIChatReturn {
         })
       }
 
+      if (action?.type === 'salary_updated') {
+        queryClient.invalidateQueries({ queryKey: ['salary'] })
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+
+        toast.success('Salário atualizado com sucesso!', {
+          description: 'O valor do seu salário foi atualizado.',
+        })
+      }
+
       if (action?.type === 'invoice_paid' && action.data) {
         queryClient.invalidateQueries({ queryKey: ['invoices'] })
         queryClient.invalidateQueries({ queryKey: ['limit-usage'] })

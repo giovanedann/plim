@@ -8,6 +8,7 @@ import type { GetCreditCardLimitUsageUseCase } from '../invoices/get-credit-card
 import type { GetOrCreateInvoiceUseCase } from '../invoices/get-or-create-invoice.usecase'
 import type { InvoicesRepository } from '../invoices/invoices.repository'
 import type { PayInvoiceUseCase } from '../invoices/pay-invoice.usecase'
+import type { CreateSalaryUseCase } from '../salary/create-salary.usecase'
 import type { AIRepository, CachedResponse } from './ai.repository'
 import { ChatUseCase, type ChatUseCaseDependencies, type ChatUseCaseInput } from './chat.usecase'
 import type { AIClient, ChatOutput } from './client'
@@ -96,6 +97,7 @@ describe('ChatUseCase', () => {
       aiRepository: mockAIRepository as unknown as AIRepository,
       supabase: mockSupabase as never,
       createExpenseUseCase: mockCreateExpenseUseCase as unknown as CreateExpenseUseCase,
+      createSalaryUseCase: {} as unknown as CreateSalaryUseCase,
       expensesRepository: mockExpensesRepository as unknown as ExpensesRepository,
       updateCreditCardUseCase: {} as unknown as UpdateCreditCardUseCase,
       getOrCreateInvoiceUseCase: {} as unknown as GetOrCreateInvoiceUseCase,

@@ -8,6 +8,7 @@ import type { GetCreditCardLimitUsageUseCase } from '../../invoices/get-credit-c
 import type { GetOrCreateInvoiceUseCase } from '../../invoices/get-or-create-invoice.usecase'
 import type { InvoicesRepository } from '../../invoices/invoices.repository'
 import type { PayInvoiceUseCase } from '../../invoices/pay-invoice.usecase'
+import type { CreateSalaryUseCase } from '../../salary/create-salary.usecase'
 import { type FunctionExecutionContext, executeFunction } from './execute-function'
 
 type MockSupabase = {
@@ -55,6 +56,7 @@ describe('executePayInvoice', () => {
       userId,
       supabase: mockSupabase as never,
       createExpenseUseCase: {} as unknown as CreateExpenseUseCase,
+      createSalaryUseCase: {} as unknown as CreateSalaryUseCase,
       expensesRepository: {} as unknown as ExpensesRepository,
       updateCreditCardUseCase: {} as unknown as UpdateCreditCardUseCase,
       getOrCreateInvoiceUseCase:

@@ -9,6 +9,7 @@ import type { GetCreditCardLimitUsageUseCase } from '../invoices/get-credit-card
 import type { GetOrCreateInvoiceUseCase } from '../invoices/get-or-create-invoice.usecase'
 import type { InvoicesRepository } from '../invoices/invoices.repository'
 import type { PayInvoiceUseCase } from '../invoices/pay-invoice.usecase'
+import type { CreateSalaryUseCase } from '../salary/create-salary.usecase'
 import type { AIRepository, IntentCacheEntry } from './ai.repository'
 import type { AIClient, ChatMessage, ChatOutput, ContentPart } from './client'
 import { type FunctionExecutionResult, aiFunctionDefinitions, executeFunction } from './functions'
@@ -39,6 +40,7 @@ export interface ChatUseCaseOutput {
       | 'show_tutorial'
       | 'help'
       | 'credit_card_updated'
+      | 'salary_updated'
       | 'invoice_result'
       | 'invoice_paid'
     data?: unknown
@@ -51,6 +53,7 @@ export interface ChatUseCaseDependencies {
   aiRepository: AIRepository
   supabase: SupabaseClient
   createExpenseUseCase: CreateExpenseUseCase
+  createSalaryUseCase: CreateSalaryUseCase
   expensesRepository: ExpensesRepository
   updateCreditCardUseCase: UpdateCreditCardUseCase
   getOrCreateInvoiceUseCase: GetOrCreateInvoiceUseCase
@@ -133,6 +136,7 @@ export class ChatUseCase {
         userId,
         supabase: this.deps.supabase,
         createExpenseUseCase: this.deps.createExpenseUseCase,
+        createSalaryUseCase: this.deps.createSalaryUseCase,
         expensesRepository: this.deps.expensesRepository,
         updateCreditCardUseCase: this.deps.updateCreditCardUseCase,
         getOrCreateInvoiceUseCase: this.deps.getOrCreateInvoiceUseCase,
@@ -172,7 +176,8 @@ export class ChatUseCase {
       )
       output.message = validateOutput(output.message)
 
-      if (input.requestType === 'text' && result.actionType !== 'expense_created') {
+      const uncacheableActions = ['expense_created', 'salary_updated']
+      if (input.requestType === 'text' && !uncacheableActions.includes(result.actionType)) {
         await this.deps.aiRepository.setCachedResponse(
           userId,
           cacheKey,
@@ -184,8 +189,9 @@ export class ChatUseCase {
       }
 
       // Store in intent cache for future semantic matching
-      // Skip create_expense (side effects) and failed results
-      if (embedding && result.success && response.functionCall.name !== 'create_expense') {
+      // Skip mutation functions (side effects) and failed results
+      const mutationFunctions = ['create_expense', 'update_salary']
+      if (embedding && result.success && !mutationFunctions.includes(response.functionCall.name)) {
         this.storeNewIntent(
           messageText,
           embedding,
@@ -242,6 +248,7 @@ export class ChatUseCase {
           userId,
           supabase: this.deps.supabase,
           createExpenseUseCase: this.deps.createExpenseUseCase,
+          createSalaryUseCase: this.deps.createSalaryUseCase,
           expensesRepository: this.deps.expensesRepository,
           updateCreditCardUseCase: this.deps.updateCreditCardUseCase,
           getOrCreateInvoiceUseCase: this.deps.getOrCreateInvoiceUseCase,

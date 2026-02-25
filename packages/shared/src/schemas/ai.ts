@@ -66,6 +66,7 @@ export const aiChatResponseSchema = z.object({
         'show_tutorial',
         'help',
         'credit_card_updated',
+        'salary_updated',
         'invoice_result',
         'invoice_paid',
       ]),
@@ -130,6 +131,12 @@ export const payInvoiceFunctionParamsSchema = z.object({
   pay_full: z.boolean().optional(),
 })
 
+// Update salary function parameters
+export const updateSalaryFunctionParamsSchema = z.object({
+  amount_cents: z.number().int().positive(),
+  effective_from: z.string().optional(),
+})
+
 // Execute query function parameters (raw SQL execution)
 export const executeQueryFunctionParamsSchema = z.object({
   sql: z.string().min(1),
@@ -152,4 +159,5 @@ export type ForecastSpendingFunctionParams = z.infer<typeof forecastSpendingFunc
 export type QueryInvoicesFunctionParams = z.infer<typeof queryInvoicesFunctionParamsSchema>
 export type UpdateCreditCardFunctionParams = z.infer<typeof updateCreditCardFunctionParamsSchema>
 export type PayInvoiceFunctionParams = z.infer<typeof payInvoiceFunctionParamsSchema>
+export type UpdateSalaryFunctionParams = z.infer<typeof updateSalaryFunctionParamsSchema>
 export type ExecuteQueryFunctionParams = z.infer<typeof executeQueryFunctionParamsSchema>

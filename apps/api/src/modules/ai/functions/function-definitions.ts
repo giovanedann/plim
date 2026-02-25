@@ -186,6 +186,22 @@ const payInvoiceParameters: JsonSchema = {
   required: ['reference_month'],
 }
 
+const updateSalaryParameters: JsonSchema = {
+  type: 'object',
+  description: 'Update the user registered salary amount',
+  properties: {
+    amount_cents: {
+      type: 'integer',
+      description: 'New salary value in cents (R$6000 = 600000)',
+    },
+    effective_from: {
+      type: 'string',
+      description: 'Date when the new salary takes effect (YYYY-MM-DD). Defaults to today.',
+    },
+  },
+  required: ['amount_cents'],
+}
+
 const showTutorialParameters: JsonSchema = {
   type: 'object',
   description:
@@ -241,6 +257,11 @@ export const aiFunctionDefinitions: FunctionDefinition[] = [
     parameters: updateCreditCardParameters,
   },
   {
+    name: 'update_salary',
+    description: 'Update user registered salary amount',
+    parameters: updateSalaryParameters,
+  },
+  {
     name: 'pay_invoice',
     description: 'Pay a credit card invoice (full or partial)',
     parameters: payInvoiceParameters,
@@ -260,6 +281,7 @@ export {
   executeQueryParameters,
   queryInvoicesParameters,
   updateCreditCardParameters,
+  updateSalaryParameters,
   payInvoiceParameters,
   showTutorialParameters,
 }
