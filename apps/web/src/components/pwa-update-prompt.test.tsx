@@ -10,6 +10,12 @@ let mockRegistration: { update: ReturnType<typeof vi.fn> } | null = {
   update: mockRegistrationUpdate,
 }
 
+vi.mock('@/lib/query-persister', () => ({
+  idbPersister: {
+    removeClient: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: (options?: { onRegisteredSW?: (swUrl: string, registration: any) => void }) => {
     if (options?.onRegisteredSW) {
@@ -71,7 +77,8 @@ describe('PWAUpdatePrompt', () => {
   })
 
   describe('update action', () => {
-    it('calls updateServiceWorker(true) when "Atualizar" button is clicked', async () => {
+    it('clears IndexedDB cache and calls updateServiceWorker(true) when "Atualizar" button is clicked', async () => {
+      const { idbPersister } = await import('@/lib/query-persister')
       mockNeedRefresh = true
       const user = userEvent.setup()
 
@@ -79,6 +86,7 @@ describe('PWAUpdatePrompt', () => {
 
       await user.click(screen.getByRole('button', { name: 'Atualizar' }))
 
+      expect(idbPersister.removeClient).toHaveBeenCalledTimes(1)
       expect(mockUpdateServiceWorker).toHaveBeenCalledTimes(1)
       expect(mockUpdateServiceWorker).toHaveBeenCalledWith(true)
     })

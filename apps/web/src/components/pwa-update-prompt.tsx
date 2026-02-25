@@ -1,6 +1,7 @@
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { idbPersister } from '@/lib/query-persister'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
 
@@ -41,7 +42,13 @@ export function PWAUpdatePrompt(): React.ReactElement | null {
           <Card className="flex items-center gap-3 p-4 shadow-lg">
             <RefreshCw className="h-5 w-5 shrink-0 text-primary" />
             <p className="text-sm text-muted-foreground">Nova versão disponível!</p>
-            <Button size="sm" onClick={() => updateServiceWorker(true)}>
+            <Button
+              size="sm"
+              onClick={async () => {
+                await idbPersister.removeClient()
+                await updateServiceWorker(true)
+              }}
+            >
               Atualizar
             </Button>
           </Card>
