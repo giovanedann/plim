@@ -56,7 +56,8 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
   )
   const getCreditCardLimitUsageUseCase = new GetCreditCardLimitUsageUseCase(
     invoicesRepository,
-    creditCardsRepository
+    creditCardsRepository,
+    getOrCreateInvoiceUseCase
   )
   const payInvoiceUseCase = new PayInvoiceUseCase(invoicesRepository)
 

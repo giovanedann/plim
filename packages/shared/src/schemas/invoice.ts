@@ -42,6 +42,7 @@ export const creditCardLimitUsageSchema = z.object({
   credit_limit_cents: z.number().int(),
   used_cents: z.number().int(),
   available_cents: z.number().int(),
+  recurrent_commitment_cents: z.number().int(),
 })
 
 export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>

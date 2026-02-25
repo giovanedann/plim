@@ -107,6 +107,46 @@ export class InvoicesRepository {
     return data as Invoice
   }
 
+  async sumFutureInstallments(
+    creditCardId: string,
+    userId: string,
+    afterDate: string
+  ): Promise<number> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .select('amount_cents')
+      .eq('credit_card_id', creditCardId)
+      .eq('user_id', userId)
+      .eq('type', 'expense')
+      .gt('date', afterDate)
+      .not('installment_group_id', 'is', null)
+
+    if (error || !data) return 0
+
+    return (data as { amount_cents: number }[]).reduce((sum, row) => sum + row.amount_cents, 0)
+  }
+
+  async sumActiveRecurrences(creditCardId: string, userId: string, today: string): Promise<number> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .select('amount_cents, recurrent_group_id')
+      .eq('credit_card_id', creditCardId)
+      .eq('user_id', userId)
+      .eq('is_recurrent', true)
+      .or(`recurrence_end.is.null,recurrence_end.gte.${today}`)
+
+    if (error || !data) return 0
+
+    const seen = new Set<string>()
+    let total = 0
+    for (const row of data as { amount_cents: number; recurrent_group_id: string | null }[]) {
+      if (row.recurrent_group_id && seen.has(row.recurrent_group_id)) continue
+      if (row.recurrent_group_id) seen.add(row.recurrent_group_id)
+      total += row.amount_cents
+    }
+    return total
+  }
+
   async getTransactionsForCycle(
     creditCardId: string,
     userId: string,

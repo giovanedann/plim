@@ -32,7 +32,8 @@ export function createInvoicesDependencies(
     payInvoice: new PayInvoiceUseCase(invoicesRepository),
     getCreditCardLimitUsage: new GetCreditCardLimitUsageUseCase(
       invoicesRepository,
-      creditCardsRepository
+      creditCardsRepository,
+      new GetOrCreateInvoiceUseCase(invoicesRepository, creditCardsRepository)
     ),
   }
 }

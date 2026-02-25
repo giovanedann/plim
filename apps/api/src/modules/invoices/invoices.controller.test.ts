@@ -96,6 +96,7 @@ describe('Invoices Controller', () => {
         credit_limit_cents: 500000,
         used_cents: 150000,
         available_cents: 350000,
+        recurrent_commitment_cents: 0,
       }
       const mockExecute = vi.fn().mockResolvedValue(limitUsage)
       vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(

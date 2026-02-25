@@ -395,6 +395,131 @@ describe('InvoicesRepository', () => {
     })
   })
 
+  describe('sumFutureInstallments', () => {
+    it('returns sum of future installment amounts', async () => {
+      const rows = [{ amount_cents: 10000 }, { amount_cents: 10000 }, { amount_cents: 10000 }]
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  not: vi.fn().mockResolvedValue({ data: rows, error: null }),
+                }),
+              }),
+            }),
+          }),
+        }),
+      })
+
+      const result = await sut.sumFutureInstallments('card-123', 'user-123', '2026-01-10')
+
+      expect(result).toBe(30000)
+      expect(mockSupabase.from).toHaveBeenCalledWith('expense')
+    })
+
+    it('returns 0 when no future installments exist', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  not: vi.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }),
+        }),
+      })
+
+      const result = await sut.sumFutureInstallments('card-123', 'user-123', '2026-01-10')
+
+      expect(result).toBe(0)
+    })
+
+    it('returns 0 on database error', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  not: vi.fn().mockResolvedValue({ data: null, error: new Error('DB error') }),
+                }),
+              }),
+            }),
+          }),
+        }),
+      })
+
+      const result = await sut.sumFutureInstallments('card-123', 'user-123', '2026-01-10')
+
+      expect(result).toBe(0)
+    })
+  })
+
+  describe('sumActiveRecurrences', () => {
+    it('deduplicates by recurrent_group_id and returns sum', async () => {
+      const rows = [
+        { amount_cents: 5000, recurrent_group_id: 'group-1' },
+        { amount_cents: 5000, recurrent_group_id: 'group-1' },
+        { amount_cents: 3000, recurrent_group_id: 'group-2' },
+      ]
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                or: vi.fn().mockResolvedValue({ data: rows, error: null }),
+              }),
+            }),
+          }),
+        }),
+      })
+
+      const result = await sut.sumActiveRecurrences('card-123', 'user-123', '2026-01-15')
+
+      expect(result).toBe(8000)
+    })
+
+    it('returns 0 when no active recurrences exist', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                or: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      })
+
+      const result = await sut.sumActiveRecurrences('card-123', 'user-123', '2026-01-15')
+
+      expect(result).toBe(0)
+    })
+
+    it('returns 0 on database error', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                or: vi.fn().mockResolvedValue({ data: null, error: new Error('DB error') }),
+              }),
+            }),
+          }),
+        }),
+      })
+
+      const result = await sut.sumActiveRecurrences('card-123', 'user-123', '2026-01-15')
+
+      expect(result).toBe(0)
+    })
+  })
+
   describe('getTransactionsForCycle', () => {
     it('returns expenses for the billing cycle', async () => {
       const expenses = [
