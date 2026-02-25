@@ -539,9 +539,11 @@ describe('InvoicesRepository', () => {
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                gte: vi.fn().mockReturnValue({
-                  lte: vi.fn().mockReturnValue({
-                    order: vi.fn().mockResolvedValue({ data: expenses, error: null }),
+                is: vi.fn().mockReturnValue({
+                  gte: vi.fn().mockReturnValue({
+                    lte: vi.fn().mockReturnValue({
+                      order: vi.fn().mockResolvedValue({ data: expenses, error: null }),
+                    }),
                   }),
                 }),
               }),
@@ -568,9 +570,13 @@ describe('InvoicesRepository', () => {
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                gte: vi.fn().mockReturnValue({
-                  lte: vi.fn().mockReturnValue({
-                    order: vi.fn().mockResolvedValue({ data: null, error: new Error('DB error') }),
+                is: vi.fn().mockReturnValue({
+                  gte: vi.fn().mockReturnValue({
+                    lte: vi.fn().mockReturnValue({
+                      order: vi
+                        .fn()
+                        .mockResolvedValue({ data: null, error: new Error('DB error') }),
+                    }),
                   }),
                 }),
               }),
@@ -595,9 +601,11 @@ describe('InvoicesRepository', () => {
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                gte: vi.fn().mockReturnValue({
-                  lte: vi.fn().mockReturnValue({
-                    order: vi.fn().mockResolvedValue({ data: [], error: null }),
+                is: vi.fn().mockReturnValue({
+                  gte: vi.fn().mockReturnValue({
+                    lte: vi.fn().mockReturnValue({
+                      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    }),
                   }),
                 }),
               }),

@@ -1,6 +1,7 @@
 import { sValidator } from '@hono/standard-validator'
 import { HTTP_STATUS, payInvoiceSchema } from '@plim/shared'
 import { Hono } from 'hono'
+import { checkProFeature } from '../../lib/check-pro-feature'
 import type { Bindings } from '../../lib/env'
 import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
@@ -32,10 +33,12 @@ invoicesController.get('/:creditCardId/:referenceMonth', async (c) => {
   const creditCardId = c.req.param('creditCardId')
   const referenceMonth = c.req.param('referenceMonth')
 
-  const { getOrCreateInvoice } = createInvoicesDependencies({
+  const { supabase, getOrCreateInvoice } = createInvoicesDependencies({
     env: c.env,
     accessToken: c.get('accessToken'),
   })
+
+  await checkProFeature(supabase, userId, 'invoices')
 
   const result = await getOrCreateInvoice.execute(userId, creditCardId, referenceMonth)
 
@@ -46,10 +49,12 @@ invoicesController.get('/:creditCardId', async (c) => {
   const userId = c.get('userId')
   const creditCardId = c.req.param('creditCardId')
 
-  const { invoicesRepository } = createInvoicesDependencies({
+  const { supabase, invoicesRepository } = createInvoicesDependencies({
     env: c.env,
     accessToken: c.get('accessToken'),
   })
+
+  await checkProFeature(supabase, userId, 'invoices')
 
   const invoices = await invoicesRepository.findByCard(creditCardId, userId)
 
@@ -61,10 +66,12 @@ invoicesController.post('/:invoiceId/pay', sValidator('json', payInvoiceSchema),
   const invoiceId = c.req.param('invoiceId')
   const input = c.req.valid('json')
 
-  const { payInvoice } = createInvoicesDependencies({
+  const { supabase, payInvoice } = createInvoicesDependencies({
     env: c.env,
     accessToken: c.get('accessToken'),
   })
+
+  await checkProFeature(supabase, userId, 'invoices')
 
   const invoice = await payInvoice.execute(userId, invoiceId, input.amount_cents)
 

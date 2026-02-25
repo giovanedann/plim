@@ -22,6 +22,9 @@ vi.mock('./get-or-create-invoice.usecase')
 vi.mock('./pay-invoice.usecase')
 vi.mock('./get-credit-card-limit-usage.usecase')
 vi.mock('./invoices.repository')
+vi.mock('../../lib/check-pro-feature', () => ({
+  checkProFeature: vi.fn().mockResolvedValue(undefined),
+}))
 
 type SuccessResponse<T> = { data: T }
 type ErrorResponse = { error: ApiError }
@@ -344,6 +347,21 @@ describe('Invoices Controller', () => {
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST)
       expect(body.error.code).toBe(ERROR_CODES.VALIDATION_ERROR)
+    })
+  })
+
+  describe('Pro feature gating', () => {
+    it('returns 403 when user is on free plan', async () => {
+      const { checkProFeature } = await import('../../lib/check-pro-feature')
+      vi.mocked(checkProFeature).mockRejectedValueOnce(
+        new AppError(ERROR_CODES.LIMIT_EXCEEDED, 'Pro feature required', HTTP_STATUS.FORBIDDEN)
+      )
+
+      const res = await app.request(`/invoices/${CARD_ID}/2026-01`, { method: 'GET' }, testEnv)
+      const body = (await res.json()) as ErrorResponse
+
+      expect(res.status).toBe(HTTP_STATUS.FORBIDDEN)
+      expect(body.error.code).toBe(ERROR_CODES.LIMIT_EXCEEDED)
     })
   })
 })

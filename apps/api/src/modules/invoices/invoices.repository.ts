@@ -5,7 +5,7 @@ const INVOICE_COLUMNS =
   'id, user_id, credit_card_id, reference_month, cycle_start, cycle_end, total_amount_cents, paid_amount_cents, carry_over_cents, status, paid_at, created_at, updated_at'
 
 const EXPENSE_COLUMNS =
-  'id, user_id, type, category_id, description, amount_cents, payment_method, date, is_recurrent, recurrence_day, recurrence_start, recurrence_end, installment_current, installment_total, installment_group_id, recurrent_group_id, credit_card_id, created_at, updated_at'
+  'id, user_id, type, category_id, description, amount_cents, payment_method, date, is_recurrent, recurrence_day, recurrence_start, recurrence_end, installment_current, installment_total, installment_group_id, recurrent_group_id, credit_card_id, invoice_id, created_at, updated_at'
 
 export class InvoicesRepository {
   constructor(private supabase: SupabaseClient) {}
@@ -159,6 +159,7 @@ export class InvoicesRepository {
       .eq('credit_card_id', creditCardId)
       .eq('user_id', userId)
       .eq('type', 'expense')
+      .is('invoice_id', null)
       .gte('date', cycleStart)
       .lte('date', cycleEnd)
       .order('date')
@@ -166,5 +167,57 @@ export class InvoicesRepository {
     if (error) return []
 
     return data as Expense[]
+  }
+
+  async findRemainderExpense(invoiceId: string, userId: string): Promise<Expense | null> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .select(EXPENSE_COLUMNS)
+      .eq('invoice_id', invoiceId)
+      .eq('user_id', userId)
+      .single()
+
+    if (error || !data) return null
+
+    return data as Expense
+  }
+
+  async createRemainderExpense(
+    userId: string,
+    invoiceId: string,
+    creditCardId: string,
+    amountCents: number,
+    description: string,
+    date: string
+  ): Promise<Expense | null> {
+    const { data, error } = await this.supabase
+      .from('expense')
+      .insert({
+        user_id: userId,
+        type: 'expense',
+        category_id: null,
+        description,
+        amount_cents: amountCents,
+        payment_method: 'pix',
+        date,
+        credit_card_id: creditCardId,
+        invoice_id: invoiceId,
+      })
+      .select(EXPENSE_COLUMNS)
+      .single()
+
+    if (error || !data) return null
+
+    return data as Expense
+  }
+
+  async deleteRemainderExpense(invoiceId: string, userId: string): Promise<boolean> {
+    const { error, count } = await this.supabase
+      .from('expense')
+      .delete({ count: 'exact' })
+      .eq('invoice_id', invoiceId)
+      .eq('user_id', userId)
+
+    return !error && (count ?? 0) > 0
   }
 }

@@ -59,7 +59,7 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
     creditCardsRepository,
     getOrCreateInvoiceUseCase
   )
-  const payInvoiceUseCase = new PayInvoiceUseCase(invoicesRepository)
+  const payInvoiceUseCase = new PayInvoiceUseCase(invoicesRepository, creditCardsRepository)
 
   const chatUseCase = new ChatUseCase({
     aiClient,

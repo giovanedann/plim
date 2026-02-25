@@ -7,6 +7,7 @@ import {
 } from '@plim/shared'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { CreditCardsRepository } from '../credit-cards/credit-cards.repository'
+import { createRemainderExpenseIfNeeded } from './create-remainder-expense'
 import type { InvoicesRepository } from './invoices.repository'
 
 interface GetOrCreateInvoiceResult {
@@ -130,6 +131,27 @@ export class GetOrCreateInvoiceUseCase {
         'Failed to create invoice',
         HTTP_STATUS.INTERNAL_SERVER_ERROR
       )
+    }
+
+    if (carryOverCents > 0) {
+      const previousRefMonth = getPreviousReferenceMonth(referenceMonth)
+      const previousInvoice = await this.invoicesRepository.findByCardAndMonth(
+        creditCardId,
+        userId,
+        previousRefMonth
+      )
+
+      if (previousInvoice) {
+        const creditCard = await this.creditCardsRepository.findById(creditCardId, userId)
+        if (creditCard) {
+          await createRemainderExpenseIfNeeded({
+            invoice: previousInvoice,
+            creditCardName: creditCard.name,
+            userId,
+            repository: this.invoicesRepository,
+          })
+        }
+      }
     }
 
     return { invoice, transactions }

@@ -21,6 +21,7 @@ const EXPENSE_COLUMNS = `
   installment_group_id,
   recurrent_group_id,
   credit_card_id,
+  invoice_id,
   created_at,
   updated_at
 `

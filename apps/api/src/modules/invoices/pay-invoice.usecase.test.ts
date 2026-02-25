@@ -1,6 +1,7 @@
 import { ERROR_CODES, HTTP_STATUS, createMockInvoice, resetIdCounter } from '@plim/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppError } from '../../middleware/error-handler.middleware'
+import type { CreditCardsRepository } from '../credit-cards/credit-cards.repository'
 import type { InvoicesRepository } from './invoices.repository'
 import { PayInvoiceUseCase } from './pay-invoice.usecase'
 
@@ -8,6 +9,13 @@ type MockRepository = {
   findById: ReturnType<typeof vi.fn>
   update: ReturnType<typeof vi.fn>
   findByCardAndMonth: ReturnType<typeof vi.fn>
+  deleteRemainderExpense: ReturnType<typeof vi.fn>
+  findRemainderExpense: ReturnType<typeof vi.fn>
+  createRemainderExpense: ReturnType<typeof vi.fn>
+}
+
+type MockCreditCardsRepository = {
+  findById: ReturnType<typeof vi.fn>
 }
 
 function createMockRepository(): MockRepository {
@@ -15,17 +23,31 @@ function createMockRepository(): MockRepository {
     findById: vi.fn(),
     update: vi.fn(),
     findByCardAndMonth: vi.fn(),
+    deleteRemainderExpense: vi.fn(),
+    findRemainderExpense: vi.fn(),
+    createRemainderExpense: vi.fn(),
+  }
+}
+
+function createMockCreditCardsRepository(): MockCreditCardsRepository {
+  return {
+    findById: vi.fn().mockResolvedValue(null),
   }
 }
 
 describe('PayInvoiceUseCase', () => {
   let sut: PayInvoiceUseCase
   let mockRepository: MockRepository
+  let mockCreditCardsRepository: MockCreditCardsRepository
 
   beforeEach(() => {
     resetIdCounter()
     mockRepository = createMockRepository()
-    sut = new PayInvoiceUseCase(mockRepository as unknown as InvoicesRepository)
+    mockCreditCardsRepository = createMockCreditCardsRepository()
+    sut = new PayInvoiceUseCase(
+      mockRepository as unknown as InvoicesRepository,
+      mockCreditCardsRepository as unknown as CreditCardsRepository
+    )
   })
 
   it('processes full payment and sets status to paid', async () => {
@@ -289,5 +311,98 @@ describe('PayInvoiceUseCase', () => {
       code: ERROR_CODES.VALIDATION_ERROR,
       status: HTTP_STATUS.BAD_REQUEST,
     })
+  })
+
+  it('deletes remainder expense on full payment', async () => {
+    const invoice = createMockInvoice({
+      id: 'invoice-1',
+      user_id: 'user-123',
+      total_amount_cents: 100000,
+      paid_amount_cents: 0,
+      carry_over_cents: 0,
+      status: 'open',
+    })
+    const updatedInvoice = {
+      ...invoice,
+      paid_amount_cents: 100000,
+      status: 'paid',
+      paid_at: '2026-01-15T12:00:00.000Z',
+    }
+
+    mockRepository.findById.mockResolvedValue(invoice)
+    mockRepository.update.mockResolvedValue(updatedInvoice)
+    mockRepository.findByCardAndMonth.mockResolvedValue(null)
+
+    await sut.execute('user-123', 'invoice-1', 100000)
+
+    expect(mockRepository.deleteRemainderExpense).toHaveBeenCalledWith('invoice-1', 'user-123')
+  })
+
+  it('creates remainder expense on partial payment with closed cycle', async () => {
+    const invoice = createMockInvoice({
+      id: 'invoice-1',
+      user_id: 'user-123',
+      credit_card_id: 'card-1',
+      total_amount_cents: 100000,
+      paid_amount_cents: 0,
+      carry_over_cents: 0,
+      status: 'open',
+      cycle_end: '2020-01-01',
+    })
+    const updatedInvoice = {
+      ...invoice,
+      paid_amount_cents: 50000,
+      status: 'partially_paid',
+    }
+
+    mockRepository.findById.mockResolvedValue(invoice)
+    mockRepository.update.mockResolvedValue(updatedInvoice)
+    mockRepository.findByCardAndMonth.mockResolvedValue(null)
+    mockRepository.findRemainderExpense.mockResolvedValue(null)
+    mockCreditCardsRepository.findById.mockResolvedValue({
+      id: 'card-1',
+      name: 'Nubank',
+      user_id: 'user-123',
+    })
+
+    await sut.execute('user-123', 'invoice-1', 50000)
+
+    expect(mockCreditCardsRepository.findById).toHaveBeenCalledWith('card-1', 'user-123')
+    expect(mockRepository.findRemainderExpense).toHaveBeenCalledWith('invoice-1', 'user-123')
+    expect(mockRepository.createRemainderExpense).toHaveBeenCalledWith(
+      'user-123',
+      'invoice-1',
+      'card-1',
+      50000,
+      expect.any(String),
+      '2020-01-01'
+    )
+  })
+
+  it('does not create remainder expense when cycle is still open', async () => {
+    const invoice = createMockInvoice({
+      id: 'invoice-1',
+      user_id: 'user-123',
+      credit_card_id: 'card-1',
+      total_amount_cents: 100000,
+      paid_amount_cents: 0,
+      carry_over_cents: 0,
+      status: 'open',
+      cycle_end: '2099-12-31',
+    })
+    const updatedInvoice = {
+      ...invoice,
+      paid_amount_cents: 50000,
+      status: 'partially_paid',
+    }
+
+    mockRepository.findById.mockResolvedValue(invoice)
+    mockRepository.update.mockResolvedValue(updatedInvoice)
+    mockRepository.findByCardAndMonth.mockResolvedValue(null)
+
+    await sut.execute('user-123', 'invoice-1', 50000)
+
+    expect(mockCreditCardsRepository.findById).not.toHaveBeenCalled()
+    expect(mockRepository.createRemainderExpense).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,8 @@
 import type { Invoice } from '@plim/shared'
 import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
 import { AppError } from '../../middleware/error-handler.middleware'
+import type { CreditCardsRepository } from '../credit-cards/credit-cards.repository'
+import { createRemainderExpenseIfNeeded } from './create-remainder-expense'
 import type { InvoicesRepository } from './invoices.repository'
 
 function getNextMonth(referenceMonth: string): string {
@@ -18,7 +20,10 @@ function getNextMonth(referenceMonth: string): string {
 }
 
 export class PayInvoiceUseCase {
-  constructor(private repository: InvoicesRepository) {}
+  constructor(
+    private repository: InvoicesRepository,
+    private creditCardsRepository: CreditCardsRepository
+  ) {}
 
   async execute(userId: string, invoiceId: string, amountCents: number): Promise<Invoice> {
     const invoice = await this.repository.findById(invoiceId, userId)
@@ -68,6 +73,23 @@ export class PayInvoiceUseCase {
       await this.repository.update(nextInvoice.id, userId, {
         carry_over_cents: newRemaining,
       })
+    }
+
+    if (isFullyPaid) {
+      await this.repository.deleteRemainderExpense(invoiceId, userId)
+    } else {
+      const today = new Date().toISOString().split('T')[0]!
+      if (today > invoice.cycle_end) {
+        const creditCard = await this.creditCardsRepository.findById(invoice.credit_card_id, userId)
+        if (creditCard) {
+          await createRemainderExpenseIfNeeded({
+            invoice: updatedInvoice,
+            creditCardName: creditCard.name,
+            userId,
+            repository: this.repository,
+          })
+        }
+      }
     }
 
     return updatedInvoice

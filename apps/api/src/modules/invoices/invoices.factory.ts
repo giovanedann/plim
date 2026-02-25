@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import { CreditCardsRepository } from '../credit-cards/credit-cards.repository'
 import { GetCreditCardLimitUsageUseCase } from './get-credit-card-limit-usage.usecase'
@@ -6,6 +7,7 @@ import { InvoicesRepository } from './invoices.repository'
 import { PayInvoiceUseCase } from './pay-invoice.usecase'
 
 export interface InvoicesDependencies {
+  supabase: SupabaseClient
   invoicesRepository: InvoicesRepository
   creditCardsRepository: CreditCardsRepository
   getOrCreateInvoice: GetOrCreateInvoiceUseCase
@@ -26,10 +28,11 @@ export function createInvoicesDependencies(
   const creditCardsRepository = new CreditCardsRepository(supabase)
 
   return {
+    supabase,
     invoicesRepository,
     creditCardsRepository,
     getOrCreateInvoice: new GetOrCreateInvoiceUseCase(invoicesRepository, creditCardsRepository),
-    payInvoice: new PayInvoiceUseCase(invoicesRepository),
+    payInvoice: new PayInvoiceUseCase(invoicesRepository, creditCardsRepository),
     getCreditCardLimitUsage: new GetCreditCardLimitUsageUseCase(
       invoicesRepository,
       creditCardsRepository,
