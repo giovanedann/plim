@@ -37,6 +37,7 @@ export function createMockExpense(overrides: Partial<Expense> = {}): Expense {
     installment_group_id: null,
     recurrent_group_id: null,
     credit_card_id: null,
+    invoice_id: null,
     created_at: getTimestamp(),
     updated_at: getTimestamp(),
     ...overrides,

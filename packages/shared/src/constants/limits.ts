@@ -23,3 +23,15 @@ export const PLAN_LIMITS: Record<PlanTier, TierLimits> = {
     dashboard: { timeRangeDays: Number.POSITIVE_INFINITY },
   },
 } as const
+
+export type ProFeatureKey = 'invoices'
+
+export interface ProFeatures {
+  invoices: boolean
+}
+
+export const PRO_FEATURES: Record<PlanTier, ProFeatures> = {
+  free: { invoices: false },
+  pro: { invoices: true },
+  unlimited: { invoices: true },
+} as const
