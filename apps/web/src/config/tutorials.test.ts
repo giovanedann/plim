@@ -8,6 +8,8 @@ const EXPECTED_TUTORIAL_IDS = [
   'view-dashboard',
   'profile-settings',
   'view-upgrade',
+  'view-invoices',
+  'add-income',
 ]
 
 const VALID_ELEMENT_IDS = [
@@ -32,6 +34,9 @@ const VALID_ELEMENT_IDS = [
   'profile-data-export',
   'upgrade-plan-card',
   'upgrade-payment-button',
+  'sidebar-nav-invoices',
+  'invoice-card-selector',
+  'invoice-summary-card',
 ]
 
 describe('tutorials config', () => {

@@ -58,8 +58,6 @@ describe('LandingPage Integration', () => {
     it('renders header section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // LandingHeader component should be present
-      // Verify by checking for common header elements
       const container = screen.getByRole('main').parentElement
       expect(container).toBeInTheDocument()
     })
@@ -67,7 +65,6 @@ describe('LandingPage Integration', () => {
     it('renders hero section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // HeroSection component should be rendered
       const main = screen.getByRole('main')
       expect(main).toBeInTheDocument()
     })
@@ -75,7 +72,6 @@ describe('LandingPage Integration', () => {
     it('renders onboarding section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // OnboardingSection component should be rendered
       const main = screen.getByRole('main')
       expect(main).toBeInTheDocument()
     })
@@ -83,15 +79,13 @@ describe('LandingPage Integration', () => {
     it('renders features showcase section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // FeaturesShowcase component should be rendered
       const main = screen.getByRole('main')
       expect(main).toBeInTheDocument()
     })
 
-    it('renders security section', () => {
+    it('renders trust section (security + AI)', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // SecuritySection component should be rendered
       const main = screen.getByRole('main')
       expect(main).toBeInTheDocument()
     })
@@ -99,7 +93,6 @@ describe('LandingPage Integration', () => {
     it('renders pricing section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // PricingSection component should be rendered
       const main = screen.getByRole('main')
       expect(main).toBeInTheDocument()
     })
@@ -107,7 +100,6 @@ describe('LandingPage Integration', () => {
     it('renders CTA section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // CtaSection component should be rendered
       const main = screen.getByRole('main')
       expect(main).toBeInTheDocument()
     })
@@ -115,7 +107,6 @@ describe('LandingPage Integration', () => {
     it('renders footer section', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // LandingFooter component should be present
       const container = screen.getByRole('main').parentElement
       expect(container).toBeInTheDocument()
     })
@@ -128,8 +119,8 @@ describe('LandingPage Integration', () => {
       const main = container.querySelector('main')
       expect(main).toBeInTheDocument()
 
-      // Verify main has children (the sections)
-      expect(main?.children.length).toBeGreaterThan(0)
+      // 7 sections: Hero, Onboarding, FeaturesShowcase, Testimonials, TrustSection, Pricing, CTA
+      expect(main?.children.length).toBe(7)
     })
   })
 
@@ -156,12 +147,10 @@ describe('LandingPage Integration', () => {
     it('renders all 7 major sections plus header and footer', () => {
       render(<LandingPage />, { wrapper: TestWrapper })
 
-      // Main element should contain all the sections
       const main = screen.getByRole('main')
 
-      // Check that main has multiple children (7 sections)
-      // HeroSection, OnboardingSection, FeaturesShowcase, SecuritySection, PricingSection, CtaSection
-      expect(main.children.length).toBeGreaterThanOrEqual(6)
+      // Hero, Onboarding, FeaturesShowcase, Testimonials, TrustSection, Pricing, CTA
+      expect(main.children.length).toBe(7)
     })
   })
 
@@ -176,7 +165,6 @@ describe('LandingPage Integration', () => {
     it('renders without accessibility violations', () => {
       const { container } = render(<LandingPage />, { wrapper: TestWrapper })
 
-      // Basic check that content is rendered
       expect(container.firstChild).toBeInTheDocument()
     })
   })
@@ -194,7 +182,6 @@ describe('LandingPage Integration', () => {
     it('renders complete landing experience', () => {
       const { container } = render(<LandingPage />, { wrapper: TestWrapper })
 
-      // Verify the full page structure is present
       const landingContainer = container.querySelector('.landing-container')
       const main = screen.getByRole('main')
 

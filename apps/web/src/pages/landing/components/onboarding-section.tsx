@@ -1,4 +1,6 @@
 import { Receipt, Sparkles, Tags, Wallet } from 'lucide-react'
+import type { Variants } from 'motion/react'
+import * as motion from 'motion/react-client'
 
 interface OnboardingStep {
   icon: React.ReactNode
@@ -29,18 +31,55 @@ const steps: OnboardingStep[] = [
   },
 ]
 
+const containerVariants: Variants = {
+  offscreen: {},
+  onscreen: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+}
+
+const itemVariants: Variants = {
+  offscreen: {
+    y: 24,
+    opacity: 0,
+  },
+  onscreen: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      bounce: 0.3,
+      duration: 0.6,
+    },
+  },
+}
+
 export function OnboardingSection() {
   return (
-    <section className="landing-section flex min-h-screen w-full items-center bg-background py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-6xl px-4 md:px-8">
+    <section className="flex w-full items-center bg-slate-950 py-16 md:py-24">
+      <motion.div
+        initial="offscreen"
+        whileInView="onscreen"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={containerVariants}
+        className="relative z-10 mx-auto max-w-6xl px-4 md:px-8"
+      >
         {/* Header */}
         <div className="mb-16 text-center">
-          <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+          <motion.h2
+            variants={itemVariants}
+            className="mb-4 text-3xl font-bold md:text-4xl lg:text-5xl bg-gradient-to-r from-white via-white to-slate-400 bg-clip-text text-transparent"
+          >
             Comece em minutos
-          </h2>
-          <p className="mx-auto max-w-2xl text-lg text-slate-400 md:text-xl">
+          </motion.h2>
+          <motion.p
+            variants={itemVariants}
+            className="mx-auto max-w-2xl text-lg text-slate-400 md:text-xl"
+          >
             Um passo a passo simples para organizar suas finanças
-          </p>
+          </motion.p>
         </div>
 
         {/* Steps */}
@@ -50,7 +89,11 @@ export function OnboardingSection() {
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-4">
             {steps.map((step, index) => (
-              <div key={step.title} className="relative flex flex-col items-center text-center">
+              <motion.div
+                key={step.title}
+                variants={itemVariants}
+                className="relative flex flex-col items-center text-center"
+              >
                 {/* Step number badge */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-slate-950">
@@ -59,7 +102,7 @@ export function OnboardingSection() {
                 </div>
 
                 {/* Icon container */}
-                <div className="relative z-10 mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-slate-800 border border-slate-700 text-amber-500 transition-all duration-300 hover:border-amber-500/50 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                <div className="relative z-10 mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 text-amber-500 transition-all duration-300 hover:border-amber-500/30 hover:bg-white/10 hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
                   {step.icon}
                 </div>
 
@@ -71,19 +114,19 @@ export function OnboardingSection() {
                 {index < steps.length - 1 && (
                   <div className="md:hidden absolute -bottom-4 left-1/2 h-8 w-0.5 -translate-x-1/2 bg-gradient-to-b from-amber-500/30 to-transparent" />
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
         {/* CTA text */}
-        <div className="mt-12 text-center">
+        <motion.div variants={itemVariants} className="mt-12 text-center">
           <p className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-4 py-2 text-sm text-amber-400">
             <Sparkles className="h-4 w-4" />
             Leva menos de 2 minutos
           </p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   )
 }

@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-react'
+import * as motion from 'motion/react-client'
 
 type AnimationType = 'orbit' | 'orbit-reverse' | 'float-wave' | 'drift' | 'pulse-float' | 'swing'
 
@@ -63,7 +64,7 @@ export function HeroSection() {
   const user = useAuthStore((state) => state.user)
 
   return (
-    <section className="landing-section relative min-h-screen w-full overflow-hidden bg-slate-950">
+    <section className="relative min-h-screen w-full overflow-hidden bg-slate-950">
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
 
@@ -221,28 +222,46 @@ export function HeroSection() {
 
       {/* Main content */}
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 text-center">
-        {/* Animated logo */}
-        <div
-          className="mb-8 drop-shadow-[0_0_40px_rgba(255,193,7,0.6)]"
-          style={{
-            animation: 'float-wave 6s ease-in-out infinite',
-          }}
-        >
-          <PlimIcon className="size-24 md:size-40" />
+        {/* Animated logo with amber glow */}
+        <div className="relative mb-8">
+          <div className="absolute inset-0 m-auto h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+          <div
+            className="relative drop-shadow-[0_0_40px_rgba(255,193,7,0.6)]"
+            style={{
+              animation: 'float-wave 6s ease-in-out infinite',
+            }}
+          >
+            <PlimIcon className="size-24 md:size-40" />
+          </div>
         </div>
 
         {/* Headline */}
-        <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-4 text-4xl font-bold md:text-5xl lg:text-6xl bg-gradient-to-r from-amber-200 via-amber-400 to-orange-500 bg-clip-text text-transparent"
+        >
           Domine suas finanças pessoais
-        </h1>
+        </motion.h1>
 
         {/* Subheadline */}
-        <p className="mb-8 max-w-2xl text-lg text-slate-400 md:text-xl lg:text-2xl">
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8 max-w-2xl text-lg text-slate-400 md:text-xl lg:text-2xl"
+        >
           Acompanhe gastos, visualize padrões e economize mais todo mês. Simples, visual e gratuito.
-        </p>
+        </motion.p>
 
         {/* CTAs */}
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex flex-col items-center gap-4 sm:flex-row"
+        >
           {user ? (
             <Button
               asChild
@@ -271,7 +290,7 @@ export function HeroSection() {
               </Link>
             </>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Scroll indicator */}

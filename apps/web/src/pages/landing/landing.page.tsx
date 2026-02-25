@@ -1,5 +1,4 @@
 import {
-  AiDisclaimerSection,
   CtaSection,
   FeaturesShowcase,
   HeroSection,
@@ -7,8 +6,8 @@ import {
   LandingHeader,
   OnboardingSection,
   PricingSection,
-  SecuritySection,
   TestimonialsSection,
+  TrustSection,
 } from './components'
 
 export function LandingPage() {
@@ -20,9 +19,8 @@ export function LandingPage() {
         <HeroSection />
         <OnboardingSection />
         <FeaturesShowcase />
-        <SecuritySection />
         <TestimonialsSection />
-        <AiDisclaimerSection />
+        <TrustSection />
         <PricingSection />
         <CtaSection />
       </main>

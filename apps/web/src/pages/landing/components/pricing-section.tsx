@@ -2,6 +2,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 import { Check, Gift, Share2, UserPlus } from 'lucide-react'
+import type { Variants } from 'motion/react'
+import * as motion from 'motion/react-client'
 
 interface PricingTier {
   name: string
@@ -62,6 +64,7 @@ const tiers: PricingTier[] = [
       'Tudo do plano Grátis',
       'Categorias ilimitadas',
       'Cartões de crédito ilimitados',
+      'Faturas de cartão com controle de saldo restante',
       'Dashboard com mais gráficos, ranges e insights',
       '100 requisições de texto por semana',
       '20 requisições de imagem por semana',
@@ -71,34 +74,75 @@ const tiers: PricingTier[] = [
   },
 ]
 
+const containerVariants: Variants = {
+  offscreen: {},
+  onscreen: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+}
+
+const itemVariants: Variants = {
+  offscreen: {
+    y: 24,
+    opacity: 0,
+  },
+  onscreen: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      bounce: 0.3,
+      duration: 0.6,
+    },
+  },
+}
+
 export function PricingSection() {
   return (
-    <section className="landing-section flex min-h-screen w-full items-center bg-background py-24 md:py-32">
-      <div className="mx-auto w-full max-w-5xl px-4 md:px-8">
+    <section className="flex w-full items-center bg-slate-950 py-16 md:py-24">
+      <motion.div
+        initial="offscreen"
+        whileInView="onscreen"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={containerVariants}
+        className="mx-auto w-full max-w-5xl px-4 md:px-8"
+      >
         {/* Header */}
         <div className="mb-12 text-center md:mb-16">
-          <span className="mb-4 inline-block rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-amber-400">
+          <motion.span
+            variants={itemVariants}
+            className="mb-4 inline-block rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-amber-400"
+          >
             Preços
-          </span>
-          <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+          </motion.span>
+          <motion.h2
+            variants={itemVariants}
+            className="mb-4 text-3xl font-bold md:text-4xl lg:text-5xl bg-gradient-to-r from-white via-white to-slate-400 bg-clip-text text-transparent"
+          >
             Simples e transparente
-          </h2>
-          <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
+          </motion.h2>
+          <motion.p
+            variants={itemVariants}
+            className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg"
+          >
             Comece grátis e tenha acesso a todas as funcionalidades essenciais. Atualize quando
             precisar de mais.
-          </p>
+          </motion.p>
         </div>
 
         {/* Pricing cards */}
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           {tiers.map((tier) => (
-            <div
+            <motion.div
               key={tier.name}
+              variants={itemVariants}
               className={cn(
-                'relative flex flex-col rounded-2xl border p-6 md:p-8',
+                'relative flex flex-col rounded-2xl p-6 md:p-8 transition-all duration-300',
                 tier.highlighted
-                  ? 'border-amber-500/50 bg-slate-900/80 shadow-lg shadow-amber-500/10'
-                  : 'border-slate-800 bg-slate-900/50'
+                  ? 'border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm shadow-lg shadow-amber-500/5 hover:border-amber-500/50'
+                  : 'bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 hover:bg-white/10'
               )}
             >
               {/* Tier name */}
@@ -136,12 +180,15 @@ export function PricingSection() {
               >
                 <Link to={tier.highlighted ? '/sign-up' : '/upgrade'}>{tier.cta}</Link>
               </Button>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Referral */}
-        <div className="mt-12 rounded-2xl border border-emerald-500/20 bg-slate-900/50 p-6 md:mt-16 md:p-8">
+        <motion.div
+          variants={itemVariants}
+          className="mt-12 rounded-2xl bg-white/5 backdrop-blur-sm border border-emerald-500/20 p-6 md:mt-16 md:p-8"
+        >
           <div className="mb-8 text-center">
             <span className="mb-3 inline-block rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-emerald-400">
               Indique e ganhe
@@ -179,8 +226,8 @@ export function PricingSection() {
               <Link to="/sign-up">Criar conta grátis</Link>
             </Button>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   )
 }

@@ -1,6 +1,6 @@
 import { Star } from 'lucide-react'
-import type { Variants } from 'motion/react'
 import * as motion from 'motion/react-client'
+import { useRef, useState } from 'react'
 
 interface Testimonial {
   name: string
@@ -35,30 +35,7 @@ const testimonials: Testimonial[] = [
   },
 ]
 
-const containerVariants: Variants = {
-  offscreen: {},
-  onscreen: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants: Variants = {
-  offscreen: {
-    y: 20,
-    opacity: 0,
-  },
-  onscreen: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: 'spring',
-      bounce: 0.3,
-      duration: 0.6,
-    },
-  },
-}
+const duplicated = [...testimonials, ...testimonials]
 
 const starPositions = [1, 2, 3, 4, 5] as const
 
@@ -78,52 +55,57 @@ function StarRating({ rating }: { rating: number }): React.ReactNode {
 }
 
 export function TestimonialsSection(): React.ReactNode {
-  return (
-    <section className="landing-section flex min-h-screen w-full items-center bg-background py-24 md:py-32">
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-8">
-        <motion.div
-          initial="offscreen"
-          whileInView="onscreen"
-          viewport={{ once: false, amount: 0.3 }}
-          variants={containerVariants}
-        >
-          {/* Header */}
-          <div className="mb-12 text-center md:mb-16">
-            <motion.span
-              variants={itemVariants}
-              className="mb-4 inline-block rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-amber-400"
-            >
-              Depoimentos
-            </motion.span>
-            <motion.h2
-              variants={itemVariants}
-              className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl"
-            >
-              Quem usa, recomenda
-            </motion.h2>
-            <motion.p
-              variants={itemVariants}
-              className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg"
-            >
-              Veja o que pessoas reais estão falando sobre o Plim.
-            </motion.p>
-          </div>
+  const [isPaused, setIsPaused] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-          {/* Testimonial cards grid */}
-          <motion.div variants={containerVariants} className="grid gap-6 md:grid-cols-2">
-            {testimonials.map((testimonial) => (
-              <motion.div
-                key={testimonial.name}
-                variants={itemVariants}
-                className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-colors hover:border-amber-500/30 hover:bg-slate-900/80"
+  return (
+    <section className="flex w-full items-center bg-slate-950 py-16 md:py-20 overflow-hidden">
+      <div className="w-full">
+        {/* Header */}
+        <div className="mb-10 text-center px-4 md:px-8">
+          <span className="mb-4 inline-block rounded-full bg-amber-500/10 px-3 py-1 text-sm font-medium uppercase tracking-wide text-amber-400">
+            Depoimentos
+          </span>
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl lg:text-5xl bg-gradient-to-r from-white via-white to-slate-400 bg-clip-text text-transparent">
+            Quem usa, recomenda
+          </h2>
+          <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
+            Veja o que pessoas reais estão falando sobre o Plim.
+          </p>
+        </div>
+
+        {/* Auto-scrolling marquee */}
+        <div
+          ref={containerRef}
+          className="relative"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <motion.div
+            className="flex gap-6 px-4"
+            animate={{ x: ['0%', '-50%'] }}
+            transition={{
+              x: {
+                repeat: Number.POSITIVE_INFINITY,
+                repeatType: 'loop',
+                duration: 25,
+                ease: 'linear',
+              },
+            }}
+            style={isPaused ? { animationPlayState: 'paused' } : undefined}
+          >
+            {duplicated.map((testimonial, index) => (
+              <div
+                key={`${testimonial.name}-${index}`}
+                className="min-w-[320px] max-w-[360px] shrink-0 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 transition-all duration-300 hover:border-amber-500/20 hover:bg-white/10"
               >
                 <StarRating rating={testimonial.rating} />
                 <p className="mt-4 text-slate-300">&ldquo;{testimonial.quote}&rdquo;</p>
                 <p className="mt-4 font-semibold text-white">{testimonial.name}</p>
-              </motion.div>
+              </div>
             ))}
           </motion.div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

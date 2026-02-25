@@ -116,7 +116,7 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:gap-6 md:py-6 lg:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" data-tutorial-id="invoice-card-selector">
           <h1 className="text-2xl font-semibold">Faturas</h1>
           <Select value={cardId} onValueChange={handleCardChange}>
             <SelectTrigger className="w-[200px]">

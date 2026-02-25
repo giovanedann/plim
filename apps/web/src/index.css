@@ -160,15 +160,10 @@
   }
 }
 
-/* Landing page scroll-snap */
+/* Landing page container */
 .landing-container {
-  scroll-snap-type: y proximity;
   overflow-y: auto;
   height: 100vh;
-}
-
-.landing-section {
-  scroll-snap-align: start;
 }
 
 /* Feature section slide-in animations */
@@ -208,10 +203,6 @@
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .landing-container {
-    scroll-snap-type: none;
-  }
-
   .slide-in-left,
   .slide-in-right {
     animation: none;

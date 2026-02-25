@@ -26,7 +26,7 @@ export function LandingHeader() {
       className={cn(
         'fixed left-0 right-0 top-0 z-50 transition-all duration-300',
         isVisible
-          ? 'translate-y-0 bg-background/80 backdrop-blur-md border-b border-border'
+          ? 'translate-y-0 bg-slate-950/80 backdrop-blur-md border-b border-white/10'
           : '-translate-y-full'
       )}
     >
@@ -34,7 +34,7 @@ export function LandingHeader() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <PlimIcon className="size-8" />
-          <span className="font-semibold text-foreground">Plim</span>
+          <span className="font-semibold text-white">Plim</span>
         </Link>
 
         {/* Right side */}

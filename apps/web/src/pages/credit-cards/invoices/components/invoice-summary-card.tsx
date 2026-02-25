@@ -38,7 +38,7 @@ export function InvoiceSummaryCard({
   }
 
   return (
-    <Card>
+    <Card data-tutorial-id="invoice-summary-card">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Resumo da Fatura</CardTitle>

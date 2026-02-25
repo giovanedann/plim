@@ -15,6 +15,7 @@ import {
   Clock,
   CreditCard,
   Crown,
+  FileText,
   LayoutDashboard,
   QrCode,
   Sparkles,
@@ -27,6 +28,7 @@ import { PixPaymentDialog } from './components/pix-payment-dialog'
 const PERKS = [
   { icon: Tags, text: 'Categorias ilimitadas' },
   { icon: CreditCard, text: 'Cartões de crédito ilimitados' },
+  { icon: FileText, text: 'Faturas de cartão com controle de saldo restante' },
   { icon: LayoutDashboard, text: 'Dashboard com mais gráficos, ranges e insights' },
   { icon: Sparkles, text: '100 requisições de texto com IA por semana' },
   { icon: Sparkles, text: '20 requisições de imagem com IA por semana' },
