@@ -1,4 +1,6 @@
 import { PageLoader } from '@/components/page-loader'
+import { useSubscription } from '@/hooks/use-subscription'
+import { InvoiceProGate } from '@/pages/credit-cards/invoices/components/invoice-pro-gate'
 import { createFileRoute } from '@tanstack/react-router'
 import { Suspense, lazy } from 'react'
 import { z } from 'zod'
@@ -24,6 +26,11 @@ export const Route = createFileRoute('/_app/invoices')({
 
 function InvoiceRoute() {
   const { cardId, month } = Route.useSearch()
+  const { isPro } = useSubscription()
+
+  if (!isPro) {
+    return <InvoiceProGate />
+  }
 
   return (
     <Suspense fallback={<PageLoader />}>
