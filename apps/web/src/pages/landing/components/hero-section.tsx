@@ -1,5 +1,7 @@
 import { PlimIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link } from '@tanstack/react-router'
@@ -15,7 +17,9 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-react'
+import { useMotionValue, useSpring, useTransform } from 'motion/react'
 import * as motion from 'motion/react-client'
+import { useCallback, useRef } from 'react'
 
 type AnimationType = 'orbit' | 'orbit-reverse' | 'float-wave' | 'drift' | 'pulse-float' | 'swing'
 
@@ -27,6 +31,7 @@ interface FloatingIconProps {
   animation?: AnimationType
   color: string
   glowColor: string
+  isDraggable?: boolean
 }
 
 function FloatingIcon({
@@ -37,31 +42,129 @@ function FloatingIcon({
   animation = 'orbit',
   color,
   glowColor,
+  isDraggable = false,
 }: FloatingIconProps) {
   return (
     <div
-      className={cn('absolute transition-all duration-300 cursor-pointer', color, className)}
+      className={cn('absolute z-20', className)}
       style={{
         animation: `${animation} ${duration} ease-in-out infinite`,
         animationDelay: delay,
-        filter: 'drop-shadow(0 0 8px currentColor)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.filter = `drop-shadow(0 0 25px ${glowColor})`
-        e.currentTarget.style.transform = 'scale(1.3)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.filter = 'drop-shadow(0 0 8px currentColor)'
-        e.currentTarget.style.transform = ''
       }}
     >
-      {icon}
+      <motion.div
+        className={cn(
+          'transition-[filter] duration-300',
+          color,
+          isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
+        )}
+        style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}
+        drag={isDraggable}
+        dragConstraints={{ top: -40, right: 40, bottom: 40, left: -40 }}
+        dragElastic={0.3}
+        dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+        whileHover={{ scale: 1.3, filter: `drop-shadow(0 0 25px ${glowColor})` }}
+        whileTap={{ scale: 1.1 }}
+        whileDrag={{ scale: 1.2, filter: `drop-shadow(0 0 30px ${glowColor})` }}
+      >
+        {icon}
+      </motion.div>
+    </div>
+  )
+}
+
+function InteractiveLogo() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
+  const prefersReducedMotion = useReducedMotion()
+
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  const springX = useSpring(mouseX, { stiffness: 300, damping: 30 })
+  const springY = useSpring(mouseY, { stiffness: 300, damping: 30 })
+
+  const rotateX = useTransform(springY, [-0.5, 0.5], ['12deg', '-12deg'])
+  const rotateY = useTransform(springX, [-0.5, 0.5], ['-12deg', '12deg'])
+
+  const glowX = useTransform(springX, [-0.5, 0.5], ['30%', '70%'])
+  const glowY = useTransform(springY, [-0.5, 0.5], ['30%', '70%'])
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isMobile || prefersReducedMotion || !containerRef.current) return
+      const rect = containerRef.current.getBoundingClientRect()
+      mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+      mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+    },
+    [isMobile, prefersReducedMotion, mouseX, mouseY]
+  )
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0)
+    mouseY.set(0)
+  }, [mouseX, mouseY])
+
+  if (prefersReducedMotion) {
+    return (
+      <div className="relative mb-8">
+        <div className="absolute inset-0 m-auto h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="relative drop-shadow-[0_0_40px_rgba(255,193,7,0.6)]">
+          <PlimIcon className="size-24 md:size-40" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative mb-8 cursor-pointer p-12"
+      style={{ perspective: '800px' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="absolute inset-0 m-auto h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+
+      <motion.div
+        className="pointer-events-none absolute inset-0 m-auto h-60 w-60 rounded-full blur-2xl"
+        style={{
+          background: 'radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%)',
+          left: glowX,
+          top: glowY,
+          translateX: '-50%',
+          translateY: '-50%',
+        }}
+      />
+
+      {/* Breathing glow — CSS animation so it doesn't fight Motion gestures */}
+      <div
+        className="relative"
+        style={{
+          animation: 'logo-breathe 4s ease-in-out infinite',
+        }}
+      >
+        {/* 3D tilt + gesture layer */}
+        <motion.div
+          style={{
+            rotateX: isMobile ? 0 : rotateX,
+            rotateY: isMobile ? 0 : rotateY,
+            transformStyle: 'preserve-3d',
+          }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <PlimIcon className="size-24 md:size-40" />
+        </motion.div>
+      </div>
     </div>
   )
 }
 
 export function HeroSection() {
   const user = useAuthStore((state) => state.user)
+  const isMobile = useIsMobile()
+  const isDraggable = !isMobile
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-slate-950">
@@ -78,6 +181,7 @@ export function HeroSection() {
           animation="orbit"
           color="text-amber-500/70"
           glowColor="#f59e0b"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<CreditCard className="h-14 w-14" />}
@@ -87,6 +191,7 @@ export function HeroSection() {
           animation="drift"
           color="text-purple-500/80"
           glowColor="#a855f7"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<PiggyBank className="h-20 w-20" />}
@@ -96,6 +201,7 @@ export function HeroSection() {
           animation="float-wave"
           color="text-pink-500/70"
           glowColor="#ec4899"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<TrendingUp className="h-14 w-14" />}
@@ -105,6 +211,7 @@ export function HeroSection() {
           animation="pulse-float"
           color="text-emerald-500/80"
           glowColor="#10b981"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<Banknote className="h-12 w-12" />}
@@ -114,6 +221,7 @@ export function HeroSection() {
           animation="orbit-reverse"
           color="text-green-500/80"
           glowColor="#22c55e"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<Receipt className="h-12 w-12" />}
@@ -123,6 +231,7 @@ export function HeroSection() {
           animation="swing"
           color="text-blue-400/70"
           glowColor="#60a5fa"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<Coins className="h-16 w-16" />}
@@ -132,6 +241,7 @@ export function HeroSection() {
           animation="drift"
           color="text-yellow-400/80"
           glowColor="#facc15"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<BadgeDollarSign className="h-14 w-14" />}
@@ -141,6 +251,7 @@ export function HeroSection() {
           animation="orbit"
           color="text-lime-500/70"
           glowColor="#84cc16"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<Wallet className="h-10 w-10" />}
@@ -150,6 +261,7 @@ export function HeroSection() {
           animation="float-wave"
           color="text-orange-400/60"
           glowColor="#fb923c"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<CreditCard className="h-10 w-10" />}
@@ -159,6 +271,7 @@ export function HeroSection() {
           animation="pulse-float"
           color="text-violet-500/60"
           glowColor="#8b5cf6"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<Coins className="h-8 w-8" />}
@@ -168,6 +281,7 @@ export function HeroSection() {
           animation="swing"
           color="text-amber-400/60"
           glowColor="#fbbf24"
+          isDraggable={isDraggable}
         />
         <FloatingIcon
           icon={<TrendingDown className="h-10 w-10" />}
@@ -177,10 +291,11 @@ export function HeroSection() {
           animation="orbit-reverse"
           color="text-red-500/70"
           glowColor="#ef4444"
+          isDraggable={isDraggable}
         />
       </div>
 
-      {/* Mobile floating icons - fewer, smaller */}
+      {/* Mobile floating icons - fewer, smaller, not draggable */}
       <div className="md:hidden">
         <FloatingIcon
           icon={<Wallet className="h-10 w-10" />}
@@ -220,19 +335,10 @@ export function HeroSection() {
         />
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 text-center">
-        {/* Animated logo with amber glow */}
-        <div className="relative mb-8">
-          <div className="absolute inset-0 m-auto h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
-          <div
-            className="relative drop-shadow-[0_0_40px_rgba(255,193,7,0.6)]"
-            style={{
-              animation: 'float-wave 6s ease-in-out infinite',
-            }}
-          >
-            <PlimIcon className="size-24 md:size-40" />
-          </div>
+      {/* Main content — pointer-events-none so floating icons behind are reachable */}
+      <div className="relative z-30 flex min-h-screen flex-col items-center justify-center px-4 text-center pointer-events-none">
+        <div className="pointer-events-auto">
+          <InteractiveLogo />
         </div>
 
         {/* Headline */}
@@ -260,7 +366,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col items-center gap-4 sm:flex-row"
+          className="flex flex-col items-center gap-4 sm:flex-row pointer-events-auto"
         >
           {user ? (
             <Button

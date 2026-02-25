@@ -85,16 +85,18 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   offscreen: {
-    y: 24,
+    y: 30,
     opacity: 0,
+    scale: 0.85,
   },
   onscreen: {
     y: 0,
     opacity: 1,
+    scale: 1,
     transition: {
       type: 'spring',
-      bounce: 0.3,
-      duration: 0.6,
+      bounce: 0.45,
+      duration: 0.7,
     },
   },
 }

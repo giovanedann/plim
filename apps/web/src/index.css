@@ -160,6 +160,18 @@
   }
 }
 
+@keyframes logo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 30px rgba(255, 193, 7, 0.5));
+  }
+  50% {
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 50px rgba(255, 193, 7, 0.7));
+  }
+}
+
 /* Landing page container */
 .landing-container {
   overflow-y: auto;

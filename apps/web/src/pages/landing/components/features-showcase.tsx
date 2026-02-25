@@ -172,7 +172,7 @@ export function FeaturesShowcase() {
         </div>
 
         {/* Content area */}
-        <div className="min-h-[320px] md:min-h-[360px]">
+        <motion.div layout transition={{ layout: { duration: 0.3, ease: 'easeInOut' } }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={feature.id}
@@ -234,7 +234,7 @@ export function FeaturesShowcase() {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </section>
   )
