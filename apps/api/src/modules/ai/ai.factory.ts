@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import { createServerPostHog } from '../../lib/posthog'
@@ -15,12 +14,11 @@ import { SalaryRepository } from '../salary/salary.repository'
 import { AIRepository } from './ai.repository'
 import { ChatUseCase } from './chat.usecase'
 import { CheckUsageLimitUseCase } from './check-usage-limit.usecase'
-import { type AIClient, GeminiClient } from './client'
 import { GetUsageInfoUseCase } from './get-usage-info.usecase'
 
 export interface AIDependencies {
   repository: AIRepository
-  aiClient: AIClient
+  geminiApiKey: string
   supabase: SupabaseClient
   checkUsageLimit: CheckUsageLimitUseCase
   getUsageInfo: GetUsageInfoUseCase
@@ -41,9 +39,6 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
   if (!geminiApiKey) {
     throw new Error('GEMINI_API_KEY is not configured')
   }
-
-  const genAI = new GoogleGenAI({ apiKey: geminiApiKey })
-  const aiClient = new GeminiClient(genAI)
 
   const posthog = createServerPostHog(options.env)
 
@@ -66,7 +61,7 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
   const createSalaryUseCase = new CreateSalaryUseCase(salaryRepository)
 
   const chatUseCase = new ChatUseCase({
-    aiClient,
+    geminiApiKey,
     aiRepository: repository,
     supabase,
     createExpenseUseCase,
@@ -89,7 +84,7 @@ export function createAIDependencies(options: CreateDependenciesOptions): AIDepe
 
   return {
     repository,
-    aiClient,
+    geminiApiKey,
     supabase,
     checkUsageLimit: new CheckUsageLimitUseCase(repository),
     getUsageInfo: new GetUsageInfoUseCase(repository),

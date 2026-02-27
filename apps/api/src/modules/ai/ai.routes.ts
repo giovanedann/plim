@@ -6,7 +6,7 @@ import { success } from '../../lib/responses'
 import type { AuthVariables } from '../../middleware/auth.middleware'
 import { AppError } from '../../middleware/error-handler.middleware'
 import { type AIDependencies, createAIDependencies } from './ai.factory'
-import type { ContentPart } from './client'
+import type { ContentPart } from './chat.usecase'
 
 export type AIEnv = {
   Bindings: Bindings
