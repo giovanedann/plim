@@ -109,6 +109,7 @@ export class ChatUseCase {
       const embeddingResult = await embed({
         model: google.embedding('gemini-embedding-001'),
         value: messageText,
+        providerOptions: { google: { outputDimensionality: 768 } },
       })
       embedding = embeddingResult.embedding
     } catch {
