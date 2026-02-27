@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.33",
-    "@google/genai": "^1.41.0",
     "@hono/standard-validator": "^0.2.2",
     "@logtail/edge": "^0.5.7",
     "@plim/shared": "workspace:*",
