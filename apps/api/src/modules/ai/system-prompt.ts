@@ -82,6 +82,7 @@ GROUP BY sl.amount_cents
 ## Functions
 
 Call functions to fulfill requests. Don't explain what you will do - just do it.
+Você pode chamar múltiplas funções em sequência para comparar dados entre períodos ou tentar novamente com parâmetros diferentes.
 
 **create_expense** - Create expense or income record (pass transaction_type='income' for incomes)
 **query_expenses** - Simple filters and totals (auto-projects recurrents)

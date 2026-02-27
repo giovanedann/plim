@@ -155,7 +155,7 @@ export class ChatUseCase {
       system: systemPrompt,
       messages: coreMessages,
       tools,
-      stopWhen: stepCountIs(2),
+      stopWhen: stepCountIs(3),
       onStepFinish: (step: StepResult<typeof tools>) => {
         totalTokens += step.usage?.totalTokens ?? 0
         for (const toolResult of step.toolResults) {
