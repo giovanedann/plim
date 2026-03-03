@@ -51,7 +51,7 @@ import type {
 } from '@plim/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Info, Plus } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -136,6 +136,7 @@ export function ExpenseModal({
     watch,
     reset,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -281,6 +282,9 @@ export function ExpenseModal({
     isIncomeMode,
   ])
 
+  const selectedMonthRef = useRef(selectedMonth)
+  selectedMonthRef.current = selectedMonth
+
   useEffect(() => {
     if (open) {
       setTransactionMode(initialMode)
@@ -318,8 +322,9 @@ export function ExpenseModal({
           installment_input_mode: 'total',
         })
       } else {
-        const defaultDate = getDefaultDate(selectedMonth)
-        const monthStart = `${selectedMonth}-01`
+        const month = selectedMonthRef.current
+        const defaultDate = getDefaultDate(month)
+        const monthStart = `${month}-01`
         const isIncome = initialMode === 'income'
         reset({
           type: isIncome ? 'income' : 'one_time',
@@ -337,7 +342,7 @@ export function ExpenseModal({
         })
       }
     }
-  }, [open, expense, selectedMonth, reset, initialMode])
+  }, [open, expense, reset, initialMode])
 
   const createMutation = useMutation({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
@@ -596,6 +601,13 @@ export function ExpenseModal({
         toast.error('Dados inválidos. Verifique os campos.')
         return
       }
+      if (
+        data.payment_method === 'credit_card' &&
+        (!data.credit_card_id || data.credit_card_id === NO_CREDIT_CARD_VALUE)
+      ) {
+        setError('credit_card_id', { message: 'Selecione um cartão para parcelamento' })
+        return
+      }
       const installments = Number.parseInt(data.installment_total || '2', 10)
       const isPerInstallmentMode = data.installment_input_mode === 'per_installment'
       const totalAmountCents = isPerInstallmentMode ? amountCents * installments : amountCents
@@ -820,7 +832,7 @@ export function ExpenseModal({
                           field.onChange(value === NO_CREDIT_CARD_VALUE ? '' : value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger error={!!errors.credit_card_id}>
                           <SelectValue placeholder="Selecione (opcional)" />
                         </SelectTrigger>
                         <SelectContent>
@@ -834,6 +846,9 @@ export function ExpenseModal({
                       </Select>
                     )}
                   />
+                  {errors.credit_card_id && (
+                    <p className="text-sm text-destructive">{errors.credit_card_id.message}</p>
+                  )}
                 </div>
               )}
 
