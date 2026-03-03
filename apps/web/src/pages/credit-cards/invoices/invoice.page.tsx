@@ -13,7 +13,8 @@ import { MonthSelector } from '@/pages/expenses/components/month-selector'
 import { categoryService } from '@/services/category.service'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { CreditCard } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { CreditCard, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { InvoiceSummaryCard } from './components/invoice-summary-card'
 import { InvoiceTransactionsList } from './components/invoice-transactions-list'
@@ -104,10 +105,17 @@ export function InvoicePage({ cardId, month: initialMonth }: InvoicePageProps) {
           <div className="rounded-full bg-muted p-4">
             <CreditCard className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="mt-4 text-lg font-medium">Nenhum cartao com fatura configurado</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Adicione um cartao com dia de fechamento para visualizar as faturas.
+          <h3 className="mt-4 text-lg font-medium">Configure o dia de fechamento</h3>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+            Para visualizar as faturas, é necessário configurar o dia de fechamento nos seus cartões
+            de crédito. Você encontra essa informação no app do seu banco.
           </p>
+          <Button asChild variant="outline" className="mt-4 gap-2">
+            <Link to="/credit-cards">
+              <Settings className="h-4 w-4" />
+              Configurar cartões
+            </Link>
+          </Button>
         </div>
       </div>
     )
