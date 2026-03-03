@@ -26,22 +26,23 @@ export function getBillingCycleDates(
   closingDay: number,
   referenceMonth: string
 ): { cycleStart: string; cycleEnd: string } {
-  const { year, month } = parseReferenceMonth(referenceMonth)
-  const prev = previousMonth(year, month)
+  const { year: refYear, month: refMonth } = parseReferenceMonth(referenceMonth)
+  const next =
+    refMonth === 12 ? { year: refYear + 1, month: 1 } : { year: refYear, month: refMonth + 1 }
 
-  const daysInCurrentMonth = daysInMonth(year, month)
-  const clampedEndDay = Math.min(closingDay, daysInCurrentMonth)
-  const cycleEnd = `${year}-${padMonth(month)}-${padDay(clampedEndDay)}`
+  const daysInEndMonth = daysInMonth(next.year, next.month)
+  const clampedEndDay = Math.min(closingDay, daysInEndMonth)
+  const cycleEnd = `${next.year}-${padMonth(next.month)}-${padDay(clampedEndDay)}`
 
-  const daysInPrevMonth = daysInMonth(prev.year, prev.month)
-  const clampedPrevClosingDay = Math.min(closingDay, daysInPrevMonth)
-  const startDay = clampedPrevClosingDay + 1
+  const daysInRefMonth = daysInMonth(refYear, refMonth)
+  const clampedRefClosingDay = Math.min(closingDay, daysInRefMonth)
+  const startDay = clampedRefClosingDay + 1
 
   let cycleStart: string
-  if (startDay > daysInPrevMonth) {
-    cycleStart = `${year}-${padMonth(month)}-01`
+  if (startDay > daysInRefMonth) {
+    cycleStart = `${next.year}-${padMonth(next.month)}-01`
   } else {
-    cycleStart = `${prev.year}-${padMonth(prev.month)}-${padDay(startDay)}`
+    cycleStart = `${refYear}-${padMonth(refMonth)}-${padDay(startDay)}`
   }
 
   return { cycleStart, cycleEnd }
@@ -57,12 +58,9 @@ export function getInvoiceMonth(closingDay: number, transactionDate: string): st
   const clampedClosingDay = Math.min(closingDay, daysInCurrentMonth)
 
   if (day <= clampedClosingDay) {
-    return `${year}-${padMonth(month)}`
+    const prev = previousMonth(year, month)
+    return `${prev.year}-${padMonth(prev.month)}`
   }
 
-  if (month === 12) {
-    return `${year + 1}-01`
-  }
-
-  return `${year}-${padMonth(month + 1)}`
+  return `${year}-${padMonth(month)}`
 }
