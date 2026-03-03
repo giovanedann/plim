@@ -461,6 +461,156 @@ describe('optimistic-updates', () => {
       })
     })
 
+    describe('recurringVsOnetime updates', () => {
+      it('adding a recurring expense increases recurring_amount and recalculates percentages', () => {
+        const oldData = createMockDashboardData()
+        // initial: recurring=0, onetime=200000
+        const change = createExpenseChange({
+          amount_cents: 100000,
+          operation: 'add',
+          is_recurrent: true,
+        })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.recurringVsOnetime?.recurring_amount).toBe(100000)
+        expect(result?.recurringVsOnetime?.onetime_amount).toBe(200000)
+        // total=300000; recurring_pct = round(100000/300000*1000)/10 = 33.3
+        expect(result?.recurringVsOnetime?.recurring_percentage).toBeCloseTo(33.3, 1)
+        expect(result?.recurringVsOnetime?.onetime_percentage).toBeCloseTo(66.7, 1)
+      })
+
+      it('adding a one-time expense increases onetime_amount', () => {
+        const oldData = createMockDashboardData()
+        const change = createExpenseChange({
+          amount_cents: 50000,
+          operation: 'add',
+          is_recurrent: false,
+        })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.recurringVsOnetime?.onetime_amount).toBe(250000)
+        expect(result?.recurringVsOnetime?.recurring_amount).toBe(0)
+      })
+
+      it('adding a one-time expense when is_recurrent is undefined increases onetime_amount', () => {
+        const oldData = createMockDashboardData()
+        const change = createExpenseChange({
+          amount_cents: 30000,
+          operation: 'add',
+          // is_recurrent not set — undefined
+        })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.recurringVsOnetime?.onetime_amount).toBe(230000)
+        expect(result?.recurringVsOnetime?.recurring_amount).toBe(0)
+      })
+
+      it('removing a recurring expense decreases recurring_amount', () => {
+        const oldData = createMockDashboardData({
+          recurringVsOnetime: {
+            recurring_amount: 80000,
+            onetime_amount: 120000,
+            recurring_percentage: 40,
+            onetime_percentage: 60,
+          },
+        })
+        const change = createExpenseChange({
+          amount_cents: 30000,
+          operation: 'remove',
+          is_recurrent: true,
+        })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.recurringVsOnetime?.recurring_amount).toBe(50000)
+        expect(result?.recurringVsOnetime?.onetime_amount).toBe(120000)
+      })
+
+      it('prevents recurring_amount from going below 0', () => {
+        const oldData = createMockDashboardData({
+          recurringVsOnetime: {
+            recurring_amount: 10000,
+            onetime_amount: 200000,
+            recurring_percentage: 5,
+            onetime_percentage: 95,
+          },
+        })
+        const change = createExpenseChange({
+          amount_cents: 50000,
+          operation: 'remove',
+          is_recurrent: true,
+        })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.recurringVsOnetime?.recurring_amount).toBe(0)
+      })
+
+      it('recalculates percentages correctly after update', () => {
+        const oldData = createMockDashboardData({
+          recurringVsOnetime: {
+            recurring_amount: 50000,
+            onetime_amount: 50000,
+            recurring_percentage: 50,
+            onetime_percentage: 50,
+          },
+        })
+        const change = createExpenseChange({
+          amount_cents: 50000,
+          operation: 'add',
+          is_recurrent: true,
+        })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        // recurring=100000, onetime=50000, total=150000
+        // recurring_pct = round(100000/150000*1000)/10 = 66.7
+        expect(result?.recurringVsOnetime?.recurring_percentage).toBeCloseTo(66.7, 1)
+        expect(result?.recurringVsOnetime?.onetime_percentage).toBeCloseTo(33.3, 1)
+      })
+    })
+
+    describe('passthrough fields', () => {
+      it('passes creditCardUtilization through unchanged', () => {
+        const oldData = createMockDashboardData()
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.creditCardUtilization).toEqual(oldData.creditCardUtilization)
+      })
+
+      it('passes dayOfWeek (null) through unchanged', () => {
+        const oldData = createMockDashboardData({ dayOfWeek: null })
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.dayOfWeek).toBeNull()
+      })
+
+      it('passes invoiceCalendar (null) through unchanged', () => {
+        const oldData = createMockDashboardData({ invoiceCalendar: null })
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.invoiceCalendar).toBeNull()
+      })
+
+      it('passes spendingLimitProgress (null) through unchanged', () => {
+        const oldData = createMockDashboardData({ spendingLimitProgress: null })
+        const change = createExpenseChange({ amount_cents: 10000, operation: 'add' })
+
+        const result = updateDashboardOptimistically(oldData, change, 'day')
+
+        expect(result?.spendingLimitProgress).toBeNull()
+      })
+    })
+
     describe('free user dashboard (null pro fields)', () => {
       const freeTierDashboardData = createMockDashboardData({
         incomeVsExpenses: null,

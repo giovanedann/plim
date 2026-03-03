@@ -847,6 +847,163 @@ describe('DashboardRepository', () => {
     })
   })
 
+  describe('pure aggregation methods', () => {
+    let sut: DashboardRepository
+    let mocks: ReturnType<typeof createMockSupabaseClient>
+
+    beforeEach(() => {
+      mocks = createMockSupabaseClient()
+      sut = new DashboardRepository(mocks.supabase)
+    })
+
+    describe('aggregateRecurringVsOnetime', () => {
+      it('returns 0/0 for empty expenses array', () => {
+        // Arrange
+        const expenses: ExpenseRow[] = []
+
+        // Act
+        const result = sut.aggregateRecurringVsOnetime(expenses)
+
+        // Assert
+        expect(result).toEqual({ recurring_amount: 0, onetime_amount: 0 })
+      })
+
+      it('sums recurring expenses correctly', () => {
+        // Arrange
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ amount_cents: 3000, is_recurrent: true }),
+          createMockExpenseRow({ amount_cents: 7000, is_recurrent: true }),
+        ]
+
+        // Act
+        const result = sut.aggregateRecurringVsOnetime(expenses)
+
+        // Assert
+        expect(result.recurring_amount).toBe(10000)
+        expect(result.onetime_amount).toBe(0)
+      })
+
+      it('sums onetime expenses correctly', () => {
+        // Arrange
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ amount_cents: 4000, is_recurrent: false }),
+          createMockExpenseRow({ amount_cents: 6000, is_recurrent: false }),
+        ]
+
+        // Act
+        const result = sut.aggregateRecurringVsOnetime(expenses)
+
+        // Assert
+        expect(result.recurring_amount).toBe(0)
+        expect(result.onetime_amount).toBe(10000)
+      })
+
+      it('handles mix of recurring and one-time expenses correctly', () => {
+        // Arrange
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ amount_cents: 5000, is_recurrent: true }),
+          createMockExpenseRow({ amount_cents: 2000, is_recurrent: false }),
+          createMockExpenseRow({ amount_cents: 8000, is_recurrent: true }),
+          createMockExpenseRow({ amount_cents: 3000, is_recurrent: false }),
+        ]
+
+        // Act
+        const result = sut.aggregateRecurringVsOnetime(expenses)
+
+        // Assert
+        expect(result.recurring_amount).toBe(13000)
+        expect(result.onetime_amount).toBe(5000)
+      })
+    })
+
+    describe('aggregateByDayOfWeek', () => {
+      it('returns 7 entries for empty expenses array with all zeros', () => {
+        // Arrange
+        const expenses: ExpenseRow[] = []
+
+        // Act
+        const result = sut.aggregateByDayOfWeek(expenses)
+
+        // Assert
+        expect(result).toHaveLength(7)
+        for (let d = 0; d < 7; d++) {
+          const entry = result.find((r) => r.day_of_week === d)
+          expect(entry).toBeDefined()
+          expect(entry?.total).toBe(0)
+          expect(entry?.count).toBe(0)
+        }
+      })
+
+      it('accumulates totals for the correct day of week', () => {
+        // Arrange
+        // 2026-01-19 is a Monday (UTC) → day_of_week = 1
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ date: '2026-01-19', amount_cents: 3000 }),
+          createMockExpenseRow({ date: '2026-01-19', amount_cents: 7000 }),
+        ]
+
+        // Act
+        const result = sut.aggregateByDayOfWeek(expenses)
+
+        // Assert
+        const monday = result.find((r) => r.day_of_week === 1)
+        expect(monday?.total).toBe(10000)
+      })
+
+      it('counts unique dates (not individual expenses) for count', () => {
+        // Arrange
+        // 2026-01-19 is Monday (day_of_week = 1) — two expenses on same date
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ date: '2026-01-19', amount_cents: 1000 }),
+          createMockExpenseRow({ date: '2026-01-19', amount_cents: 2000 }),
+        ]
+
+        // Act
+        const result = sut.aggregateByDayOfWeek(expenses)
+
+        // Assert
+        const monday = result.find((r) => r.day_of_week === 1)
+        expect(monday?.count).toBe(1)
+      })
+
+      it('counts multiple expenses on same date as 1 unique date', () => {
+        // Arrange
+        // 2026-01-18 is Sunday (UTC) → day_of_week = 0
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ date: '2026-01-18', amount_cents: 500 }),
+          createMockExpenseRow({ date: '2026-01-18', amount_cents: 500 }),
+          createMockExpenseRow({ date: '2026-01-18', amount_cents: 500 }),
+        ]
+
+        // Act
+        const result = sut.aggregateByDayOfWeek(expenses)
+
+        // Assert
+        const sunday = result.find((r) => r.day_of_week === 0)
+        expect(sunday?.count).toBe(1)
+        expect(sunday?.total).toBe(1500)
+      })
+
+      it('counts two expenses on different dates on same weekday as 2 unique dates', () => {
+        // Arrange
+        // 2026-01-24 is Saturday (UTC) → day_of_week = 6
+        // 2026-01-17 is Saturday (UTC) → day_of_week = 6
+        const expenses: ExpenseRow[] = [
+          createMockExpenseRow({ date: '2026-01-24', amount_cents: 4000 }),
+          createMockExpenseRow({ date: '2026-01-17', amount_cents: 6000 }),
+        ]
+
+        // Act
+        const result = sut.aggregateByDayOfWeek(expenses)
+
+        // Assert
+        const saturday = result.find((r) => r.day_of_week === 6)
+        expect(saturday?.count).toBe(2)
+        expect(saturday?.total).toBe(10000)
+      })
+    })
+  })
+
   describe('calculateInstallmentForecast', () => {
     it('calculates installment totals by month', () => {
       // Arrange
