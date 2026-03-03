@@ -81,6 +81,8 @@ describe('GetOrCreateInvoiceUseCase', () => {
       const existingInvoice = createMockInvoice({
         credit_card_id: CARD_ID,
         reference_month: '2026-02',
+        cycle_start: '2026-02-11',
+        cycle_end: '2026-03-10',
         total_amount_cents: 15000,
       })
       const transactions = [
@@ -105,6 +107,8 @@ describe('GetOrCreateInvoiceUseCase', () => {
         id: 'inv-1',
         credit_card_id: CARD_ID,
         reference_month: '2026-02',
+        cycle_start: '2026-02-11',
+        cycle_end: '2026-03-10',
         total_amount_cents: 15000,
       })
       const transactions = [
@@ -123,6 +127,8 @@ describe('GetOrCreateInvoiceUseCase', () => {
       expect(result.invoice.total_amount_cents).toBe(17000)
       expect(mockInvoicesRepo.update).toHaveBeenCalledWith('inv-1', USER_ID, {
         total_amount_cents: 17000,
+        cycle_start: '2026-02-11',
+        cycle_end: '2026-03-10',
       })
     })
 
@@ -132,6 +138,8 @@ describe('GetOrCreateInvoiceUseCase', () => {
         id: 'inv-1',
         credit_card_id: CARD_ID,
         reference_month: '2026-02',
+        cycle_start: '2026-02-11',
+        cycle_end: '2026-03-10',
         total_amount_cents: 15000,
       })
       const transactions = [createMockExpense({ amount_cents: 8000, credit_card_id: CARD_ID })]
@@ -157,8 +165,8 @@ describe('GetOrCreateInvoiceUseCase', () => {
       const createdInvoice = createMockInvoice({
         credit_card_id: CARD_ID,
         reference_month: '2026-02',
-        cycle_start: '2026-01-11',
-        cycle_end: '2026-02-10',
+        cycle_start: '2026-02-11',
+        cycle_end: '2026-03-10',
         total_amount_cents: 10000,
         carry_over_cents: 0,
       })
@@ -176,8 +184,8 @@ describe('GetOrCreateInvoiceUseCase', () => {
       expect(mockInvoicesRepo.create).toHaveBeenCalledWith(USER_ID, {
         credit_card_id: CARD_ID,
         reference_month: '2026-02',
-        cycle_start: '2026-01-11',
-        cycle_end: '2026-02-10',
+        cycle_start: '2026-02-11',
+        cycle_end: '2026-03-10',
         total_amount_cents: 10000,
         paid_amount_cents: 0,
         carry_over_cents: 0,

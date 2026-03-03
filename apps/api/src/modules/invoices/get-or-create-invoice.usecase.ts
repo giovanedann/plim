@@ -82,13 +82,25 @@ export class GetOrCreateInvoiceUseCase {
 
     const totalAmountCents = transactions.reduce((sum, tx) => sum + tx.amount_cents, 0)
 
-    if (totalAmountCents !== invoice.total_amount_cents) {
+    const needsUpdate =
+      totalAmountCents !== invoice.total_amount_cents ||
+      invoice.cycle_start !== cycleStart ||
+      invoice.cycle_end !== cycleEnd
+
+    if (needsUpdate) {
       const updatedInvoice = await this.invoicesRepository.update(invoice.id, userId, {
         total_amount_cents: totalAmountCents,
+        cycle_start: cycleStart,
+        cycle_end: cycleEnd,
       })
 
       return {
-        invoice: updatedInvoice ?? { ...invoice, total_amount_cents: totalAmountCents },
+        invoice: updatedInvoice ?? {
+          ...invoice,
+          total_amount_cents: totalAmountCents,
+          cycle_start: cycleStart,
+          cycle_end: cycleEnd,
+        },
         transactions,
       }
     }
