@@ -113,6 +113,78 @@ export const creditCardBreakdownResponseSchema = z.object({
   total: z.number().int().nonnegative(),
 })
 
+// Credit Card Utilization (FREE)
+export const creditCardUtilizationItemSchema = z.object({
+  credit_card_id: z.uuid(),
+  name: z.string(),
+  color: z.string(),
+  bank: z.string(),
+  flag: z.string(),
+  used_cents: z.number().int().nonnegative(),
+  limit_cents: z.number().int().nonnegative(),
+  utilization_percent: z.number(),
+})
+
+export const creditCardUtilizationResponseSchema = z.object({
+  data: z.array(creditCardUtilizationItemSchema),
+})
+
+// Recurring vs One-Time (FREE)
+export const recurringVsOnetimeResponseSchema = z.object({
+  recurring_amount: z.number().int().nonnegative(),
+  onetime_amount: z.number().int().nonnegative(),
+  recurring_percentage: z.number(),
+  onetime_percentage: z.number(),
+})
+
+// Day of Week (PRO)
+export const dayOfWeekDataPointSchema = z.object({
+  day_of_week: z.number().int().min(0).max(6),
+  label: z.string(),
+  average_amount: z.number().int().nonnegative(),
+})
+
+export const dayOfWeekResponseSchema = z.object({
+  data: z.array(dayOfWeekDataPointSchema),
+})
+
+// Invoice Calendar (PRO)
+export const invoiceCalendarItemSchema = z.object({
+  credit_card_id: z.uuid(),
+  credit_card_name: z.string(),
+  color: z.string(),
+  bank: z.string(),
+  flag: z.string(),
+  due_date: z.string(),
+  total_cents: z.number().int().nonnegative(),
+  paid_cents: z.number().int().nonnegative(),
+  is_paid: z.boolean(),
+})
+
+export const invoiceCalendarResponseSchema = z.object({
+  data: z.array(invoiceCalendarItemSchema),
+})
+
+// Spending Limit Progress (PRO)
+export const spendingLimitProgressResponseSchema = z.object({
+  spent_cents: z.number().int().nonnegative(),
+  limit_cents: z.number().int().nonnegative(),
+  percentage: z.number(),
+  days_remaining: z.number().int().nonnegative(),
+})
+
+// Expense Forecast (PRO)
+export const expenseForecastDataPointSchema = z.object({
+  date: z.string(),
+  actual_amount: z.number().int().nonnegative().nullable(),
+  projected_amount: z.number().int().nonnegative().nullable(),
+})
+
+export const expenseForecastResponseSchema = z.object({
+  data: z.array(expenseForecastDataPointSchema),
+  projected_end_of_month: z.number().int().nonnegative(),
+})
+
 export type DashboardQuery = z.infer<typeof dashboardQuerySchema>
 export type TimelineGroupBy = z.infer<typeof timelineGroupBySchema>
 export type ExpensesTimelineQuery = z.infer<typeof expensesTimelineQuerySchema>
@@ -134,6 +206,16 @@ export type InstallmentForecastMonth = z.infer<typeof installmentForecastMonthSc
 export type InstallmentForecastResponse = z.infer<typeof installmentForecastResponseSchema>
 export type CreditCardBreakdownItem = z.infer<typeof creditCardBreakdownItemSchema>
 export type CreditCardBreakdownResponse = z.infer<typeof creditCardBreakdownResponseSchema>
+export type CreditCardUtilizationItem = z.infer<typeof creditCardUtilizationItemSchema>
+export type CreditCardUtilizationResponse = z.infer<typeof creditCardUtilizationResponseSchema>
+export type RecurringVsOnetimeResponse = z.infer<typeof recurringVsOnetimeResponseSchema>
+export type DayOfWeekDataPoint = z.infer<typeof dayOfWeekDataPointSchema>
+export type DayOfWeekResponse = z.infer<typeof dayOfWeekResponseSchema>
+export type InvoiceCalendarItem = z.infer<typeof invoiceCalendarItemSchema>
+export type InvoiceCalendarResponse = z.infer<typeof invoiceCalendarResponseSchema>
+export type SpendingLimitProgressResponse = z.infer<typeof spendingLimitProgressResponseSchema>
+export type ExpenseForecastDataPoint = z.infer<typeof expenseForecastDataPointSchema>
+export type ExpenseForecastResponse = z.infer<typeof expenseForecastResponseSchema>
 
 export const dashboardDataSchema = z.object({
   summary: dashboardSummarySchema,
@@ -145,6 +227,12 @@ export const dashboardDataSchema = z.object({
   savingsRate: savingsRateResponseSchema.nullable(),
   salaryTimeline: salaryTimelineResponseSchema.nullable(),
   installmentForecast: installmentForecastResponseSchema.nullable(),
+  creditCardUtilization: creditCardUtilizationResponseSchema,
+  recurringVsOnetime: recurringVsOnetimeResponseSchema,
+  dayOfWeek: dayOfWeekResponseSchema.nullable(),
+  invoiceCalendar: invoiceCalendarResponseSchema.nullable(),
+  spendingLimitProgress: spendingLimitProgressResponseSchema.nullable(),
+  expenseForecast: expenseForecastResponseSchema.nullable(),
 })
 
 export type DashboardData = z.infer<typeof dashboardDataSchema>
