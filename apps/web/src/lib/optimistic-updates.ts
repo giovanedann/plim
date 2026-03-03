@@ -337,6 +337,12 @@ export function updateDashboardOptimistically(
     installmentForecast: oldData.installmentForecast
       ? updateInstallmentForecast(oldData.installmentForecast, change)
       : null,
+    creditCardUtilization: oldData.creditCardUtilization,
+    recurringVsOnetime: oldData.recurringVsOnetime,
+    dayOfWeek: oldData.dayOfWeek,
+    invoiceCalendar: oldData.invoiceCalendar,
+    spendingLimitProgress: oldData.spendingLimitProgress,
+    expenseForecast: oldData.expenseForecast,
   }
 }
 

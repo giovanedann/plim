@@ -99,6 +99,17 @@ const mockDashboardData = {
       { month: '2024-03', total: 50000 },
     ],
   },
+  creditCardUtilization: { data: [] },
+  recurringVsOnetime: {
+    recurring_amount: 0,
+    onetime_amount: 300000,
+    recurring_percentage: 0,
+    onetime_percentage: 100,
+  },
+  dayOfWeek: null,
+  invoiceCalendar: null,
+  spendingLimitProgress: null,
+  expenseForecast: null,
 }
 
 function createTestQueryClient(): QueryClient {
