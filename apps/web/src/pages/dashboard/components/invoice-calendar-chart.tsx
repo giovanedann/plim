@@ -120,8 +120,7 @@ export function InvoiceCalendarChart({ data }: InvoiceCalendarChartProps) {
               <div className="space-y-2">
                 {group.items.map((item) => {
                   const overdue = isOverdue(item.due_date, item.is_paid)
-                  const dotColor =
-                    COLOR_HEX[item.color as CardColor] ?? COLOR_HEX.default
+                  const dotColor = COLOR_HEX[item.color as CardColor] ?? COLOR_HEX.default
 
                   return (
                     <div
@@ -134,7 +133,9 @@ export function InvoiceCalendarChart({ data }: InvoiceCalendarChartProps) {
                           style={{ backgroundColor: dotColor }}
                         />
                         <span className="truncate text-foreground">{item.credit_card_name}</span>
-                        <span className={`shrink-0 text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                        <span
+                          className={`shrink-0 text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
+                        >
                           {formatDueDate(item.due_date)}
                         </span>
                       </div>
@@ -147,7 +148,9 @@ export function InvoiceCalendarChart({ data }: InvoiceCalendarChartProps) {
                             <CheckCircle2 className="size-4 text-emerald-500" />
                           </>
                         ) : (
-                          <span className={overdue ? 'font-medium text-destructive' : 'font-medium'}>
+                          <span
+                            className={overdue ? 'font-medium text-destructive' : 'font-medium'}
+                          >
                             {formatBRL(item.total_cents)}
                           </span>
                         )}

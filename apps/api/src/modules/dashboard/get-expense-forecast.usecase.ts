@@ -5,8 +5,7 @@ export class GetExpenseForecastUseCase {
   constructor(private dashboardRepository: DashboardRepository) {}
 
   async execute(userId: string): Promise<ExpenseForecastResponse> {
-    const { daily_expenses, spending_limit_cents } =
-      await this.dashboardRepository.getExpenseForecastData(userId)
+    const { daily_expenses } = await this.dashboardRepository.getExpenseForecastData(userId)
 
     const now = new Date()
     const year = now.getFullYear()

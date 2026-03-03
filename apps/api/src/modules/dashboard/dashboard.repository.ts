@@ -427,10 +427,7 @@ export class DashboardRepository {
 
       if (expError) continue
 
-      const usedCents = (expenses ?? []).reduce(
-        (sum, e) => sum + (e.amount_cents as number),
-        0
-      )
+      const usedCents = (expenses ?? []).reduce((sum, e) => sum + (e.amount_cents as number), 0)
 
       results.push({
         credit_card_id: card.id as string,
@@ -564,9 +561,7 @@ export class DashboardRepository {
     return results.sort((a, b) => a.due_date.localeCompare(b.due_date))
   }
 
-  async getSpendingLimitProgress(
-    userId: string
-  ): Promise<{
+  async getSpendingLimitProgress(userId: string): Promise<{
     spent_cents: number
     limit_cents: number
     days_remaining: number
@@ -600,19 +595,14 @@ export class DashboardRepository {
 
     if (expError) return null
 
-    const spentCents = (expenses ?? []).reduce(
-      (sum, e) => sum + (e.amount_cents as number),
-      0
-    )
+    const spentCents = (expenses ?? []).reduce((sum, e) => sum + (e.amount_cents as number), 0)
 
     const daysRemaining = daysInMonth - now.getDate()
 
     return { spent_cents: spentCents, limit_cents: limitCents, days_remaining: daysRemaining }
   }
 
-  async getExpenseForecastData(
-    userId: string
-  ): Promise<{
+  async getExpenseForecastData(userId: string): Promise<{
     daily_expenses: Map<string, number>
     spending_limit_cents: number | null
   }> {

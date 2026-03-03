@@ -10,9 +10,7 @@ export class GetSpendingLimitProgressUseCase {
     if (!result) return null
 
     const percentage =
-      result.limit_cents > 0
-        ? Math.round((result.spent_cents / result.limit_cents) * 1000) / 10
-        : 0
+      result.limit_cents > 0 ? Math.round((result.spent_cents / result.limit_cents) * 1000) / 10 : 0
 
     return {
       spent_cents: result.spent_cents,

@@ -334,6 +334,10 @@ describe('DashboardPage Integration', () => {
           'Top Categorias',
           'Histórico de Salários',
           'Previsão de Parcelas',
+          'Gastos por Dia da Semana',
+          'Limite de Gastos',
+          'Projeção de Gastos',
+          'Calendário de Faturas',
         ]
 
         for (const title of lockedChartTitles) {
@@ -348,7 +352,7 @@ describe('DashboardPage Integration', () => {
         await screen.findByText('Receita vs Despesas')
 
         const proTexts = screen.getAllByText('Disponível no plano Pro')
-        expect(proTexts).toHaveLength(6)
+        expect(proTexts).toHaveLength(10)
       })
 
       it('shows "Seja Pro" links for all locked charts', async () => {
@@ -357,7 +361,7 @@ describe('DashboardPage Integration', () => {
         await screen.findByText('Receita vs Despesas')
 
         const sejaProLinks = screen.getAllByRole('link', { name: /seja pro/i })
-        expect(sejaProLinks).toHaveLength(6)
+        expect(sejaProLinks).toHaveLength(10)
 
         for (const link of sejaProLinks) {
           expect(link).toHaveAttribute('href', '/upgrade')
@@ -388,7 +392,7 @@ describe('DashboardPage Integration', () => {
           expect(elements.length).toBeGreaterThan(0)
         }
 
-        expect(screen.getAllByText('Disponível no plano Pro')).toHaveLength(6)
+        expect(screen.getAllByText('Disponível no plano Pro')).toHaveLength(10)
       })
     })
 
@@ -424,6 +428,10 @@ describe('DashboardPage Integration', () => {
           expect(screen.queryByText('Top Categorias')).not.toBeInTheDocument()
           expect(screen.queryByText('Histórico de Salários')).not.toBeInTheDocument()
           expect(screen.queryByText('Previsão de Parcelas')).not.toBeInTheDocument()
+          expect(screen.queryByText('Gastos por Dia da Semana')).not.toBeInTheDocument()
+          expect(screen.queryByText('Limite de Gastos')).not.toBeInTheDocument()
+          expect(screen.queryByText('Projeção de Gastos')).not.toBeInTheDocument()
+          expect(screen.queryByText('Calendário de Faturas')).not.toBeInTheDocument()
         })
       })
 

@@ -90,9 +90,7 @@ export function ExpenseForecastChart({ data }: ExpenseForecastChartProps) {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  formatter={(value) =>
-                    value !== null ? formatBRL(Number(value) * 100) : '-'
-                  }
+                  formatter={(value) => (value !== null ? formatBRL(Number(value) * 100) : '-')}
                 />
               }
             />

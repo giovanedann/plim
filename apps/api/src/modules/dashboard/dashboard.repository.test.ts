@@ -60,6 +60,7 @@ interface ExpenseRow {
   installment_total: number | null
   installment_current: number | null
   description: string
+  is_recurrent: boolean
 }
 
 interface ExpenseWithCreditCardRow {
@@ -90,6 +91,7 @@ function createMockExpenseRow(overrides: Partial<ExpenseRow> = {}): ExpenseRow {
     installment_total: null,
     installment_current: null,
     description: 'Test expense',
+    is_recurrent: false,
     ...overrides,
   }
 }
@@ -127,6 +129,7 @@ describe('DashboardRepository', () => {
           installment_total: null,
           installment_current: null,
           description: 'Lunch',
+          is_recurrent: false,
         },
       ]
       mocks.mockOrder.mockResolvedValue({ data: rawData, error: null })
@@ -148,6 +151,7 @@ describe('DashboardRepository', () => {
         installment_total: null,
         installment_current: null,
         description: 'Lunch',
+        is_recurrent: false,
       })
       expect(mocks.mockFrom).toHaveBeenCalledWith('expense')
       expect(mocks.mockEq).toHaveBeenCalledWith('user_id', userId)
@@ -171,6 +175,7 @@ describe('DashboardRepository', () => {
           installment_total: null,
           installment_current: null,
           description: 'Unknown',
+          is_recurrent: false,
         },
       ]
       mocks.mockOrder.mockResolvedValue({ data: rawData, error: null })

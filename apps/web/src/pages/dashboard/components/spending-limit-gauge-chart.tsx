@@ -81,11 +81,7 @@ export function SpendingLimitGaugeChart({ data }: SpendingLimitGaugeChartProps) 
             cx="50%"
             cy="80%"
           >
-            <RadialBar
-              dataKey="value"
-              background
-              cornerRadius={8}
-            />
+            <RadialBar dataKey="value" background cornerRadius={8} />
             <text
               x="50%"
               y="70%"
