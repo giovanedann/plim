@@ -81,6 +81,11 @@ export function useDashboard() {
     savingsRate: filteredData?.savingsRate,
     salaryTimeline: filteredData?.salaryTimeline,
     installmentForecast: filteredData?.installmentForecast,
+    creditCardUtilization: filteredData?.creditCardUtilization,
+    recurringVsOnetime: filteredData?.recurringVsOnetime,
+    dayOfWeek: filteredData?.dayOfWeek,
+    invoiceCalendar: filteredData?.invoiceCalendar,
+    spendingLimitProgress: filteredData?.spendingLimitProgress,
     isLoading: dashboardQuery.isLoading,
   }
 }

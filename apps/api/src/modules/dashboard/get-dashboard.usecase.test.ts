@@ -20,6 +20,11 @@ type MockRepository = {
   getTotalIncome: ReturnType<typeof vi.fn>
   getTotalExpenses: ReturnType<typeof vi.fn>
   getPreviousPeriodData: ReturnType<typeof vi.fn>
+  getCreditCardUtilization: ReturnType<typeof vi.fn>
+  aggregateRecurringVsOnetime: ReturnType<typeof vi.fn>
+  aggregateByDayOfWeek: ReturnType<typeof vi.fn>
+  getUpcomingInvoices: ReturnType<typeof vi.fn>
+  getSpendingLimitProgress: ReturnType<typeof vi.fn>
 }
 
 function createMockDashboardRepository(): MockRepository {
@@ -44,6 +49,13 @@ function createMockDashboardRepository(): MockRepository {
       expenses: 310000,
       balance: 170000,
     }),
+    getCreditCardUtilization: vi.fn().mockResolvedValue([]),
+    aggregateRecurringVsOnetime: vi
+      .fn()
+      .mockReturnValue({ recurring_amount: 0, onetime_amount: 0 }),
+    aggregateByDayOfWeek: vi.fn().mockReturnValue([]),
+    getUpcomingInvoices: vi.fn().mockResolvedValue([]),
+    getSpendingLimitProgress: vi.fn().mockResolvedValue(null),
   }
 }
 
@@ -78,6 +90,11 @@ describe('GetDashboardUseCase', () => {
     expect(result.savingsRate).toBeDefined()
     expect(result.salaryTimeline).toBeDefined()
     expect(result.installmentForecast).toBeDefined()
+    expect(result.creditCardUtilization).toBeDefined()
+    expect(result.recurringVsOnetime).toBeDefined()
+    expect(result.dayOfWeek).toBeDefined()
+    expect(result.invoiceCalendar).toBeDefined()
+    expect(result.spendingLimitProgress).toBeDefined()
   })
 
   it('returns free charts and null pro-only charts for free tier', async () => {
@@ -91,12 +108,17 @@ describe('GetDashboardUseCase', () => {
     expect(result.expensesTimeline).toBeDefined()
     expect(result.categoryBreakdown).toBeDefined()
     expect(result.paymentBreakdown).toBeDefined()
+    expect(result.creditCardUtilization).toBeDefined()
+    expect(result.recurringVsOnetime).toBeDefined()
 
     expect(result.incomeVsExpenses).toBeNull()
     expect(result.creditCardBreakdown).toBeNull()
     expect(result.savingsRate).toBeNull()
     expect(result.salaryTimeline).toBeNull()
     expect(result.installmentForecast).toBeNull()
+    expect(result.dayOfWeek).toBeNull()
+    expect(result.invoiceCalendar).toBeNull()
+    expect(result.spendingLimitProgress).toBeNull()
   })
 
   it('returns all charts for pro tier', async () => {
@@ -111,6 +133,11 @@ describe('GetDashboardUseCase', () => {
     expect(result.savingsRate).toBeDefined()
     expect(result.salaryTimeline).toBeDefined()
     expect(result.installmentForecast).toBeDefined()
+    expect(result.creditCardUtilization).toBeDefined()
+    expect(result.recurringVsOnetime).toBeDefined()
+    expect(result.dayOfWeek).toBeDefined()
+    expect(result.invoiceCalendar).toBeDefined()
+    expect(result.spendingLimitProgress).toBeDefined()
   })
 
   it('returns all charts for unlimited tier', async () => {
@@ -125,6 +152,11 @@ describe('GetDashboardUseCase', () => {
     expect(result.savingsRate).toBeDefined()
     expect(result.salaryTimeline).toBeDefined()
     expect(result.installmentForecast).toBeDefined()
+    expect(result.creditCardUtilization).toBeDefined()
+    expect(result.recurringVsOnetime).toBeDefined()
+    expect(result.dayOfWeek).toBeDefined()
+    expect(result.invoiceCalendar).toBeDefined()
+    expect(result.spendingLimitProgress).toBeDefined()
   })
 
   it('skips pro-only DB queries for free tier', async () => {

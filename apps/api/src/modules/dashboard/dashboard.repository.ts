@@ -1,9 +1,11 @@
 import type {
   CategoryBreakdownItem,
   CreditCardBreakdownItem,
+  CreditCardUtilizationItem,
   DashboardQuery,
   IncomeExpensesDataPoint,
   InstallmentForecastMonth,
+  InvoiceCalendarItem,
   PaymentBreakdownItem,
   SalaryTimelineDataPoint,
   SavingsRateDataPoint,
@@ -12,7 +14,7 @@ import type {
 } from '@plim/shared'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-interface ExpenseRow {
+export interface ExpenseRow {
   date: string
   amount_cents: number
   payment_method: string
@@ -24,6 +26,7 @@ interface ExpenseRow {
   installment_total: number | null
   installment_current: number | null
   description: string
+  is_recurrent: boolean
 }
 
 interface IncomeRow {
@@ -62,7 +65,8 @@ export class DashboardRepository {
         installment_group_id,
         installment_total,
         installment_current,
-        description
+        description,
+        is_recurrent
       `)
       .eq('user_id', userId)
       .eq('type', 'expense')
@@ -90,6 +94,7 @@ export class DashboardRepository {
         installment_total: row.installment_total,
         installment_current: row.installment_current,
         description: row.description,
+        is_recurrent: row.is_recurrent ?? false,
       }
     })
   }
@@ -388,6 +393,238 @@ export class DashboardRepository {
       month,
       total: totals.get(month) ?? 0,
     }))
+  }
+
+  async getCreditCardUtilization(userId: string): Promise<CreditCardUtilizationItem[]> {
+    const { data: cards, error: cardsError } = await this.supabase
+      .from('credit_card')
+      .select('id, name, color, bank, flag, closing_day, credit_limit_cents')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .not('credit_limit_cents', 'is', null)
+
+    if (cardsError || !cards || cards.length === 0) return []
+
+    const now = new Date()
+    const results: CreditCardUtilizationItem[] = []
+
+    for (const card of cards) {
+      const closingDay = card.closing_day as number | null
+      const limitCents = card.credit_limit_cents as number
+
+      if (!closingDay || !limitCents) continue
+
+      const { cycleStart, cycleEnd } = this.calculateCurrentCycle(now, closingDay)
+
+      const { data: expenses, error: expError } = await this.supabase
+        .from('expense')
+        .select('amount_cents')
+        .eq('user_id', userId)
+        .eq('type', 'expense')
+        .eq('credit_card_id', card.id)
+        .gte('date', cycleStart)
+        .lte('date', cycleEnd)
+
+      if (expError) continue
+
+      const usedCents = (expenses ?? []).reduce((sum, e) => sum + (e.amount_cents as number), 0)
+
+      results.push({
+        credit_card_id: card.id as string,
+        name: card.name as string,
+        color: card.color as string,
+        bank: card.bank as string,
+        flag: card.flag as string,
+        used_cents: usedCents,
+        limit_cents: limitCents,
+        utilization_percent: Math.round((usedCents / limitCents) * 1000) / 10,
+      })
+    }
+
+    return results.sort((a, b) => b.utilization_percent - a.utilization_percent)
+  }
+
+  aggregateRecurringVsOnetime(expenses: ExpenseRow[]): {
+    recurring_amount: number
+    onetime_amount: number
+  } {
+    let recurringAmount = 0
+    let onetimeAmount = 0
+
+    for (const expense of expenses) {
+      if (expense.is_recurrent) {
+        recurringAmount += expense.amount_cents
+      } else {
+        onetimeAmount += expense.amount_cents
+      }
+    }
+
+    return { recurring_amount: recurringAmount, onetime_amount: onetimeAmount }
+  }
+
+  aggregateByDayOfWeek(
+    expenses: ExpenseRow[]
+  ): { day_of_week: number; total: number; count: number }[] {
+    const totals = new Map<number, number>()
+    const uniqueDates = new Map<number, Set<string>>()
+
+    for (let d = 0; d < 7; d++) {
+      totals.set(d, 0)
+      uniqueDates.set(d, new Set())
+    }
+
+    for (const expense of expenses) {
+      const dayOfWeek = new Date(expense.date).getUTCDay()
+      totals.set(dayOfWeek, (totals.get(dayOfWeek) ?? 0) + expense.amount_cents)
+      uniqueDates.get(dayOfWeek)!.add(expense.date)
+    }
+
+    return Array.from(totals.entries()).map(([dayOfWeek, total]) => ({
+      day_of_week: dayOfWeek,
+      total,
+      count: uniqueDates.get(dayOfWeek)!.size,
+    }))
+  }
+
+  async getUpcomingInvoices(userId: string): Promise<InvoiceCalendarItem[]> {
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+    const futureDate = new Date(now)
+    futureDate.setMonth(futureDate.getMonth() + 3)
+    const endMonth = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}`
+
+    const { data: invoices, error } = await this.supabase
+      .from('invoice')
+      .select('id, credit_card_id, reference_month, total_amount_cents, paid_amount_cents, status')
+      .eq('user_id', userId)
+      .gte('reference_month', currentMonth)
+      .lte('reference_month', endMonth)
+      .order('reference_month', { ascending: true })
+
+    if (error || !invoices || invoices.length === 0) return []
+
+    const creditCardIds = [...new Set(invoices.map((inv) => inv.credit_card_id as string))]
+
+    const { data: cards } = await this.supabase
+      .from('credit_card')
+      .select('id, name, color, bank, flag, expiration_day')
+      .in('id', creditCardIds)
+
+    const cardsMap = new Map<
+      string,
+      { name: string; color: string; bank: string; flag: string; expiration_day: number | null }
+    >()
+
+    if (cards) {
+      for (const card of cards) {
+        cardsMap.set(card.id as string, {
+          name: card.name as string,
+          color: card.color as string,
+          bank: card.bank as string,
+          flag: card.flag as string,
+          expiration_day: card.expiration_day as number | null,
+        })
+      }
+    }
+
+    const results: InvoiceCalendarItem[] = []
+
+    for (const invoice of invoices) {
+      const card = cardsMap.get(invoice.credit_card_id as string)
+      if (!card) continue
+
+      const expirationDay = card.expiration_day ?? 10
+      const [yearStr, monthStr] = (invoice.reference_month as string).split('-')
+      const year = Number(yearStr)
+      const month = Number(monthStr)
+      const daysInMonth = new Date(year, month, 0).getDate()
+      const clampedDay = Math.min(expirationDay, daysInMonth)
+      const dueDate = `${yearStr}-${monthStr}-${String(clampedDay).padStart(2, '0')}`
+
+      const totalCents = (invoice.total_amount_cents as number | null) ?? 0
+      const paidCents = (invoice.paid_amount_cents as number | null) ?? 0
+
+      results.push({
+        credit_card_id: invoice.credit_card_id as string,
+        credit_card_name: card.name,
+        color: card.color,
+        bank: card.bank,
+        flag: card.flag,
+        due_date: dueDate,
+        total_cents: totalCents,
+        paid_cents: paidCents,
+        is_paid: invoice.status === 'paid',
+      })
+    }
+
+    return results.sort((a, b) => a.due_date.localeCompare(b.due_date))
+  }
+
+  async getSpendingLimitProgress(userId: string): Promise<{
+    spent_cents: number
+    limit_cents: number
+    days_remaining: number
+  } | null> {
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+    const { data: limits, error: limitError } = await this.supabase
+      .from('spending_limit')
+      .select('amount_cents')
+      .eq('user_id', userId)
+      .lte('year_month', currentMonth)
+      .order('year_month', { ascending: false })
+      .limit(1)
+
+    if (limitError || !limits || limits.length === 0) return null
+
+    const limitCents = limits[0]!.amount_cents as number
+
+    const monthStart = `${currentMonth}-01`
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const monthEnd = `${currentMonth}-${String(daysInMonth).padStart(2, '0')}`
+
+    const { data: expenses, error: expError } = await this.supabase
+      .from('expense')
+      .select('amount_cents')
+      .eq('user_id', userId)
+      .eq('type', 'expense')
+      .gte('date', monthStart)
+      .lte('date', monthEnd)
+
+    if (expError) return null
+
+    const spentCents = (expenses ?? []).reduce((sum, e) => sum + (e.amount_cents as number), 0)
+
+    const daysRemaining = daysInMonth - now.getDate()
+
+    return { spent_cents: spentCents, limit_cents: limitCents, days_remaining: daysRemaining }
+  }
+
+  private calculateCurrentCycle(
+    now: Date,
+    closingDay: number
+  ): { cycleStart: string; cycleEnd: string } {
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    const day = now.getDate()
+
+    let cycleStartDate: Date
+    let cycleEndDate: Date
+
+    if (day <= closingDay) {
+      cycleStartDate = new Date(year, month - 1, closingDay + 1)
+      cycleEndDate = new Date(year, month, closingDay)
+    } else {
+      cycleStartDate = new Date(year, month, closingDay + 1)
+      cycleEndDate = new Date(year, month + 1, closingDay)
+    }
+
+    return {
+      cycleStart: cycleStartDate.toISOString().slice(0, 10),
+      cycleEnd: cycleEndDate.toISOString().slice(0, 10),
+    }
   }
 
   private getTimelineKey(date: string, groupBy: TimelineGroupBy): string {

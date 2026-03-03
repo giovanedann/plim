@@ -2,13 +2,18 @@ import { type Bindings, createSupabaseClientWithAuth } from '../../lib/env'
 import { DashboardRepository } from './dashboard.repository'
 import { GetCategoryBreakdownUseCase } from './get-category-breakdown.usecase'
 import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.usecase'
+import { GetCreditCardUtilizationUseCase } from './get-credit-card-utilization.usecase'
 import { GetDashboardUseCase } from './get-dashboard.usecase'
+import { GetDayOfWeekUseCase } from './get-day-of-week.usecase'
 import { GetExpensesTimelineUseCase } from './get-expenses-timeline.usecase'
 import { GetIncomeVsExpensesUseCase } from './get-income-vs-expenses.usecase'
 import { GetInstallmentForecastUseCase } from './get-installment-forecast.usecase'
+import { GetInvoiceCalendarUseCase } from './get-invoice-calendar.usecase'
 import { GetPaymentBreakdownUseCase } from './get-payment-breakdown.usecase'
+import { GetRecurringVsOnetimeUseCase } from './get-recurring-vs-onetime.usecase'
 import { GetSalaryTimelineUseCase } from './get-salary-timeline.usecase'
 import { GetSavingsRateUseCase } from './get-savings-rate.usecase'
+import { GetSpendingLimitProgressUseCase } from './get-spending-limit-progress.usecase'
 import { GetSummaryUseCase } from './get-summary.usecase'
 
 export interface DashboardDependencies {
@@ -24,6 +29,11 @@ export interface DashboardDependencies {
   getSavingsRate: GetSavingsRateUseCase
   getSalaryTimeline: GetSalaryTimelineUseCase
   getInstallmentForecast: GetInstallmentForecastUseCase
+  getCreditCardUtilization: GetCreditCardUtilizationUseCase
+  getRecurringVsOnetime: GetRecurringVsOnetimeUseCase
+  getDayOfWeek: GetDayOfWeekUseCase
+  getInvoiceCalendar: GetInvoiceCalendarUseCase
+  getSpendingLimitProgress: GetSpendingLimitProgressUseCase
 }
 
 interface CreateDependenciesOptions {
@@ -49,5 +59,10 @@ export function createDashboardDependencies(
     getSavingsRate: new GetSavingsRateUseCase(repository),
     getSalaryTimeline: new GetSalaryTimelineUseCase(repository),
     getInstallmentForecast: new GetInstallmentForecastUseCase(repository),
+    getCreditCardUtilization: new GetCreditCardUtilizationUseCase(repository),
+    getRecurringVsOnetime: new GetRecurringVsOnetimeUseCase(repository),
+    getDayOfWeek: new GetDayOfWeekUseCase(repository),
+    getInvoiceCalendar: new GetInvoiceCalendarUseCase(repository),
+    getSpendingLimitProgress: new GetSpendingLimitProgressUseCase(repository),
   }
 }

@@ -41,6 +41,16 @@ const baseDashboardData: DashboardData = {
   savingsRate: { data: [] },
   salaryTimeline: { data: [] },
   installmentForecast: { data: [] },
+  creditCardUtilization: { data: [] },
+  recurringVsOnetime: {
+    recurring_amount: 0,
+    onetime_amount: 0,
+    recurring_percentage: 0,
+    onetime_percentage: 0,
+  },
+  dayOfWeek: null,
+  invoiceCalendar: null,
+  spendingLimitProgress: null,
 }
 
 const testEnv = {

@@ -3,12 +3,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
 import { CategoryBreakdownChart } from './components/category-breakdown-chart'
 import { CreditCardBreakdownChart } from './components/credit-card-breakdown-chart'
+import { CreditCardUtilizationChart } from './components/credit-card-utilization-chart'
+import { DayOfWeekChart } from './components/day-of-week-chart'
 import { ExpensesTimelineChart } from './components/expenses-timeline-chart'
 import { IncomeExpensesChart } from './components/income-expenses-chart'
 import { InstallmentForecast } from './components/installment-forecast'
+import { InvoiceCalendarChart } from './components/invoice-calendar-chart'
 import { PaymentBreakdownChart } from './components/payment-breakdown-chart'
+import { RecurringVsOnetimeChart } from './components/recurring-vs-onetime-chart'
 import { SalaryTimelineChart } from './components/salary-timeline-chart'
 import { SavingsRateChart } from './components/savings-rate-chart'
+import { SpendingLimitGaugeChart } from './components/spending-limit-gauge-chart'
 import { SummaryCards } from './components/summary-cards'
 import { TimeRangeSelector } from './components/time-range-selector'
 import { TopCategoriesChart } from './components/top-categories-chart'
@@ -44,6 +49,25 @@ function DashboardSkeleton() {
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-64 rounded-xl md:col-span-2 lg:col-span-1" />
       </div>
+
+      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+
+      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+
+      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+
+      <div className="px-4 lg:px-6">
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
     </div>
   )
 }
@@ -61,6 +85,11 @@ export function DashboardPage() {
     savingsRate,
     salaryTimeline,
     installmentForecast,
+    creditCardUtilization,
+    recurringVsOnetime,
+    dayOfWeek,
+    invoiceCalendar,
+    spendingLimitProgress,
     isLoading,
   } = useDashboard()
 
@@ -134,6 +163,15 @@ export function DashboardPage() {
         </div>
       </div>
 
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <div className="min-w-0">
+          <CreditCardUtilizationChart data={creditCardUtilization} />
+        </div>
+        <div className="min-w-0">
+          <RecurringVsOnetimeChart data={recurringVsOnetime} />
+        </div>
+      </div>
+
       <div
         className={`grid min-w-0 gap-4 px-4 lg:px-6 ${showIncomeSection ? 'md:grid-cols-2' : ''}`}
       >
@@ -156,6 +194,37 @@ export function DashboardPage() {
               </ProChartLock>
             )}
           </div>
+        )}
+      </div>
+
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
+        <div className="min-w-0">
+          {isPro ? (
+            <DayOfWeekChart data={dayOfWeek!} />
+          ) : (
+            <ProChartLock title="Gastos por Dia da Semana">
+              <div className="h-64" />
+            </ProChartLock>
+          )}
+        </div>
+        <div className="min-w-0">
+          {isPro ? (
+            <SpendingLimitGaugeChart data={spendingLimitProgress} />
+          ) : (
+            <ProChartLock title="Limite de Gastos">
+              <div className="h-64" />
+            </ProChartLock>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 lg:px-6">
+        {isPro ? (
+          <InvoiceCalendarChart data={invoiceCalendar!} />
+        ) : (
+          <ProChartLock title="Calendário de Faturas">
+            <div className="h-64" />
+          </ProChartLock>
         )}
       </div>
 

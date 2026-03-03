@@ -78,6 +78,16 @@ function createMockDashboardData(overrides: Partial<DashboardData> = {}): Dashbo
     installmentForecast: {
       data: [{ month: '2026-02', total: 50000 }],
     },
+    creditCardUtilization: { data: [] },
+    recurringVsOnetime: {
+      recurring_amount: 0,
+      onetime_amount: 350000,
+      recurring_percentage: 0,
+      onetime_percentage: 100,
+    },
+    dayOfWeek: null,
+    invoiceCalendar: null,
+    spendingLimitProgress: null,
     ...overrides,
   }
 }
