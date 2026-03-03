@@ -87,7 +87,7 @@ export function ExpensesPage() {
       </div>
 
       {paginationMeta && (
-        <div className="px-4 lg:px-6">
+        <div className="px-4 lg:px-6 pb-24">
           <PaginationControls meta={paginationMeta} onPageChange={setPage} isLoading={isLoading} />
         </div>
       )}
