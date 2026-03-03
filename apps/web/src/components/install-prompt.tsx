@@ -35,9 +35,9 @@ export function InstallPrompt(): React.ReactElement | null {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed bottom-0 left-0 right-0 z-[60] p-4"
+            className="fixed bottom-0 left-0 right-0 z-[60] p-4 pointer-events-none"
           >
-            <Card className="mx-auto flex max-w-sm items-center gap-3 p-4 shadow-lg">
+            <Card className="mx-auto flex max-w-sm items-center gap-3 p-4 shadow-lg pointer-events-auto">
               <Download className="h-5 w-5 shrink-0 text-primary" />
               <p className="flex-1 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Instalar o Plim</span>
