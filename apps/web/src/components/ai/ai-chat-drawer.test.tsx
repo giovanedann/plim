@@ -16,10 +16,6 @@ vi.mock('@/hooks/use-subscription', () => ({
   useSubscription: vi.fn(),
 }))
 
-vi.mock('@/hooks/use-feature-flag', () => ({
-  useFeatureFlag: vi.fn(),
-}))
-
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
 }))
@@ -33,7 +29,6 @@ vi.mock('@/stores/auth.store', () => ({
 }))
 
 import { useAIChat } from '@/hooks/use-ai-chat'
-import { useFeatureFlag } from '@/hooks/use-feature-flag'
 import { useProfile } from '@/hooks/use-profile'
 import { useSubscription } from '@/hooks/use-subscription'
 import { type StoredChatMessage, useAIStore } from '@/stores/ai.store'
@@ -89,7 +84,6 @@ describe('AIChatDrawer', () => {
       daysRemaining: null,
       isLoading: false,
     })
-    vi.mocked(useFeatureFlag).mockReturnValue(true)
   })
 
   afterEach(() => {
@@ -501,24 +495,6 @@ describe('AIChatDrawer', () => {
       render(<AIChatDrawer />)
 
       expect(screen.getByText('Seu assistente financeiro inteligente')).toBeInTheDocument()
-    })
-  })
-
-  describe('feature flag', () => {
-    it('hides upgrade banner when feature flag is false', () => {
-      vi.mocked(useFeatureFlag).mockReturnValue(false)
-
-      render(<AIChatDrawer />)
-
-      expect(screen.queryByText(/Desbloqueie mais com o Pro/)).not.toBeInTheDocument()
-    })
-
-    it('shows upgrade banner when feature flag is true and user is not pro', () => {
-      vi.mocked(useFeatureFlag).mockReturnValue(true)
-
-      render(<AIChatDrawer />)
-
-      expect(screen.getByText(/Desbloqueie mais com o Pro/)).toBeInTheDocument()
     })
   })
 

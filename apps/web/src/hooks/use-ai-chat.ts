@@ -10,9 +10,8 @@ import { aiService } from '@/services'
 import { useAIStore, useTutorialStore } from '@/stores'
 import type { Category, ContentPart, CreditCard, Expense } from '@plim/shared'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
-import { useFeatureFlag } from './use-feature-flag'
 
 const API_TIMEOUT_MS = 30_000
 
@@ -27,9 +26,6 @@ export function useAIChat(): UseAIChatReturn {
   const { messages, addMessage, setUsage, setPulsing } = useAIStore()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const tutorialsEnabled = useFeatureFlag('enable-tutorials', true)
-  const tutorialsEnabledRef = useRef(tutorialsEnabled)
-  tutorialsEnabledRef.current = tutorialsEnabled
 
   const sendMessage = useCallback(
     async (content: ContentPart[]) => {
@@ -92,7 +88,7 @@ export function useAIChat(): UseAIChatReturn {
       setPulsing(true)
       setTimeout(() => setPulsing(false), 1000)
 
-      if (action?.type === 'show_tutorial' && action.data && tutorialsEnabledRef.current) {
+      if (action?.type === 'show_tutorial' && action.data) {
         const { tutorial_id } = action.data as { tutorial_id: string }
         const { startTutorialById } = useTutorialStore.getState()
         startTutorialById(tutorial_id)

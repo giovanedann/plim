@@ -19,7 +19,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { useAIChat } from '@/hooks/use-ai-chat'
-import { useFeatureFlag } from '@/hooks/use-feature-flag'
 import { useProfile } from '@/hooks/use-profile'
 import { useSubscription } from '@/hooks/use-subscription'
 import { cn } from '@/lib/utils'
@@ -351,7 +350,6 @@ export function AIChatDrawer(): React.ReactElement {
   const { isDrawerOpen, closeDrawer, messages, usage } = useAIStore()
   const { sendMessage, isLoading } = useAIChat()
   const { isPro } = useSubscription()
-  const showUpgradeBanner = useFeatureFlag('show-upgrade-banner', true)
   const [inputMode, setInputMode] = useState<InputMode>('text')
   const [textInput, setTextInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -463,9 +461,7 @@ export function AIChatDrawer(): React.ReactElement {
           </div>
 
           {/* Upgrade Banner */}
-          {showUpgradeBanner && (
-            <UpgradeBanner usage={usage} inputMode={inputMode} onNavigate={closeDrawer} />
-          )}
+          <UpgradeBanner usage={usage} inputMode={inputMode} onNavigate={closeDrawer} />
 
           {/* Mode Selector */}
           <div className="mb-3 flex justify-center gap-1">
