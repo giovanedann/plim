@@ -382,6 +382,7 @@ export function ExpenseModal({
           newExpense.type === 'installment' || newExpense.type === 'income_installment'
             ? newExpense.installment_total
             : undefined,
+        is_recurrent: newExpense.type === 'recurrent' || newExpense.type === 'income_recurrent',
         operation: 'add',
       }
 
@@ -442,6 +443,7 @@ export function ExpenseModal({
         credit_card_bank: oldCreditCard?.bank,
         credit_card_flag: oldCreditCard?.flag,
         date: expense.date,
+        is_recurrent: expense.is_recurrent,
         operation: 'remove',
       }
 
@@ -458,6 +460,7 @@ export function ExpenseModal({
         credit_card_bank: newCreditCard?.bank ?? oldCreditCard?.bank,
         credit_card_flag: newCreditCard?.flag ?? oldCreditCard?.flag,
         date: updateData.date ?? expense.date,
+        is_recurrent: expense.is_recurrent,
         operation: 'add',
       }
 

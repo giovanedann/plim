@@ -15,6 +15,7 @@ import type {
   InstallmentForecastResponse,
   PaymentBreakdownItem,
   PaymentBreakdownResponse,
+  RecurringVsOnetimeResponse,
   SavingsRateDataPoint,
   SavingsRateResponse,
   TimelineGroupBy,
@@ -36,6 +37,7 @@ export interface ExpenseChange {
   credit_card_flag?: string
   date: string
   installment_total?: number
+  is_recurrent?: boolean
   operation: 'add' | 'remove'
 }
 
@@ -309,6 +311,28 @@ function updateInstallmentForecast(
   return { data: items.filter((item) => item.total > 0) }
 }
 
+function updateRecurringVsOnetime(
+  response: RecurringVsOnetimeResponse,
+  change: ExpenseChange
+): RecurringVsOnetimeResponse {
+  const delta = change.operation === 'add' ? change.amount_cents : -change.amount_cents
+
+  const newRecurring = change.is_recurrent
+    ? Math.max(0, response.recurring_amount + delta)
+    : response.recurring_amount
+  const newOnetime = !change.is_recurrent
+    ? Math.max(0, response.onetime_amount + delta)
+    : response.onetime_amount
+  const total = newRecurring + newOnetime
+
+  return {
+    recurring_amount: newRecurring,
+    onetime_amount: newOnetime,
+    recurring_percentage: total > 0 ? Math.round((newRecurring / total) * 1000) / 10 : 0,
+    onetime_percentage: total > 0 ? Math.round((newOnetime / total) * 1000) / 10 : 0,
+  }
+}
+
 export function updateDashboardOptimistically(
   oldData: DashboardData | undefined,
   change: ExpenseChange,
@@ -338,7 +362,7 @@ export function updateDashboardOptimistically(
       ? updateInstallmentForecast(oldData.installmentForecast, change)
       : null,
     creditCardUtilization: oldData.creditCardUtilization,
-    recurringVsOnetime: oldData.recurringVsOnetime,
+    recurringVsOnetime: updateRecurringVsOnetime(oldData.recurringVsOnetime, change),
     dayOfWeek: oldData.dayOfWeek,
     invoiceCalendar: oldData.invoiceCalendar,
     spendingLimitProgress: oldData.spendingLimitProgress,

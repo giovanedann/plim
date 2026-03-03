@@ -1,7 +1,7 @@
 import { isErrorResponse } from '@/lib/api-client'
 import { queryConfig, queryKeys } from '@/lib/query-config'
 import { categoryService } from '@/services/category.service'
-import type { CreateCategory, UpdateCategory } from '@plim/shared'
+import type { Category, CreateCategory, UpdateCategory } from '@plim/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -26,35 +26,93 @@ export function useCategoriesPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCategory) => categoryService.createCategory(data),
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.categories })
+      const previous = queryClient.getQueryData<Category[]>(queryKeys.categories)
+
+      const optimisticCategory: Category = {
+        id: crypto.randomUUID(),
+        user_id: crypto.randomUUID(),
+        name: data.name,
+        icon: data.icon,
+        color: data.color,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
+        old ? [...old, optimisticCategory] : [optimisticCategory]
+      )
+
+      return { previous }
+    },
+    onError: (error, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.categories, context.previous)
+      }
+      toast.error(error.message || 'Erro ao criar categoria')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
       toast.success('Categoria criada com sucesso!')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Erro ao criar categoria')
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateCategory }) =>
       categoryService.updateCategory(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.categories })
+      const previous = queryClient.getQueryData<Category[]>(queryKeys.categories)
+
+      queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
+        old?.map((cat) =>
+          cat.id === id ? { ...cat, ...data, updated_at: new Date().toISOString() } : cat
+        )
+      )
+
+      return { previous }
+    },
+    onError: (error, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.categories, context.previous)
+      }
+      toast.error(error.message || 'Erro ao atualizar categoria')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
       toast.success('Categoria atualizada com sucesso!')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Erro ao atualizar categoria')
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => categoryService.deleteCategory(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.categories })
+      const previous = queryClient.getQueryData<Category[]>(queryKeys.categories)
+
+      queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
+        old?.filter((cat) => cat.id !== id)
+      )
+
+      return { previous }
+    },
+    onError: (error, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.categories, context.previous)
+      }
+      toast.error(error.message || 'Erro ao excluir categoria')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
       toast.success('Categoria excluída com sucesso!')
     },
-    onError: (error) => {
-      toast.error(error.message || 'Erro ao excluir categoria')
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories })
     },
   })
 

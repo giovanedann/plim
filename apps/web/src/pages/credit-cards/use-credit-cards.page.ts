@@ -57,39 +57,102 @@ export function useCreditCardsPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCreditCard) => creditCardService.createCreditCard(data),
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.creditCards })
+      const previous = queryClient.getQueryData<CreditCard[]>(queryKeys.creditCards)
+
+      const optimisticCard: CreditCard = {
+        id: crypto.randomUUID(),
+        user_id: '',
+        name: data.name,
+        color: data.color,
+        bank: data.bank,
+        flag: data.flag,
+        last_4_digits: data.last_4_digits ?? null,
+        expiration_day: data.expiration_day ?? null,
+        closing_day: data.closing_day ?? null,
+        credit_limit_cents: data.credit_limit_cents ?? null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      queryClient.setQueryData<CreditCard[]>(queryKeys.creditCards, (old) =>
+        old ? [...old, optimisticCard] : [optimisticCard]
+      )
+
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.creditCards, context.previous)
+      }
+      toast.error('Erro ao criar cartão')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
       toast.success('Cartão criado com sucesso!')
       setIsModalOpen(false)
     },
-    onError: () => {
-      toast.error('Erro ao criar cartão')
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateCreditCard }) =>
       creditCardService.updateCreditCard(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.creditCards })
+      const previous = queryClient.getQueryData<CreditCard[]>(queryKeys.creditCards)
+
+      queryClient.setQueryData<CreditCard[]>(queryKeys.creditCards, (old) =>
+        old?.map((card) =>
+          card.id === id ? { ...card, ...data, updated_at: new Date().toISOString() } : card
+        )
+      )
+
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.creditCards, context.previous)
+      }
+      toast.error('Erro ao atualizar cartão')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
       toast.success('Cartão atualizado com sucesso!')
       setIsModalOpen(false)
       setSelectedCard(null)
     },
-    onError: () => {
-      toast.error('Erro ao atualizar cartão')
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => creditCardService.deleteCreditCard(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.creditCards })
+      const previous = queryClient.getQueryData<CreditCard[]>(queryKeys.creditCards)
+
+      queryClient.setQueryData<CreditCard[]>(queryKeys.creditCards, (old) =>
+        old?.filter((card) => card.id !== id)
+      )
+
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.creditCards, context.previous)
+      }
+      toast.error('Erro ao excluir cartão')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
       toast.success('Cartão excluído com sucesso!')
       setCardToDelete(null)
     },
-    onError: () => {
-      toast.error('Erro ao excluir cartão')
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditCards })
     },
   })
 
