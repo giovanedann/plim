@@ -5,8 +5,11 @@ import { TutorialOverlay } from '@/components/tutorial/tutorial-overlay'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useAIUsage } from '@/hooks/use-ai-usage'
 import { useProfile } from '@/hooks/use-profile'
+import { queryKeys } from '@/lib/query-config'
 import { profileService, salaryService } from '@/services'
 import { useOnboardingStore } from '@/stores/onboarding.store'
+import type { Profile } from '@plim/shared'
+import { useQueryClient } from '@tanstack/react-query'
 import { useLocation } from '@tanstack/react-router'
 import { useCallback, useEffect } from 'react'
 import { AppSidebar } from './app-sidebar'
@@ -44,9 +47,14 @@ export function AppLayout({ children }: AppLayoutProps) {
     await salaryService.createCurrentMonthSalary(salaryInCents)
   }, [])
 
+  const queryClient = useQueryClient()
+
   const handleComplete = useCallback(async () => {
     await profileService.markOnboarded()
-  }, [])
+    queryClient.setQueryData(queryKeys.profile, (old: Profile | undefined) =>
+      old ? { ...old, is_onboarded: true } : old
+    )
+  }, [queryClient])
 
   if (isLoadingProfile) {
     return (
