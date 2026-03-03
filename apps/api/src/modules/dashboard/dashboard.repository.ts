@@ -602,48 +602,6 @@ export class DashboardRepository {
     return { spent_cents: spentCents, limit_cents: limitCents, days_remaining: daysRemaining }
   }
 
-  async getExpenseForecastData(userId: string): Promise<{
-    daily_expenses: Map<string, number>
-    spending_limit_cents: number | null
-  }> {
-    const now = new Date()
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const monthStart = `${currentMonth}-01`
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    const monthEnd = `${currentMonth}-${String(daysInMonth).padStart(2, '0')}`
-
-    const { data: expenses } = await this.supabase
-      .from('expense')
-      .select('date, amount_cents')
-      .eq('user_id', userId)
-      .eq('type', 'expense')
-      .gte('date', monthStart)
-      .lte('date', monthEnd)
-      .order('date', { ascending: true })
-
-    const dailyExpenses = new Map<string, number>()
-    if (expenses) {
-      for (const exp of expenses) {
-        const date = exp.date as string
-        const current = dailyExpenses.get(date) ?? 0
-        dailyExpenses.set(date, current + (exp.amount_cents as number))
-      }
-    }
-
-    const { data: limits } = await this.supabase
-      .from('spending_limit')
-      .select('amount_cents')
-      .eq('user_id', userId)
-      .lte('year_month', currentMonth)
-      .order('year_month', { ascending: false })
-      .limit(1)
-
-    const spendingLimitCents =
-      limits && limits.length > 0 ? (limits[0]!.amount_cents as number) : null
-
-    return { daily_expenses: dailyExpenses, spending_limit_cents: spendingLimitCents }
-  }
-
   private calculateCurrentCycle(
     now: Date,
     closingDay: number

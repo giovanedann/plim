@@ -173,18 +173,6 @@ export const spendingLimitProgressResponseSchema = z.object({
   days_remaining: z.number().int().nonnegative(),
 })
 
-// Expense Forecast (PRO)
-export const expenseForecastDataPointSchema = z.object({
-  date: z.string(),
-  actual_amount: z.number().int().nonnegative().nullable(),
-  projected_amount: z.number().int().nonnegative().nullable(),
-})
-
-export const expenseForecastResponseSchema = z.object({
-  data: z.array(expenseForecastDataPointSchema),
-  projected_end_of_month: z.number().int().nonnegative(),
-})
-
 export type DashboardQuery = z.infer<typeof dashboardQuerySchema>
 export type TimelineGroupBy = z.infer<typeof timelineGroupBySchema>
 export type ExpensesTimelineQuery = z.infer<typeof expensesTimelineQuerySchema>
@@ -214,8 +202,6 @@ export type DayOfWeekResponse = z.infer<typeof dayOfWeekResponseSchema>
 export type InvoiceCalendarItem = z.infer<typeof invoiceCalendarItemSchema>
 export type InvoiceCalendarResponse = z.infer<typeof invoiceCalendarResponseSchema>
 export type SpendingLimitProgressResponse = z.infer<typeof spendingLimitProgressResponseSchema>
-export type ExpenseForecastDataPoint = z.infer<typeof expenseForecastDataPointSchema>
-export type ExpenseForecastResponse = z.infer<typeof expenseForecastResponseSchema>
 
 export const dashboardDataSchema = z.object({
   summary: dashboardSummarySchema,
@@ -232,7 +218,6 @@ export const dashboardDataSchema = z.object({
   dayOfWeek: dayOfWeekResponseSchema.nullable(),
   invoiceCalendar: invoiceCalendarResponseSchema.nullable(),
   spendingLimitProgress: spendingLimitProgressResponseSchema.nullable(),
-  expenseForecast: expenseForecastResponseSchema.nullable(),
 })
 
 export type DashboardData = z.infer<typeof dashboardDataSchema>

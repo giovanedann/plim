@@ -4,7 +4,6 @@ import { GetCategoryBreakdownUseCase } from './get-category-breakdown.usecase'
 import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.usecase'
 import { GetCreditCardUtilizationUseCase } from './get-credit-card-utilization.usecase'
 import { GetDayOfWeekUseCase } from './get-day-of-week.usecase'
-import { GetExpenseForecastUseCase } from './get-expense-forecast.usecase'
 import { GetExpensesTimelineUseCase } from './get-expenses-timeline.usecase'
 import { GetIncomeVsExpensesUseCase } from './get-income-vs-expenses.usecase'
 import { GetInstallmentForecastUseCase } from './get-installment-forecast.usecase'
@@ -37,7 +36,6 @@ export class GetDashboardUseCase {
   private dayOfWeekUseCase: GetDayOfWeekUseCase
   private invoiceCalendarUseCase: GetInvoiceCalendarUseCase
   private spendingLimitProgressUseCase: GetSpendingLimitProgressUseCase
-  private expenseForecastUseCase: GetExpenseForecastUseCase
 
   constructor(repository: DashboardRepository) {
     this.summaryUseCase = new GetSummaryUseCase(repository)
@@ -54,7 +52,6 @@ export class GetDashboardUseCase {
     this.dayOfWeekUseCase = new GetDayOfWeekUseCase(repository)
     this.invoiceCalendarUseCase = new GetInvoiceCalendarUseCase(repository)
     this.spendingLimitProgressUseCase = new GetSpendingLimitProgressUseCase(repository)
-    this.expenseForecastUseCase = new GetExpenseForecastUseCase(repository)
   }
 
   async execute(
@@ -102,7 +99,6 @@ export class GetDashboardUseCase {
         dayOfWeek: null,
         invoiceCalendar: null,
         spendingLimitProgress: null,
-        expenseForecast: null,
       }
     }
 
@@ -115,7 +111,6 @@ export class GetDashboardUseCase {
       dayOfWeek,
       invoiceCalendar,
       spendingLimitProgress,
-      expenseForecast,
     ] = await Promise.all([
       this.incomeVsExpensesUseCase.execute(userId, dateQuery),
       this.creditCardBreakdownUseCase.execute(userId, dateQuery),
@@ -125,7 +120,6 @@ export class GetDashboardUseCase {
       this.dayOfWeekUseCase.execute(userId, dateQuery),
       this.invoiceCalendarUseCase.execute(userId),
       this.spendingLimitProgressUseCase.execute(userId),
-      this.expenseForecastUseCase.execute(userId),
     ])
 
     return {
@@ -143,7 +137,6 @@ export class GetDashboardUseCase {
       dayOfWeek,
       invoiceCalendar,
       spendingLimitProgress,
-      expenseForecast,
     }
   }
 }

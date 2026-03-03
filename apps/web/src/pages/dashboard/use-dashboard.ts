@@ -86,7 +86,6 @@ export function useDashboard() {
     dayOfWeek: filteredData?.dayOfWeek,
     invoiceCalendar: filteredData?.invoiceCalendar,
     spendingLimitProgress: filteredData?.spendingLimitProgress,
-    expenseForecast: filteredData?.expenseForecast,
     isLoading: dashboardQuery.isLoading,
   }
 }

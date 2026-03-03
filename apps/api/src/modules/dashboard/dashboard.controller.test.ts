@@ -51,7 +51,6 @@ const baseDashboardData: DashboardData = {
   dayOfWeek: null,
   invoiceCalendar: null,
   spendingLimitProgress: null,
-  expenseForecast: null,
 }
 
 const testEnv = {

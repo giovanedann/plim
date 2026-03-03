@@ -25,7 +25,6 @@ type MockRepository = {
   aggregateByDayOfWeek: ReturnType<typeof vi.fn>
   getUpcomingInvoices: ReturnType<typeof vi.fn>
   getSpendingLimitProgress: ReturnType<typeof vi.fn>
-  getExpenseForecastData: ReturnType<typeof vi.fn>
 }
 
 function createMockDashboardRepository(): MockRepository {
@@ -57,10 +56,6 @@ function createMockDashboardRepository(): MockRepository {
     aggregateByDayOfWeek: vi.fn().mockReturnValue([]),
     getUpcomingInvoices: vi.fn().mockResolvedValue([]),
     getSpendingLimitProgress: vi.fn().mockResolvedValue(null),
-    getExpenseForecastData: vi.fn().mockResolvedValue({
-      daily_expenses: new Map(),
-      spending_limit_cents: null,
-    }),
   }
 }
 
@@ -100,7 +95,6 @@ describe('GetDashboardUseCase', () => {
     expect(result.dayOfWeek).toBeDefined()
     expect(result.invoiceCalendar).toBeDefined()
     expect(result.spendingLimitProgress).toBeDefined()
-    expect(result.expenseForecast).toBeDefined()
   })
 
   it('returns free charts and null pro-only charts for free tier', async () => {
@@ -125,7 +119,6 @@ describe('GetDashboardUseCase', () => {
     expect(result.dayOfWeek).toBeNull()
     expect(result.invoiceCalendar).toBeNull()
     expect(result.spendingLimitProgress).toBeNull()
-    expect(result.expenseForecast).toBeNull()
   })
 
   it('returns all charts for pro tier', async () => {
@@ -145,7 +138,6 @@ describe('GetDashboardUseCase', () => {
     expect(result.dayOfWeek).toBeDefined()
     expect(result.invoiceCalendar).toBeDefined()
     expect(result.spendingLimitProgress).toBeDefined()
-    expect(result.expenseForecast).toBeDefined()
   })
 
   it('returns all charts for unlimited tier', async () => {
@@ -165,7 +157,6 @@ describe('GetDashboardUseCase', () => {
     expect(result.dayOfWeek).toBeDefined()
     expect(result.invoiceCalendar).toBeDefined()
     expect(result.spendingLimitProgress).toBeDefined()
-    expect(result.expenseForecast).toBeDefined()
   })
 
   it('skips pro-only DB queries for free tier', async () => {

@@ -5,7 +5,6 @@ import { CategoryBreakdownChart } from './components/category-breakdown-chart'
 import { CreditCardBreakdownChart } from './components/credit-card-breakdown-chart'
 import { CreditCardUtilizationChart } from './components/credit-card-utilization-chart'
 import { DayOfWeekChart } from './components/day-of-week-chart'
-import { ExpenseForecastChart } from './components/expense-forecast-chart'
 import { ExpensesTimelineChart } from './components/expenses-timeline-chart'
 import { IncomeExpensesChart } from './components/income-expenses-chart'
 import { InstallmentForecast } from './components/installment-forecast'
@@ -61,10 +60,9 @@ function DashboardSkeleton() {
         <Skeleton className="h-64 rounded-xl" />
       </div>
 
-      <div className="grid gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 lg:px-6">
+      <div className="grid gap-4 px-4 md:grid-cols-2 lg:px-6">
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-64 rounded-xl" />
-        <Skeleton className="h-64 rounded-xl md:col-span-2 lg:col-span-1" />
       </div>
 
       <div className="px-4 lg:px-6">
@@ -92,7 +90,6 @@ export function DashboardPage() {
     dayOfWeek,
     invoiceCalendar,
     spendingLimitProgress,
-    expenseForecast,
     isLoading,
   } = useDashboard()
 
@@ -200,7 +197,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 lg:px-6">
+      <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
         <div className="min-w-0">
           {isPro ? (
             <DayOfWeekChart data={dayOfWeek!} />
@@ -215,15 +212,6 @@ export function DashboardPage() {
             <SpendingLimitGaugeChart data={spendingLimitProgress} />
           ) : (
             <ProChartLock title="Limite de Gastos">
-              <div className="h-64" />
-            </ProChartLock>
-          )}
-        </div>
-        <div className="min-w-0 md:col-span-2 lg:col-span-1">
-          {isPro ? (
-            <ExpenseForecastChart data={expenseForecast!} />
-          ) : (
-            <ProChartLock title="Projeção de Gastos">
               <div className="h-64" />
             </ProChartLock>
           )}

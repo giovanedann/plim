@@ -97,7 +97,6 @@ function createMockDashboardData(overrides: Partial<DashboardData> = {}): Dashbo
     dayOfWeek: null,
     invoiceCalendar: null,
     spendingLimitProgress: null,
-    expenseForecast: null,
     ...overrides,
   }
 }

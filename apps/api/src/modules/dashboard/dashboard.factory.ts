@@ -5,7 +5,6 @@ import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.useca
 import { GetCreditCardUtilizationUseCase } from './get-credit-card-utilization.usecase'
 import { GetDashboardUseCase } from './get-dashboard.usecase'
 import { GetDayOfWeekUseCase } from './get-day-of-week.usecase'
-import { GetExpenseForecastUseCase } from './get-expense-forecast.usecase'
 import { GetExpensesTimelineUseCase } from './get-expenses-timeline.usecase'
 import { GetIncomeVsExpensesUseCase } from './get-income-vs-expenses.usecase'
 import { GetInstallmentForecastUseCase } from './get-installment-forecast.usecase'
@@ -35,7 +34,6 @@ export interface DashboardDependencies {
   getDayOfWeek: GetDayOfWeekUseCase
   getInvoiceCalendar: GetInvoiceCalendarUseCase
   getSpendingLimitProgress: GetSpendingLimitProgressUseCase
-  getExpenseForecast: GetExpenseForecastUseCase
 }
 
 interface CreateDependenciesOptions {
@@ -66,6 +64,5 @@ export function createDashboardDependencies(
     getDayOfWeek: new GetDayOfWeekUseCase(repository),
     getInvoiceCalendar: new GetInvoiceCalendarUseCase(repository),
     getSpendingLimitProgress: new GetSpendingLimitProgressUseCase(repository),
-    getExpenseForecast: new GetExpenseForecastUseCase(repository),
   }
 }

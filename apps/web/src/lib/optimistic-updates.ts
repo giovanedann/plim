@@ -366,7 +366,6 @@ export function updateDashboardOptimistically(
     dayOfWeek: oldData.dayOfWeek,
     invoiceCalendar: oldData.invoiceCalendar,
     spendingLimitProgress: oldData.spendingLimitProgress,
-    expenseForecast: oldData.expenseForecast,
   }
 }
 
