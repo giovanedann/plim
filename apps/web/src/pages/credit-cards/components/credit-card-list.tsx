@@ -9,8 +9,8 @@ import {
 import type { CreditCard, CreditCardLimitUsage } from '@plim/shared'
 import { formatBRL } from '@plim/shared'
 import { useNavigate } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
 import { CalendarClock, Edit, MoreVertical, Receipt, Trash2 } from 'lucide-react'
+import { m } from 'motion/react'
 import { CreditCard3D } from './credit-card-3d'
 
 function getUsageColor(percentage: number): string {
@@ -63,7 +63,7 @@ export function CreditCardList({
       data-tutorial-id="credit-card-list"
     >
       {creditCards.map((card, index) => (
-        <motion.div
+        <m.div
           key={card.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -163,7 +163,7 @@ export function CreditCardList({
               </DropdownMenu>
             </div>
           </Card>
-        </motion.div>
+        </m.div>
       ))}
     </div>
   )

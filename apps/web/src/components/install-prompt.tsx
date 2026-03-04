@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useInstallPromptStore } from '@/stores/install-prompt.store'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Share, X } from 'lucide-react'
+import { AnimatePresence, m } from 'motion/react'
 import { useCallback } from 'react'
 
 export function InstallPrompt(): React.ReactElement | null {
@@ -30,7 +30,7 @@ export function InstallPrompt(): React.ReactElement | null {
     <>
       <AnimatePresence>
         {visible && !showIOSOverlay && (
-          <motion.div
+          <m.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -59,13 +59,13 @@ export function InstallPrompt(): React.ReactElement | null {
                 </Button>
               </div>
             </Card>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {showIOSOverlay && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -73,7 +73,7 @@ export function InstallPrompt(): React.ReactElement | null {
             className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4"
             onClick={handleDismiss}
           >
-            <motion.div
+            <m.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
@@ -130,8 +130,8 @@ export function InstallPrompt(): React.ReactElement | null {
                   </li>
                 </ol>
               </Card>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

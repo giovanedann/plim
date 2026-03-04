@@ -1,5 +1,5 @@
 import type { CardBank, CardColor, CardFlag } from '@plim/shared'
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { m, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { useRef } from 'react'
 
 const COLOR_MAP: Record<CardColor, { bg: string; text: string }> = {
@@ -103,7 +103,7 @@ export function CreditCard3D({
 
   return (
     <div className="perspective-1000" style={{ perspective: '1000px' }}>
-      <motion.div
+      <m.div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -164,7 +164,7 @@ export function CreditCard3D({
         </div>
 
         {/* Shine effect */}
-        <motion.div
+        <m.div
           className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
             background:
@@ -172,7 +172,7 @@ export function CreditCard3D({
             transform: 'translateZ(5px)',
           }}
         />
-      </motion.div>
+      </m.div>
     </div>
   )
 }

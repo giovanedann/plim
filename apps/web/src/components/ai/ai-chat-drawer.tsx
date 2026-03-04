@@ -26,8 +26,8 @@ import { type StoredChatMessage, useAIStore } from '@/stores/ai.store'
 import { useAuthStore } from '@/stores/auth.store'
 import type { AIUsageResponse, ContentPart } from '@plim/shared'
 import { Link } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, Crown, ImageIcon, Info, Mic, Send, Sparkles, Volume2 } from 'lucide-react'
+import { AnimatePresence, m } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ImageUploader } from './image-uploader'
 import { VoiceRecorder } from './voice-recorder'
@@ -88,7 +88,7 @@ function MessageBubble({
   const hasAudio = message.content.some((part) => part.type === 'audio')
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{
@@ -101,7 +101,7 @@ function MessageBubble({
     >
       {!isUser && <BotAvatar className="h-9 w-9 shrink-0" />}
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
@@ -125,16 +125,16 @@ function MessageBubble({
           </div>
         )}
         <p className="whitespace-pre-wrap text-sm leading-relaxed">{text}</p>
-      </motion.div>
+      </m.div>
 
       {isUser && <UserAvatar className="h-9 w-9 shrink-0" />}
-    </motion.div>
+    </m.div>
   )
 }
 
 function TypingIndicator(): React.ReactElement {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
@@ -143,36 +143,36 @@ function TypingIndicator(): React.ReactElement {
       <BotAvatar className="h-9 w-9 shrink-0" />
       <div className="rounded-2xl bg-card border border-border/50 px-4 py-3 shadow-sm">
         <div className="flex items-center gap-1.5">
-          <motion.span
+          <m.span
             className="h-2 w-2 rounded-full bg-muted-foreground/60"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY, delay: 0 }}
           />
-          <motion.span
+          <m.span
             className="h-2 w-2 rounded-full bg-muted-foreground/60"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY, delay: 0.15 }}
           />
-          <motion.span
+          <m.span
             className="h-2 w-2 rounded-full bg-muted-foreground/60"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY, delay: 0.3 }}
           />
         </div>
       </div>
-    </motion.div>
+    </m.div>
   )
 }
 
 function EmptyState(): React.ReactElement {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className="flex h-full flex-col items-center justify-center text-center px-4"
     >
-      <motion.div
+      <m.div
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 15 }}
@@ -182,27 +182,27 @@ function EmptyState(): React.ReactElement {
         <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg">
           <PlimIcon className="h-12 w-12" />
         </div>
-      </motion.div>
+      </m.div>
 
-      <motion.h3
+      <m.h3
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
         className="mb-2 text-xl font-semibold text-foreground"
       >
         Olá! Sou seu assistente.
-      </motion.h3>
+      </m.h3>
 
-      <motion.p
+      <m.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         className="max-w-[300px] text-sm text-muted-foreground mb-6"
       >
         Posso ajudar a registrar despesas, consultar gastos e fazer previsões financeiras.
-      </motion.p>
+      </m.p>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
@@ -216,7 +216,7 @@ function EmptyState(): React.ReactElement {
           '"Quanto gastei esse mês?"',
           '"Quanto vou gastar até março?"',
         ].map((example, index) => (
-          <motion.p
+          <m.p
             key={example}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -224,19 +224,19 @@ function EmptyState(): React.ReactElement {
             className="text-sm text-muted-foreground/80 italic"
           >
             {example}
-          </motion.p>
+          </m.p>
         ))}
-      </motion.div>
+      </m.div>
 
-      <motion.p
+      <m.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
         className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground/60"
       >
         <Info className="h-3 w-3" />A IA pode cometer erros. Verifique informações importantes.
-      </motion.p>
-    </motion.div>
+      </m.p>
+    </m.div>
   )
 }
 
@@ -485,7 +485,7 @@ export function AIChatDrawer(): React.ReactElement {
 
           {/* Text Input */}
           {inputMode === 'text' && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col gap-2 sm:flex-row sm:gap-3"
@@ -513,27 +513,27 @@ export function AIChatDrawer(): React.ReactElement {
                 <Send className="h-5 w-5" />
                 <span className="sm:hidden">Enviar</span>
               </Button>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Voice Input */}
           {inputMode === 'voice' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <VoiceRecorder
                 onRecordingComplete={handleSendAudio}
                 disabled={isLoading || isLimitReached}
               />
-            </motion.div>
+            </m.div>
           )}
 
           {/* Image Input */}
           {inputMode === 'image' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <ImageUploader
                 onImageCapture={handleSendImage}
                 disabled={isLoading || isLimitReached}
               />
-            </motion.div>
+            </m.div>
           )}
         </div>
       </SheetContent>

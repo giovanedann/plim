@@ -1,8 +1,8 @@
 import { HoverBorderGradient } from '@/components/ui/hover-border-gradient'
 import { cn } from '@/lib/utils'
 import { useAIStore } from '@/stores'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
+import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useState } from 'react'
 
 const EXAMPLE_PROMPTS = [
@@ -26,7 +26,7 @@ export function AIChatButton(): React.ReactElement {
   }, [])
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.5 }}
@@ -56,7 +56,7 @@ export function AIChatButton(): React.ReactElement {
             </div>
             <div className="h-4 overflow-hidden w-full">
               <AnimatePresence mode="wait">
-                <motion.span
+                <m.span
                   key={promptIndex}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -65,12 +65,12 @@ export function AIChatButton(): React.ReactElement {
                   className="block text-xs text-muted-foreground truncate"
                 >
                   "{EXAMPLE_PROMPTS[promptIndex]}"
-                </motion.span>
+                </m.span>
               </AnimatePresence>
             </div>
           </div>
         </div>
       </HoverBorderGradient>
-    </motion.div>
+    </m.div>
   )
 }
