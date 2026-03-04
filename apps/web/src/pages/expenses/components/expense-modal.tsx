@@ -52,7 +52,7 @@ import type {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Info, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { type Control, Controller, type UseFormRegister, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { QuickCategoryModal } from './quick-category-modal'
@@ -95,6 +95,8 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
+const incomeTypes: FormData['type'][] = ['income', 'income_recurrent', 'income_installment']
+
 function getDefaultDate(selectedMonth: string): string {
   const today = new Date()
   const [year, month] = selectedMonth.split('-').map(Number)
@@ -113,236 +115,181 @@ function getDefaultDate(selectedMonth: string): string {
 const CREATE_NEW_CATEGORY_VALUE = '__create_new__'
 const NO_CREDIT_CARD_VALUE = '__none__'
 
-export function ExpenseModal({
-  open,
-  onOpenChange,
+interface SpendingLimitWarningProps {
+  warning: {
+    severity: 'exceeded' | 'high' | 'medium'
+    message: string
+    percentage: number
+  }
+}
+
+function SpendingLimitWarning({ warning }: SpendingLimitWarningProps) {
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
+        warning.severity === 'exceeded'
+          ? 'border-red-500/50 bg-red-500/10 text-red-500'
+          : warning.severity === 'high'
+            ? 'border-orange-500/50 bg-orange-500/10 text-orange-500'
+            : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500'
+      }`}
+    >
+      <AlertTriangle className="h-4 w-4 shrink-0" />
+      <span>{warning.message}</span>
+    </div>
+  )
+}
+
+interface RecurrenceFieldsProps {
+  isIncomeMode: boolean
+  control: Control<FormData>
+  register: UseFormRegister<FormData>
+}
+
+function RecurrenceFields({ isIncomeMode, control, register }: RecurrenceFieldsProps) {
+  return (
+    <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
+      <h4 className="font-medium">Configuração de Recorrência</h4>
+      <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-400">
+        <Info className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>
+          {isIncomeMode
+            ? 'Receitas recorrentes são criadas para os próximos 2 anos e renovadas automaticamente.'
+            : 'Despesas recorrentes são criadas para os próximos 2 anos e renovadas automaticamente.'}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="recurrence_day">Dia do mês</Label>
+          <Input
+            id="recurrence_day"
+            type="number"
+            min={1}
+            max={31}
+            placeholder="1-31"
+            {...register('recurrence_day')}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Início</Label>
+          <Controller
+            name="recurrence_start"
+            control={control}
+            render={({ field }) => (
+              <DatePicker value={field.value} onChange={field.onChange} placeholder="Data início" />
+            )}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Fim (opcional)</Label>
+          <Controller
+            name="recurrence_end"
+            control={control}
+            render={({ field }) => (
+              <DatePicker value={field.value} onChange={field.onChange} placeholder="Data fim" />
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface InstallmentFieldsProps {
+  control: Control<FormData>
+  register: UseFormRegister<FormData>
+  installmentCalculation: {
+    totalCents: number
+    perInstallmentCents: number
+    formattedTotal: string
+    formattedPerInstallment: string
+    mode: 'total' | 'per_installment'
+  } | null
+}
+
+function InstallmentFields({ control, register, installmentCalculation }: InstallmentFieldsProps) {
+  return (
+    <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
+      <h4 className="font-medium">Configuração de Parcelas</h4>
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label>O valor informado é:</Label>
+          <Controller
+            name="installment_input_mode"
+            control={control}
+            render={({ field }) => (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={field.value === 'total' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => field.onChange('total')}
+                >
+                  Valor total
+                </Button>
+                <Button
+                  type="button"
+                  variant={field.value === 'per_installment' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => field.onChange('per_installment')}
+                >
+                  Valor da parcela
+                </Button>
+              </div>
+            )}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="installment_total">Número de parcelas</Label>
+          <Input
+            id="installment_total"
+            type="number"
+            min={2}
+            max={48}
+            placeholder="2-48"
+            {...register('installment_total')}
+          />
+        </div>
+        {installmentCalculation && (
+          <div className="rounded-md bg-muted/50 p-3 space-y-1">
+            {installmentCalculation.mode === 'total' ? (
+              <>
+                <p className="text-xs text-muted-foreground">Valor de cada parcela:</p>
+                <p className="text-lg font-semibold text-primary">
+                  {installmentCalculation.formattedPerInstallment}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">Valor total da compra:</p>
+                <p className="text-lg font-semibold text-primary">
+                  {installmentCalculation.formattedTotal}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface UseExpenseFormMutationsParams {
+  categories: Category[]
+  creditCards: CreditCard[]
+  expense?: Expense
+  onOpenChange: (open: boolean) => void
+}
+
+function useExpenseFormMutations({
   categories,
   creditCards,
-  selectedMonth,
   expense,
-  spendingLimit,
-  netCost = 0,
-  initialMode = 'expense',
-}: ExpenseModalProps) {
-  const isEditing = !!expense
+  onOpenChange,
+}: UseExpenseFormMutationsParams) {
   const queryClient = useQueryClient()
-  const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false)
-  const [transactionMode, setTransactionMode] = useState<TransactionMode>(initialMode)
-
-  const {
-    register,
-    handleSubmit,
-    control,
-    watch,
-    reset,
-    setValue,
-    setError,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      type: 'one_time',
-      description: '',
-      amount: '',
-      category_id: '',
-      payment_method: 'credit_card',
-      credit_card_id: '',
-      date: getDefaultDate(selectedMonth),
-      recurrence_day: '',
-      recurrence_start: '',
-      recurrence_end: '',
-      installment_total: '',
-      installment_input_mode: 'total',
-    },
-  })
-
-  const expenseType = watch('type')
-  const watchedAmount = watch('amount')
-  const watchedPaymentMethod = watch('payment_method')
-  const watchedInstallmentTotal = watch('installment_total')
-  const watchedInstallmentInputMode = watch('installment_input_mode')
-
-  const isIncomeMode = transactionMode === 'income'
-
-  const handleTransactionModeChange = (mode: TransactionMode): void => {
-    setTransactionMode(mode)
-    const currentType = expenseType
-    if (mode === 'income') {
-      const typeMap: Record<string, FormData['type']> = {
-        one_time: 'income',
-        recurrent: 'income_recurrent',
-        installment: 'income_installment',
-      }
-      setValue('type', typeMap[currentType] ?? 'income')
-      setValue('category_id', '')
-      setValue('payment_method', 'pix')
-    } else {
-      const typeMap: Record<string, FormData['type']> = {
-        income: 'one_time',
-        income_recurrent: 'recurrent',
-        income_installment: 'installment',
-      }
-      setValue('type', typeMap[currentType] ?? 'one_time')
-      setValue('payment_method', 'credit_card')
-    }
-  }
-
-  const installmentCalculation = useMemo(() => {
-    if (
-      (expenseType !== 'installment' && expenseType !== 'income_installment') ||
-      !watchedAmount ||
-      !watchedInstallmentTotal
-    ) {
-      return null
-    }
-
-    const amountCents = decimalToCents(
-      Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
-    )
-    const installments = Number.parseInt(watchedInstallmentTotal, 10)
-
-    if (Number.isNaN(amountCents) || Number.isNaN(installments) || installments < 2) {
-      return null
-    }
-
-    const isPerInstallmentMode = watchedInstallmentInputMode === 'per_installment'
-
-    if (isPerInstallmentMode) {
-      const totalCents = amountCents * installments
-      return {
-        totalCents,
-        perInstallmentCents: amountCents,
-        formattedTotal: formatBRL(totalCents),
-        formattedPerInstallment: formatBRL(amountCents),
-        mode: 'per_installment' as const,
-      }
-    }
-
-    const perInstallmentCents = Math.ceil(amountCents / installments)
-    return {
-      totalCents: amountCents,
-      perInstallmentCents,
-      formattedTotal: formatBRL(amountCents),
-      formattedPerInstallment: formatBRL(perInstallmentCents),
-      mode: 'total' as const,
-    }
-  }, [expenseType, watchedAmount, watchedInstallmentTotal, watchedInstallmentInputMode])
-
-  const spendingLimitWarning = useMemo(() => {
-    if (!spendingLimit || !watchedAmount || isIncomeMode) return null
-
-    const amountCents = decimalToCents(
-      Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
-    )
-
-    if (Number.isNaN(amountCents) || amountCents <= 0) return null
-
-    // For installments, use the total value (not per-installment)
-    const effectiveAmount =
-      expenseType === 'installment' && installmentCalculation
-        ? installmentCalculation.totalCents
-        : amountCents
-
-    // For editing, subtract current expense amount to get accurate projection
-    const currentExpenseAmount = expense?.amount_cents ?? 0
-    const projectedTotal = netCost - currentExpenseAmount + effectiveAmount
-    const percentage = Math.round((Math.max(0, projectedTotal) / spendingLimit.amount_cents) * 100)
-
-    if (percentage < 75) return null
-
-    if (percentage >= 100) {
-      const exceededBy = projectedTotal - spendingLimit.amount_cents
-      return {
-        severity: 'exceeded' as const,
-        message: `Esta despesa excederá seu limite em ${formatBRL(exceededBy)}`,
-        percentage,
-      }
-    }
-
-    if (percentage >= 90) {
-      return {
-        severity: 'high' as const,
-        message: `Alerta: Com esta despesa você atingirá ${percentage}% do limite`,
-        percentage,
-      }
-    }
-
-    return {
-      severity: 'medium' as const,
-      message: `Atenção: Com esta despesa você atingirá ${percentage}% do limite`,
-      percentage,
-    }
-  }, [
-    watchedAmount,
-    spendingLimit,
-    netCost,
-    expense,
-    expenseType,
-    installmentCalculation,
-    isIncomeMode,
-  ])
-
-  const selectedMonthRef = useRef(selectedMonth)
-  selectedMonthRef.current = selectedMonth
-
-  useEffect(() => {
-    if (open) {
-      setTransactionMode(initialMode)
-      if (expense) {
-        const isIncome = expense.type === 'income'
-        let type: FormData['type'] = 'one_time'
-        if (isIncome) {
-          if (expense.is_recurrent) {
-            type = 'income_recurrent'
-          } else if (expense.installment_total) {
-            type = 'income_installment'
-          } else {
-            type = 'income'
-          }
-        } else if (expense.is_recurrent) {
-          type = 'recurrent'
-        } else if (expense.installment_total) {
-          type = 'installment'
-        }
-
-        setTransactionMode(isIncome ? 'income' : 'expense')
-
-        reset({
-          type,
-          description: expense.description,
-          amount: centsToDecimal(expense.amount_cents).toFixed(2).replace('.', ','),
-          category_id: expense.category_id ?? '',
-          payment_method: expense.payment_method,
-          credit_card_id: expense.credit_card_id ?? '',
-          date: expense.date,
-          recurrence_day: expense.recurrence_day?.toString() ?? '',
-          recurrence_start: expense.recurrence_start ?? '',
-          recurrence_end: expense.recurrence_end ?? '',
-          installment_total: expense.installment_total?.toString() ?? '',
-          installment_input_mode: 'total',
-        })
-      } else {
-        const month = selectedMonthRef.current
-        const defaultDate = getDefaultDate(month)
-        const monthStart = `${month}-01`
-        const isIncome = initialMode === 'income'
-        reset({
-          type: isIncome ? 'income' : 'one_time',
-          description: '',
-          amount: '',
-          category_id: '',
-          payment_method: isIncome ? 'pix' : 'credit_card',
-          credit_card_id: '',
-          date: defaultDate,
-          recurrence_day: defaultDate.split('-')[2] ?? '1',
-          recurrence_start: monthStart,
-          recurrence_end: '',
-          installment_total: '',
-          installment_input_mode: 'total',
-        })
-      }
-    }
-  }, [open, expense, reset, initialMode])
 
   const createMutation = useMutation({
     mutationFn: (data: CreateExpense) => expenseService.createExpense(data),
@@ -503,6 +450,242 @@ export function ExpenseModal({
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses() })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
+  })
+
+  return { createMutation, updateMutation }
+}
+
+export function ExpenseModal({
+  open,
+  onOpenChange,
+  categories,
+  creditCards,
+  selectedMonth,
+  expense,
+  spendingLimit,
+  netCost = 0,
+  initialMode = 'expense',
+}: ExpenseModalProps) {
+  const isEditing = !!expense
+  const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false)
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      type: 'one_time',
+      description: '',
+      amount: '',
+      category_id: '',
+      payment_method: 'credit_card',
+      credit_card_id: '',
+      date: getDefaultDate(selectedMonth),
+      recurrence_day: '',
+      recurrence_start: '',
+      recurrence_end: '',
+      installment_total: '',
+      installment_input_mode: 'total',
+    },
+  })
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    reset,
+    setValue,
+    setError,
+    formState: { errors },
+  } = form
+
+  const expenseType = watch('type')
+  const watchedAmount = watch('amount')
+  const watchedPaymentMethod = watch('payment_method')
+  const watchedInstallmentTotal = watch('installment_total')
+  const watchedInstallmentInputMode = watch('installment_input_mode')
+
+  const transactionMode: TransactionMode = incomeTypes.includes(expenseType) ? 'income' : 'expense'
+  const isIncomeMode = transactionMode === 'income'
+
+  const handleTransactionModeChange = (mode: TransactionMode): void => {
+    const currentType = expenseType
+    if (mode === 'income') {
+      const typeMap: Record<string, FormData['type']> = {
+        one_time: 'income',
+        recurrent: 'income_recurrent',
+        installment: 'income_installment',
+      }
+      setValue('type', typeMap[currentType] ?? 'income')
+      setValue('category_id', '')
+      setValue('payment_method', 'pix')
+    } else {
+      const typeMap: Record<string, FormData['type']> = {
+        income: 'one_time',
+        income_recurrent: 'recurrent',
+        income_installment: 'installment',
+      }
+      setValue('type', typeMap[currentType] ?? 'one_time')
+      setValue('payment_method', 'credit_card')
+    }
+  }
+
+  const installmentCalculation = useMemo(() => {
+    if (
+      (expenseType !== 'installment' && expenseType !== 'income_installment') ||
+      !watchedAmount ||
+      !watchedInstallmentTotal
+    ) {
+      return null
+    }
+
+    const amountCents = decimalToCents(
+      Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
+    )
+    const installments = Number.parseInt(watchedInstallmentTotal, 10)
+
+    if (Number.isNaN(amountCents) || Number.isNaN(installments) || installments < 2) {
+      return null
+    }
+
+    const isPerInstallmentMode = watchedInstallmentInputMode === 'per_installment'
+
+    if (isPerInstallmentMode) {
+      const totalCents = amountCents * installments
+      return {
+        totalCents,
+        perInstallmentCents: amountCents,
+        formattedTotal: formatBRL(totalCents),
+        formattedPerInstallment: formatBRL(amountCents),
+        mode: 'per_installment' as const,
+      }
+    }
+
+    const perInstallmentCents = Math.ceil(amountCents / installments)
+    return {
+      totalCents: amountCents,
+      perInstallmentCents,
+      formattedTotal: formatBRL(amountCents),
+      formattedPerInstallment: formatBRL(perInstallmentCents),
+      mode: 'total' as const,
+    }
+  }, [expenseType, watchedAmount, watchedInstallmentTotal, watchedInstallmentInputMode])
+
+  const spendingLimitWarning = useMemo(() => {
+    if (!spendingLimit || !watchedAmount || isIncomeMode) return null
+
+    const amountCents = decimalToCents(
+      Number.parseFloat(watchedAmount.replace(/\./g, '').replace(',', '.'))
+    )
+
+    if (Number.isNaN(amountCents) || amountCents <= 0) return null
+
+    const effectiveAmount =
+      expenseType === 'installment' && installmentCalculation
+        ? installmentCalculation.totalCents
+        : amountCents
+
+    const currentExpenseAmount = expense?.amount_cents ?? 0
+    const projectedTotal = netCost - currentExpenseAmount + effectiveAmount
+    const percentage = Math.round((Math.max(0, projectedTotal) / spendingLimit.amount_cents) * 100)
+
+    if (percentage < 75) return null
+
+    if (percentage >= 100) {
+      const exceededBy = projectedTotal - spendingLimit.amount_cents
+      return {
+        severity: 'exceeded' as const,
+        message: `Esta despesa excederá seu limite em ${formatBRL(exceededBy)}`,
+        percentage,
+      }
+    }
+
+    if (percentage >= 90) {
+      return {
+        severity: 'high' as const,
+        message: `Alerta: Com esta despesa você atingirá ${percentage}% do limite`,
+        percentage,
+      }
+    }
+
+    return {
+      severity: 'medium' as const,
+      message: `Atenção: Com esta despesa você atingirá ${percentage}% do limite`,
+      percentage,
+    }
+  }, [
+    watchedAmount,
+    spendingLimit,
+    netCost,
+    expense,
+    expenseType,
+    installmentCalculation,
+    isIncomeMode,
+  ])
+
+  const selectedMonthRef = useRef(selectedMonth)
+  selectedMonthRef.current = selectedMonth
+
+  useEffect(() => {
+    if (open) {
+      if (expense) {
+        const isIncome = expense.type === 'income'
+        let type: FormData['type'] = 'one_time'
+        if (isIncome) {
+          if (expense.is_recurrent) {
+            type = 'income_recurrent'
+          } else if (expense.installment_total) {
+            type = 'income_installment'
+          } else {
+            type = 'income'
+          }
+        } else if (expense.is_recurrent) {
+          type = 'recurrent'
+        } else if (expense.installment_total) {
+          type = 'installment'
+        }
+
+        reset({
+          type,
+          description: expense.description,
+          amount: centsToDecimal(expense.amount_cents).toFixed(2).replace('.', ','),
+          category_id: expense.category_id ?? '',
+          payment_method: expense.payment_method,
+          credit_card_id: expense.credit_card_id ?? '',
+          date: expense.date,
+          recurrence_day: expense.recurrence_day?.toString() ?? '',
+          recurrence_start: expense.recurrence_start ?? '',
+          recurrence_end: expense.recurrence_end ?? '',
+          installment_total: expense.installment_total?.toString() ?? '',
+          installment_input_mode: 'total',
+        })
+      } else {
+        const month = selectedMonthRef.current
+        const defaultDate = getDefaultDate(month)
+        const monthStart = `${month}-01`
+        const isIncome = initialMode === 'income'
+        reset({
+          type: isIncome ? 'income' : 'one_time',
+          description: '',
+          amount: '',
+          category_id: '',
+          payment_method: isIncome ? 'pix' : 'credit_card',
+          credit_card_id: '',
+          date: defaultDate,
+          recurrence_day: defaultDate.split('-')[2] ?? '1',
+          recurrence_start: monthStart,
+          recurrence_end: '',
+          installment_total: '',
+          installment_input_mode: 'total',
+        })
+      }
+    }
+  }, [open, expense, reset, initialMode])
+
+  const { createMutation, updateMutation } = useExpenseFormMutations({
+    categories,
+    creditCards,
+    expense,
+    onOpenChange,
   })
 
   const onSubmit = (data: FormData) => {
@@ -779,20 +962,7 @@ export function ExpenseModal({
             )}
           </div>
 
-          {spendingLimitWarning && (
-            <div
-              className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
-                spendingLimitWarning.severity === 'exceeded'
-                  ? 'border-red-500/50 bg-red-500/10 text-red-500'
-                  : spendingLimitWarning.severity === 'high'
-                    ? 'border-orange-500/50 bg-orange-500/10 text-orange-500'
-                    : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500'
-              }`}
-            >
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>{spendingLimitWarning.message}</span>
-            </div>
-          )}
+          {spendingLimitWarning && <SpendingLimitWarning warning={spendingLimitWarning} />}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
@@ -875,126 +1045,16 @@ export function ExpenseModal({
           </div>
 
           {(expenseType === 'recurrent' || expenseType === 'income_recurrent') && !isEditing && (
-            <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
-              <h4 className="font-medium">Configuração de Recorrência</h4>
-              <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-400">
-                <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>
-                  {isIncomeMode
-                    ? 'Receitas recorrentes são criadas para os próximos 2 anos e renovadas automaticamente.'
-                    : 'Despesas recorrentes são criadas para os próximos 2 anos e renovadas automaticamente.'}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="recurrence_day">Dia do mês</Label>
-                  <Input
-                    id="recurrence_day"
-                    type="number"
-                    min={1}
-                    max={31}
-                    placeholder="1-31"
-                    {...register('recurrence_day')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Início</Label>
-                  <Controller
-                    name="recurrence_start"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Data início"
-                      />
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Fim (opcional)</Label>
-                  <Controller
-                    name="recurrence_end"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Data fim"
-                      />
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
+            <RecurrenceFields isIncomeMode={isIncomeMode} control={control} register={register} />
           )}
 
           {(expenseType === 'installment' || expenseType === 'income_installment') &&
             !isEditing && (
-              <div className="space-y-3 sm:space-y-4 rounded-lg border p-3 sm:p-4">
-                <h4 className="font-medium">Configuração de Parcelas</h4>
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label>O valor informado é:</Label>
-                    <Controller
-                      name="installment_input_mode"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant={field.value === 'total' ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => field.onChange('total')}
-                          >
-                            Valor total
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={field.value === 'per_installment' ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => field.onChange('per_installment')}
-                          >
-                            Valor da parcela
-                          </Button>
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="installment_total">Número de parcelas</Label>
-                    <Input
-                      id="installment_total"
-                      type="number"
-                      min={2}
-                      max={48}
-                      placeholder="2-48"
-                      {...register('installment_total')}
-                    />
-                  </div>
-                  {installmentCalculation && (
-                    <div className="rounded-md bg-muted/50 p-3 space-y-1">
-                      {installmentCalculation.mode === 'total' ? (
-                        <>
-                          <p className="text-xs text-muted-foreground">Valor de cada parcela:</p>
-                          <p className="text-lg font-semibold text-primary">
-                            {installmentCalculation.formattedPerInstallment}
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-xs text-muted-foreground">Valor total da compra:</p>
-                          <p className="text-lg font-semibold text-primary">
-                            {installmentCalculation.formattedTotal}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <InstallmentFields
+                control={control}
+                register={register}
+                installmentCalculation={installmentCalculation}
+              />
             )}
 
           <DialogFooter>
