@@ -82,24 +82,20 @@ function getAmountClassName(type: TransactionType): string {
   return type === 'income' ? 'text-emerald-500' : 'text-red-500'
 }
 
-export function ExpenseTable({
-  expenses,
+interface UseExpenseTableMutationsParams {
+  categories: Category[]
+  creditCards: CreditCard[]
+  expenseToDelete: Expense | null
+  setExpenseToDelete: (expense: Expense | null) => void
+}
+
+function useExpenseTableMutations({
   categories,
   creditCards,
-  isLoading,
-  selectedMonth,
-  spendingLimit,
-  netCost,
-}: ExpenseTableProps) {
-  const hideValues = useUIStore((state) => state.hideValues)
-  const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
-  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
-  const [installmentExpense, setInstallmentExpense] = useState<Expense | null>(null)
+  expenseToDelete,
+  setExpenseToDelete,
+}: UseExpenseTableMutationsParams) {
   const queryClient = useQueryClient()
-
-  const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.recurrent_group_id
-  const isInstallmentExpense =
-    expenseToDelete?.installment_total && expenseToDelete.installment_total > 1
 
   const getExpenseChange = (exp: Expense): ExpenseChange => {
     const category = categories.find((c) => c.id === exp.category_id)
@@ -286,6 +282,48 @@ export function ExpenseTable({
     deleteInstallmentGroupMutation.isPending ||
     deleteRecurrentGroupMutation.isPending
 
+  return {
+    deleteMutation,
+    cancelRecurrenceMutation,
+    deleteInstallmentGroupMutation,
+    deleteRecurrentGroupMutation,
+    handleDeleteAll,
+    handleDeleteSingle,
+    isPending,
+  }
+}
+
+export function ExpenseTable({
+  expenses,
+  categories,
+  creditCards,
+  isLoading,
+  selectedMonth,
+  spendingLimit,
+  netCost,
+}: ExpenseTableProps) {
+  const hideValues = useUIStore((state) => state.hideValues)
+  const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null)
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
+  const [installmentExpense, setInstallmentExpense] = useState<Expense | null>(null)
+
+  const isRecurrentExpense = expenseToDelete?.is_recurrent && expenseToDelete?.recurrent_group_id
+  const isInstallmentExpense =
+    expenseToDelete?.installment_total && expenseToDelete.installment_total > 1
+
+  const {
+    deleteMutation,
+    deleteRecurrentGroupMutation,
+    handleDeleteAll,
+    handleDeleteSingle,
+    isPending,
+  } = useExpenseTableMutations({
+    categories,
+    creditCards,
+    expenseToDelete,
+    setExpenseToDelete,
+  })
+
   const getCategory = (categoryId: string | null) => {
     if (!categoryId) return undefined
     return categories.find((c) => c.id === categoryId)
@@ -306,8 +344,8 @@ export function ExpenseTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <TableRow key={i}>
+            {['s1', 's2', 's3', 's4', 's5'].map((key) => (
+              <TableRow key={key}>
                 <TableCell colSpan={6}>
                   <div className="h-8 animate-pulse rounded bg-muted" />
                 </TableCell>

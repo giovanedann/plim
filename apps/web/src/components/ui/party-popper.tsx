@@ -7,7 +7,7 @@ import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
 
 import { cn } from '@/lib/utils'
 
-export interface PartyPopperIconHandle {
+interface PartyPopperIconHandle {
   startAnimation: () => void
   stopAnimation: () => void
 }

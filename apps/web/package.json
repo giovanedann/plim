@@ -44,7 +44,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.28.1",
     "idb-keyval": "^6.2.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.562.0",

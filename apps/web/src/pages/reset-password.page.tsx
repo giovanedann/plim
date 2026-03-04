@@ -1,3 +1,7 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+
 import { AuthLayout } from '@/components/layouts/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,7 +18,44 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth.store'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { CheckCircle, Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
+
+type State = {
+  isExchangingCode: boolean
+  exchangeError: string | null
+  success: boolean
+}
+
+type Action =
+  | { type: 'EXCHANGE_START' }
+  | { type: 'EXCHANGE_ERROR'; error: string }
+  | { type: 'EXCHANGE_SUCCESS' }
+  | { type: 'RESET' }
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'EXCHANGE_START':
+      return { ...state, isExchangingCode: true, exchangeError: null }
+    case 'EXCHANGE_ERROR':
+      return { ...state, isExchangingCode: false, exchangeError: action.error }
+    case 'EXCHANGE_SUCCESS':
+      return { ...state, isExchangingCode: false, exchangeError: null }
+    case 'RESET':
+      return { ...state, success: true }
+  }
+}
+
+const resetPasswordSchema = z
+  .object({
+    password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  })
+
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
 export function ResetPasswordPage() {
   return (
@@ -27,9 +68,21 @@ export function ResetPasswordPage() {
 function ResetPasswordContent() {
   const navigate = useNavigate()
   const { updatePassword, isLoading, error, clearError, user } = useAuthStore()
-  const [isExchangingCode, setIsExchangingCode] = useState(true)
-  const [exchangeError, setExchangeError] = useState<string | null>(null)
   const hasExchangedCode = useRef(false)
+
+  const [state, dispatch] = useReducer(reducer, {
+    isExchangingCode: true,
+    exchangeError: null,
+    success: false,
+  })
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const form = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { password: '', confirmPassword: '' },
+  })
 
   useEffect(() => {
     const handleCodeExchange = async () => {
@@ -41,53 +94,38 @@ function ResetPasswordContent() {
       const errorDescription = hashParams.get('error_description')
 
       if (errorParam) {
-        setExchangeError(errorDescription || 'Link inválido ou expirado')
-        setIsExchangingCode(false)
+        dispatch({
+          type: 'EXCHANGE_ERROR',
+          error: errorDescription || 'Link inválido ou expirado',
+        })
         return
       }
 
       const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
 
       if (error) {
-        setExchangeError(error.message)
+        dispatch({ type: 'EXCHANGE_ERROR', error: error.message })
+        return
       }
 
-      setIsExchangingCode(false)
+      dispatch({ type: 'EXCHANGE_SUCCESS' })
     }
 
     handleCodeExchange()
   }, [])
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [validationError, setValidationError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (data: ResetPasswordFormData) => {
     clearError()
-    setValidationError(null)
-
-    if (password.length < 6) {
-      setValidationError('A senha deve ter pelo menos 6 caracteres')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setValidationError('As senhas não coincidem')
-      return
-    }
 
     try {
-      await updatePassword(password)
-      setSuccess(true)
+      await updatePassword(data.password)
+      dispatch({ type: 'RESET' })
     } catch {
       // Error is handled by the store
     }
   }
 
-  if (isExchangingCode) {
+  if (state.isExchangingCode) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
@@ -98,7 +136,7 @@ function ResetPasswordContent() {
     )
   }
 
-  if (success) {
+  if (state.success) {
     return (
       <>
         <div className="text-center">
@@ -130,7 +168,7 @@ function ResetPasswordContent() {
     )
   }
 
-  if (exchangeError || !user) {
+  if (state.exchangeError || !user) {
     return (
       <>
         <div className="text-center">
@@ -146,7 +184,7 @@ function ResetPasswordContent() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  {exchangeError ||
+                  {state.exchangeError ||
                     'Solicite um novo link de recuperação para redefinir sua senha.'}
                 </p>
               </div>
@@ -178,7 +216,16 @@ function ResetPasswordContent() {
           <CardDescription>Sua senha deve ter pelo menos 6 caracteres</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+              if (errors.confirmPassword) {
+                form.setError('root', { message: 'As senhas não coincidem' })
+              } else if (errors.password) {
+                form.setError('root', { message: errors.password.message })
+              }
+            })}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="password">Nova senha</Label>
               <div className="relative">
@@ -186,8 +233,7 @@ function ResetPasswordContent() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...form.register('password')}
                   required
                   disabled={isLoading}
                   className="pr-10"
@@ -211,8 +257,7 @@ function ResetPasswordContent() {
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  {...form.register('confirmPassword')}
                   required
                   disabled={isLoading}
                   className="pr-10"
@@ -232,8 +277,10 @@ function ResetPasswordContent() {
               </div>
             </div>
 
-            {(error || validationError) && (
-              <p className="text-sm text-destructive">{validationError || error}</p>
+            {(error || form.formState.errors.root?.message) && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.root?.message || error}
+              </p>
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>

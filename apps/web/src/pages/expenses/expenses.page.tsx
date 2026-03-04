@@ -1,4 +1,4 @@
-import { ExpenseChart } from './components/expense-chart'
+import { Suspense, lazy } from 'react'
 import { ExpenseFilters } from './components/expense-filters'
 import { ExpenseTable } from './components/expense-table'
 import { MonthSelector } from './components/month-selector'
@@ -6,6 +6,10 @@ import { PaginationControls } from './components/pagination-controls'
 import { SalaryDisplay } from './components/salary-display'
 import { SpendingLimitCard } from './components/spending-limit-card'
 import { useExpensesPage } from './use-expenses.page'
+
+const ExpenseChart = lazy(() =>
+  import('./components/expense-chart').then((m) => ({ default: m.ExpenseChart }))
+)
 
 export function ExpensesPage() {
   const {
@@ -59,7 +63,13 @@ export function ExpensesPage() {
       </div>
 
       <div className="px-4 lg:px-6">
-        <ExpenseChart expenses={allExpenses} selectedMonth={selectedMonth} isLoading={isLoading} />
+        <Suspense fallback={<div className="h-[250px] animate-pulse rounded-lg bg-muted" />}>
+          <ExpenseChart
+            expenses={allExpenses}
+            selectedMonth={selectedMonth}
+            isLoading={isLoading}
+          />
+        </Suspense>
       </div>
 
       <div className="px-4 lg:px-6">

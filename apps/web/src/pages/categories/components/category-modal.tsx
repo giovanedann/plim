@@ -12,8 +12,18 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { CategoryIconName } from '@/lib/icons'
+import { zodResolver } from '@hookform/resolvers/zod'
 import type { Category, CreateCategory } from '@plim/shared'
-import { useEffect, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { z } from 'zod'
+
+const formSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório').max(50, 'Nome deve ter no máximo 50 caracteres'),
+  icon: z.string().nullable(),
+  color: z.string().nullable(),
+})
+
+type FormData = z.infer<typeof formSchema>
 
 interface CategoryModalProps {
   open: boolean
@@ -32,58 +42,36 @@ export function CategoryModal({
 }: CategoryModalProps) {
   const isEditing = !!category
 
-  const [name, setName] = useState('')
-  const [icon, setIcon] = useState<CategoryIconName | null>(null)
-  const [color, setColor] = useState<string | null>(PRESET_COLORS[0])
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (open) {
-      if (category) {
-        setName(category.name)
-        setIcon((category.icon as CategoryIconName) ?? null)
-        setColor(category.color)
-      } else {
-        setName('')
-        setIcon(null)
-        setColor(PRESET_COLORS[0])
-      }
-      setError(null)
-    }
-  }, [open, category])
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: category?.name ?? '',
+      icon: (category?.icon as CategoryIconName) ?? null,
+      color: category?.color ?? PRESET_COLORS[0],
+    },
+  })
 
   const handleClose = () => {
     onOpenChange(false)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-
-    if (!name.trim()) {
-      setError('Nome é obrigatório')
-      return
-    }
-
-    if (name.trim().length > 50) {
-      setError('Nome deve ter no máximo 50 caracteres')
-      return
-    }
-
+  const handleFormSubmit = async (data: FormData) => {
     try {
       await onSubmit({
-        name: name.trim(),
-        icon: icon,
-        color: color,
+        name: data.name.trim(),
+        icon: data.icon,
+        color: data.color,
       })
       handleClose()
     } catch {
-      setError('Erro ao salvar categoria. Tente novamente.')
+      form.setError('root', { message: 'Erro ao salvar categoria. Tente novamente.' })
     }
   }
 
+  const watchedColor = form.watch('color')
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleClose} key={open ? (category?.id ?? 'new') : 'closed'}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Categoria' : 'Nova Categoria'}</DialogTitle>
@@ -94,29 +82,47 @@ export function CategoryModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
             <Label htmlFor="category-name">Nome</Label>
             <Input
               id="category-name"
               placeholder="Ex: Streaming"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...form.register('name')}
               autoFocus
             />
+            {form.formState.errors.name && (
+              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Ícone</Label>
-            <IconPicker value={icon} onChange={setIcon} color={color ?? '#6b7280'} />
+            <Controller
+              name="icon"
+              control={form.control}
+              render={({ field }) => (
+                <IconPicker
+                  value={field.value as CategoryIconName | null}
+                  onChange={field.onChange}
+                  color={watchedColor ?? '#6b7280'}
+                />
+              )}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Cor</Label>
-            <ColorPicker value={color} onChange={setColor} />
+            <Controller
+              name="color"
+              control={form.control}
+              render={({ field }) => <ColorPicker value={field.value} onChange={field.onChange} />}
+            />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {form.formState.errors.root && (
+            <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>

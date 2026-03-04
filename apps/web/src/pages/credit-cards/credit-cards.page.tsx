@@ -91,8 +91,8 @@ export function CreditCardsPage() {
 
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-52 rounded-xl" />
+          {['s1', 's2', 's3'].map((key) => (
+            <Skeleton key={key} className="h-52 rounded-xl" />
           ))}
         </div>
       ) : (

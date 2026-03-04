@@ -1,8 +1,8 @@
 import { useOnlineStatus } from '@/hooks/use-online-status'
-import { AnimatePresence, motion } from 'framer-motion'
 import { WifiOff } from 'lucide-react'
+import { AnimatePresence, m } from 'motion/react'
 
-const MotionOutput = motion.create('output')
+const MotionOutput = m.create('output')
 
 export function OfflineIndicator(): React.ReactElement {
   const isOnline = useOnlineStatus()

@@ -96,7 +96,7 @@ export function TestimonialsSection(): React.ReactNode {
           >
             {duplicated.map((testimonial, index) => (
               <div
-                key={`${testimonial.name}-${index}`}
+                key={`${index >= testimonials.length ? 'b' : 'a'}-${index % testimonials.length}`}
                 className="min-w-[320px] max-w-[360px] shrink-0 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 transition-all duration-300 hover:border-amber-500/20 hover:bg-white/10"
               >
                 <StarRating rating={testimonial.rating} />

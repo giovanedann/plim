@@ -5,6 +5,7 @@ import { idbPersister } from '@/lib/query-persister'
 import { useAuthStore } from '@/stores/auth.store'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { LazyMotion, domAnimation } from 'motion/react'
 import { useEffect } from 'react'
 import { routeTree } from './routeTree.gen'
 
@@ -49,10 +50,12 @@ export function App() {
           },
         }}
       >
-        <RouterProvider
-          router={router}
-          context={{ auth: { user, isInitialized, isInRecoveryMode } }}
-        />
+        <LazyMotion features={domAnimation}>
+          <RouterProvider
+            router={router}
+            context={{ auth: { user, isInitialized, isInRecoveryMode } }}
+          />
+        </LazyMotion>
       </PersistQueryClientProvider>
     </ThemeProvider>
   )

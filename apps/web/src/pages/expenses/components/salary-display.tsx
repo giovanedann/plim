@@ -13,6 +13,7 @@ import {
   ArrowUp,
   Check,
   DollarSign,
+  type LucideIcon,
   Minus,
   Pencil,
   PiggyBank,
@@ -56,6 +57,83 @@ function calculatePercentageChange(
   return { value: change, label: `${Math.abs(change).toFixed(1)}% vs mês anterior` }
 }
 
+interface ComparisonIndicatorProps {
+  comparison: { value: number | null; label: string }
+  positiveColor: string
+  negativeColor: string
+}
+
+function ComparisonIndicator({
+  comparison: comparisonData,
+  positiveColor,
+  negativeColor,
+}: ComparisonIndicatorProps) {
+  if (comparisonData.value !== null) {
+    const isPositive = comparisonData.value > 0
+    return (
+      <div className="mt-1 flex items-center gap-1 text-xs">
+        {isPositive ? (
+          <ArrowUp className={`h-3 w-3 ${positiveColor}`} />
+        ) : (
+          <ArrowDown className={`h-3 w-3 ${negativeColor}`} />
+        )}
+        <span className={isPositive ? positiveColor : negativeColor}>{comparisonData.label}</span>
+      </div>
+    )
+  }
+  return (
+    <div className="mt-1 flex items-center gap-1 text-xs">
+      <span className="text-muted-foreground">{comparisonData.label}</span>
+    </div>
+  )
+}
+
+interface StatCardProps {
+  icon: LucideIcon
+  iconClassName: string
+  label: string
+  value: string
+  valueClassName?: string
+  comparison?: ComparisonData
+  comparisonData?: { value: number | null; label: string }
+  positiveColor?: string
+  negativeColor?: string
+  footer?: React.ReactNode
+}
+
+function StatCard({
+  icon: Icon,
+  iconClassName,
+  label,
+  value,
+  valueClassName,
+  comparison,
+  comparisonData,
+  positiveColor = 'text-emerald-500',
+  negativeColor = 'text-red-500',
+  footer,
+}: StatCardProps) {
+  return (
+    <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+      <CardContent className="pt-6">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-5 w-5 ${iconClassName}`} />
+          <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        </div>
+        <p className={`mt-2 text-2xl font-bold ${valueClassName ?? ''}`}>{value}</p>
+        {comparison && comparisonData && (
+          <ComparisonIndicator
+            comparison={comparisonData}
+            positiveColor={positiveColor}
+            negativeColor={negativeColor}
+          />
+        )}
+        {footer}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function SalaryDisplay({
   salary,
   totalExpenses,
@@ -76,14 +154,12 @@ export function SalaryDisplay({
 
   const hasIncomes = totalIncomes > 0
 
-  // Animated values
   const animatedSalary = useCountUp(salary?.amount_cents ?? 0)
   const animatedExpenses = useCountUp(totalExpenses)
   const animatedIncomes = useCountUp(totalIncomes)
   const animatedNetCost = useCountUp(netCost)
   const animatedBalance = useCountUp(balance)
 
-  // Comparison calculations
   const expenseComparison = calculatePercentageChange(
     totalExpenses,
     comparison?.previousExpenses ?? null
@@ -157,8 +233,8 @@ export function SalaryDisplay({
   if (isLoading) {
     return (
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
+        {['s1', 's2', 's3', 's4'].map((key) => (
+          <Card key={key}>
             <CardContent className="pt-6">
               <div className="h-16 animate-pulse rounded bg-muted" />
             </CardContent>
@@ -239,152 +315,68 @@ export function SalaryDisplay({
         </CardContent>
       </Card>
 
-      <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2">
-            <TrendingDown className="h-5 w-5 text-red-500" />
-            <span className="text-sm font-medium text-muted-foreground">Despesas</span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-red-500">{maskValue(animatedExpenses)}</p>
-          {comparison && (
-            <div className="mt-1 flex items-center gap-1 text-xs">
-              {expenseComparison.value !== null ? (
-                <>
-                  {expenseComparison.value > 0 ? (
-                    <ArrowUp className="h-3 w-3 text-red-500" />
-                  ) : (
-                    <ArrowDown className="h-3 w-3 text-emerald-500" />
-                  )}
-                  <span
-                    className={expenseComparison.value > 0 ? 'text-red-500' : 'text-emerald-500'}
-                  >
-                    {expenseComparison.label}
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">{expenseComparison.label}</span>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <StatCard
+        icon={TrendingDown}
+        iconClassName="text-red-500"
+        label="Despesas"
+        value={maskValue(animatedExpenses)}
+        valueClassName="text-red-500"
+        comparison={comparison}
+        comparisonData={expenseComparison}
+        positiveColor="text-red-500"
+        negativeColor="text-emerald-500"
+      />
 
       {hasIncomes && (
-        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-emerald-500" />
-              <span className="text-sm font-medium text-muted-foreground">Receitas</span>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-emerald-500">{maskValue(animatedIncomes)}</p>
-            {comparison && (
-              <div className="mt-1 flex items-center gap-1 text-xs">
-                {incomeComparison.value !== null ? (
-                  <>
-                    {incomeComparison.value > 0 ? (
-                      <ArrowUp className="h-3 w-3 text-emerald-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 text-red-500" />
-                    )}
-                    <span
-                      className={incomeComparison.value > 0 ? 'text-emerald-500' : 'text-red-500'}
-                    >
-                      {incomeComparison.label}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">{incomeComparison.label}</span>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={DollarSign}
+          iconClassName="text-emerald-500"
+          label="Receitas"
+          value={maskValue(animatedIncomes)}
+          valueClassName="text-emerald-500"
+          comparison={comparison}
+          comparisonData={incomeComparison}
+          positiveColor="text-emerald-500"
+          negativeColor="text-red-500"
+        />
       )}
 
       {hasIncomes && (
-        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Minus className="h-5 w-5 text-blue-500" />
-              <span className="text-sm font-medium text-muted-foreground">Custo Líquido</span>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-blue-500">{maskValue(animatedNetCost)}</p>
-            {comparison && (
-              <div className="mt-1 flex items-center gap-1 text-xs">
-                {netCostComparison.value !== null ? (
-                  <>
-                    {netCostComparison.value > 0 ? (
-                      <ArrowUp className="h-3 w-3 text-red-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 text-emerald-500" />
-                    )}
-                    <span
-                      className={netCostComparison.value > 0 ? 'text-red-500' : 'text-emerald-500'}
-                    >
-                      {netCostComparison.label}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">{netCostComparison.label}</span>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Minus}
+          iconClassName="text-blue-500"
+          label="Custo Líquido"
+          value={maskValue(animatedNetCost)}
+          valueClassName="text-blue-500"
+          comparison={comparison}
+          comparisonData={netCostComparison}
+          positiveColor="text-red-500"
+          negativeColor="text-emerald-500"
+        />
       )}
 
       {hasSalary && (
-        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <TrendingUp
-                className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-              />
-              <span className="text-sm font-medium text-muted-foreground">Saldo</span>
-            </div>
-            <p
-              className={`mt-2 text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-            >
-              {maskValue(animatedBalance)}
-            </p>
-            {comparison && (
-              <div className="mt-1 flex items-center gap-1 text-xs">
-                {balanceComparison.value !== null ? (
-                  <>
-                    {balanceComparison.value > 0 ? (
-                      <ArrowUp className="h-3 w-3 text-emerald-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 text-red-500" />
-                    )}
-                    <span
-                      className={balanceComparison.value > 0 ? 'text-emerald-500' : 'text-red-500'}
-                    >
-                      {balanceComparison.label}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">{balanceComparison.label}</span>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={TrendingUp}
+          iconClassName={balance >= 0 ? 'text-emerald-500' : 'text-red-500'}
+          label="Saldo"
+          value={maskValue(animatedBalance)}
+          valueClassName={balance >= 0 ? 'text-emerald-500' : 'text-red-500'}
+          comparison={comparison}
+          comparisonData={balanceComparison}
+          positiveColor="text-emerald-500"
+          negativeColor="text-red-500"
+        />
       )}
 
       {hasSalary && (
-        <Card className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <PiggyBank
-                className={`h-5 w-5 ${savingsRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-              />
-              <span className="text-sm font-medium text-muted-foreground">Taxa de Economia</span>
-            </div>
-            <p
-              className={`mt-2 text-2xl font-bold ${savingsRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-            >
-              {hideValues ? '••••••' : `${savingsRate.toFixed(1)}%`}
-            </p>
+        <StatCard
+          icon={PiggyBank}
+          iconClassName={savingsRate >= 0 ? 'text-emerald-500' : 'text-red-500'}
+          label="Taxa de Economia"
+          value={hideValues ? '••••••' : `${savingsRate.toFixed(1)}%`}
+          valueClassName={savingsRate >= 0 ? 'text-emerald-500' : 'text-red-500'}
+          footer={
             <div className="mt-1 text-xs text-muted-foreground">
               {savingsRate >= 20
                 ? 'Excelente!'
@@ -394,8 +386,8 @@ export function SalaryDisplay({
                     ? 'Pode melhorar'
                     : 'Gastos acima do salário'}
             </div>
-          </CardContent>
-        </Card>
+          }
+        />
       )}
     </div>
   )

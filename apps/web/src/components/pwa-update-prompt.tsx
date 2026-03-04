@@ -2,8 +2,8 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { idbPersister } from '@/lib/query-persister'
-import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
+import { AnimatePresence, m } from 'motion/react'
 
 const SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000
 
@@ -32,7 +32,7 @@ export function PWAUpdatePrompt(): React.ReactElement | null {
   return (
     <AnimatePresence>
       {needRefresh && (
-        <motion.div
+        <m.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
@@ -52,7 +52,7 @@ export function PWAUpdatePrompt(): React.ReactElement | null {
               Atualizar
             </Button>
           </Card>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

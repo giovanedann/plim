@@ -1,3 +1,7 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,6 +20,27 @@ import { Check, Eye, EyeOff, X } from 'lucide-react'
 import { useState } from 'react'
 
 const REFERRAL_STORAGE_KEY = 'plim_referral_code'
+
+const signUpSchema = z
+  .object({
+    displayName: z.string(),
+    email: z.string().email('Email inválido'),
+    password: z
+      .string()
+      .min(8, 'Mínimo 8 caracteres')
+      .regex(/[A-Z]/, 'Deve conter letra maiúscula')
+      .regex(/[a-z]/, 'Deve conter letra minúscula')
+      .regex(/[0-9]/, 'Deve conter número')
+      .regex(/[^A-Za-z0-9]/, 'Deve conter símbolo'),
+    confirmPassword: z.string(),
+    referredBy: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  })
+
+type SignUpFormData = z.infer<typeof signUpSchema>
 
 function getInitialReferralCode(searchRef?: string): string {
   if (searchRef) return searchRef
@@ -45,15 +70,25 @@ export function SignUpPage() {
   const initialRef = getInitialReferralCode(searchRef)
   const isReferralPrefilled = initialRef.length > 0
 
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [referredBy, setReferredBy] = useState(initialRef)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [localError, setLocalError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  const form = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      referredBy: initialRef,
+    },
+  })
+
+  const password = form.watch('password')
+  const confirmPassword = form.watch('confirmPassword')
+  const email = form.watch('email')
+  const referredBy = form.watch('referredBy')
 
   const passwordRequirements = {
     minLength: password.length >= 8,
@@ -79,23 +114,21 @@ export function SignUpPage() {
     }
   }
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLocalError(null)
+  const handleEmailSignUp = async (data: SignUpFormData) => {
     clearError()
 
     if (!allRequirementsMet) {
-      setLocalError('A senha não atende todos os requisitos')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setLocalError('As senhas não coincidem')
+      form.setError('root', { message: 'A senha não atende todos os requisitos' })
       return
     }
 
     try {
-      await signUpWithEmail(email, password, displayName || undefined, referredBy || undefined)
+      await signUpWithEmail(
+        data.email,
+        data.password,
+        data.displayName || undefined,
+        data.referredBy || undefined
+      )
       analytics.signUp('email')
       setSuccess(true)
     } catch {
@@ -140,15 +173,23 @@ export function SignUpPage() {
           <CardDescription>Crie sua conta com email e senha</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleEmailSignUp} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleEmailSignUp, (errors) => {
+              if (errors.confirmPassword?.type === 'custom') {
+                form.setError('root', { message: 'As senhas não coincidem' })
+              } else if (errors.password) {
+                form.setError('root', { message: 'A senha não atende todos os requisitos' })
+              }
+            })}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="displayName">Nome</Label>
               <Input
                 id="displayName"
                 type="text"
                 placeholder="Como você quer ser chamado"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                {...form.register('displayName')}
                 disabled={isLoading}
               />
             </div>
@@ -158,8 +199,7 @@ export function SignUpPage() {
                 id="email"
                 type="email"
                 placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...form.register('email')}
                 required
                 disabled={isLoading}
               />
@@ -171,8 +211,7 @@ export function SignUpPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...form.register('password')}
                   required
                   disabled={isLoading}
                   className="pr-10"
@@ -212,8 +251,7 @@ export function SignUpPage() {
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  {...form.register('confirmPassword')}
                   required
                   disabled={isLoading}
                   className="pr-10"
@@ -245,8 +283,7 @@ export function SignUpPage() {
                 id="referredBy"
                 type="text"
                 placeholder="ex: giovane-daniel-a7x9"
-                value={referredBy}
-                onChange={(e) => setReferredBy(e.target.value)}
+                {...form.register('referredBy')}
                 disabled={isLoading || isReferralPrefilled}
                 readOnly={isReferralPrefilled}
                 maxLength={100}
@@ -256,8 +293,10 @@ export function SignUpPage() {
               </p>
             </div>
 
-            {(localError || error) && (
-              <p className="text-sm text-destructive">{localError || error}</p>
+            {(form.formState.errors.root?.message || error) && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.root?.message || error}
+              </p>
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>

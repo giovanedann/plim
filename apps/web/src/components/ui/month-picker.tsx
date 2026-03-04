@@ -27,7 +27,7 @@ const MONTHS = [
 ]
 
 export function MonthPicker({ value, onChange, className, minDate, maxDate }: MonthPickerProps) {
-  const [viewYear, setViewYear] = useState(value.getFullYear())
+  const [viewYear, setViewYear] = useState(() => value.getFullYear())
 
   const selectedMonth = value.getMonth()
   const selectedYear = value.getFullYear()
