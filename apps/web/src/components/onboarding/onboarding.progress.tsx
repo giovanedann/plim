@@ -8,7 +8,7 @@ interface OnboardingProgressProps {
   totalSteps?: number
 }
 
-export function OnboardingProgress({ currentStep, totalSteps = 6 }: OnboardingProgressProps) {
+export function OnboardingProgress({ currentStep, totalSteps = 8 }: OnboardingProgressProps) {
   const prefersReducedMotion = useReducedMotion()
 
   return (

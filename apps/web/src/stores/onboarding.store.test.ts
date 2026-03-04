@@ -146,28 +146,28 @@ describe('useOnboardingStore', () => {
       expect(useOnboardingStore.getState().currentStep).toBe(2)
     })
 
-    it('advances from step 5 to step 6', () => {
+    it('advances from step 7 to step 8', () => {
       // Arrange
-      useOnboardingStore.setState({ currentStep: 5 })
+      useOnboardingStore.setState({ currentStep: 7 })
       const sut = useOnboardingStore.getState()
 
       // Act
       sut.nextStep()
 
       // Assert
-      expect(useOnboardingStore.getState().currentStep).toBe(6)
+      expect(useOnboardingStore.getState().currentStep).toBe(8)
     })
 
-    it('does not advance beyond step 6', () => {
+    it('does not advance beyond step 8', () => {
       // Arrange
-      useOnboardingStore.setState({ currentStep: 6 })
+      useOnboardingStore.setState({ currentStep: 8 })
       const sut = useOnboardingStore.getState()
 
       // Act
       sut.nextStep()
 
       // Assert
-      expect(useOnboardingStore.getState().currentStep).toBe(6)
+      expect(useOnboardingStore.getState().currentStep).toBe(8)
     })
 
     it('advances through all steps sequentially', () => {
@@ -176,7 +176,7 @@ describe('useOnboardingStore', () => {
       const sut = useOnboardingStore.getState()
 
       // Act & Assert
-      for (let i = 2; i <= 6; i++) {
+      for (let i = 2; i <= 8; i++) {
         sut.nextStep()
         expect(useOnboardingStore.getState().currentStep).toBe(i)
       }
@@ -196,16 +196,16 @@ describe('useOnboardingStore', () => {
       expect(useOnboardingStore.getState().currentStep).toBe(1)
     })
 
-    it('goes back from step 6 to step 5', () => {
+    it('goes back from step 8 to step 7', () => {
       // Arrange
-      useOnboardingStore.setState({ currentStep: 6 })
+      useOnboardingStore.setState({ currentStep: 8 })
       const sut = useOnboardingStore.getState()
 
       // Act
       sut.prevStep()
 
       // Assert
-      expect(useOnboardingStore.getState().currentStep).toBe(5)
+      expect(useOnboardingStore.getState().currentStep).toBe(7)
     })
 
     it('does not go back beyond step 1', () => {
@@ -222,11 +222,11 @@ describe('useOnboardingStore', () => {
 
     it('goes back through all steps sequentially', () => {
       // Arrange
-      useOnboardingStore.setState({ currentStep: 6 })
+      useOnboardingStore.setState({ currentStep: 8 })
       const sut = useOnboardingStore.getState()
 
       // Act & Assert
-      for (let i = 5; i >= 1; i--) {
+      for (let i = 7; i >= 1; i--) {
         sut.prevStep()
         expect(useOnboardingStore.getState().currentStep).toBe(i)
       }
@@ -234,7 +234,7 @@ describe('useOnboardingStore', () => {
   })
 
   describe('goToStep', () => {
-    it.each([1, 2, 3, 4, 5, 6] as OnboardingStep[])('goes to step %i when valid', (step) => {
+    it.each([1, 2, 3, 4, 5, 6, 7, 8] as OnboardingStep[])('goes to step %i when valid', (step) => {
       // Arrange
       const sut = useOnboardingStore.getState()
 
@@ -257,33 +257,33 @@ describe('useOnboardingStore', () => {
       expect(useOnboardingStore.getState().currentStep).toBe(3)
     })
 
-    it('does not change step when given step above 6', () => {
+    it('does not change step when given step above 8', () => {
       // Arrange
       useOnboardingStore.setState({ currentStep: 3 })
       const sut = useOnboardingStore.getState()
 
       // Act
-      sut.goToStep(7 as OnboardingStep)
+      sut.goToStep(9 as OnboardingStep)
 
       // Assert
       expect(useOnboardingStore.getState().currentStep).toBe(3)
     })
 
-    it('can jump from step 1 to step 6', () => {
+    it('can jump from step 1 to step 8', () => {
       // Arrange
       useOnboardingStore.setState({ currentStep: 1 })
       const sut = useOnboardingStore.getState()
 
       // Act
-      sut.goToStep(6)
+      sut.goToStep(8)
 
       // Assert
-      expect(useOnboardingStore.getState().currentStep).toBe(6)
+      expect(useOnboardingStore.getState().currentStep).toBe(8)
     })
 
-    it('can jump from step 6 to step 1', () => {
+    it('can jump from step 8 to step 1', () => {
       // Arrange
-      useOnboardingStore.setState({ currentStep: 6 })
+      useOnboardingStore.setState({ currentStep: 8 })
       const sut = useOnboardingStore.getState()
 
       // Act
@@ -297,7 +297,7 @@ describe('useOnboardingStore', () => {
   describe('complete', () => {
     it('closes onboarding', () => {
       // Arrange
-      useOnboardingStore.setState({ isOpen: true, currentStep: 6 })
+      useOnboardingStore.setState({ isOpen: true, currentStep: 8 })
       const sut = useOnboardingStore.getState()
 
       // Act
@@ -309,7 +309,7 @@ describe('useOnboardingStore', () => {
 
     it('resets currentStep to 1', () => {
       // Arrange
-      useOnboardingStore.setState({ isOpen: true, currentStep: 6 })
+      useOnboardingStore.setState({ isOpen: true, currentStep: 8 })
       const sut = useOnboardingStore.getState()
 
       // Act
@@ -323,7 +323,7 @@ describe('useOnboardingStore', () => {
       // Arrange
       useOnboardingStore.setState({
         isOpen: true,
-        currentStep: 6,
+        currentStep: 8,
         showSkipConfirmation: true,
       })
       const sut = useOnboardingStore.getState()

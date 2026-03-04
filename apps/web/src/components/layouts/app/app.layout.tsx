@@ -32,6 +32,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   useAIUsage()
 
+  const firstName = profile?.name?.split(' ')[0]
   const pageTitle = PAGE_TITLES[location.pathname]
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         existingSalary={null}
         onSaveSalary={handleSaveSalary}
         onComplete={handleComplete}
+        firstName={firstName}
       />
 
       <RenewalReminderModal />
