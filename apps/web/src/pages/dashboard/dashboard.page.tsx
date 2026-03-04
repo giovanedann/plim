@@ -1,22 +1,25 @@
 import { ProChartLock } from '@/components/pro-chart-lock'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
-import { CategoryBreakdownChart } from './components/category-breakdown-chart'
-import { CreditCardBreakdownChart } from './components/credit-card-breakdown-chart'
-import { CreditCardUtilizationChart } from './components/credit-card-utilization-chart'
-import { DayOfWeekChart } from './components/day-of-week-chart'
-import { ExpensesTimelineChart } from './components/expenses-timeline-chart'
-import { IncomeExpensesChart } from './components/income-expenses-chart'
-import { InstallmentForecast } from './components/installment-forecast'
-import { InvoiceCalendarChart } from './components/invoice-calendar-chart'
-import { PaymentBreakdownChart } from './components/payment-breakdown-chart'
-import { RecurringVsOnetimeChart } from './components/recurring-vs-onetime-chart'
-import { SalaryTimelineChart } from './components/salary-timeline-chart'
-import { SavingsRateChart } from './components/savings-rate-chart'
-import { SpendingLimitGaugeChart } from './components/spending-limit-gauge-chart'
+import { Suspense } from 'react'
+import {
+  CategoryBreakdownChart,
+  CreditCardBreakdownChart,
+  CreditCardUtilizationChart,
+  DayOfWeekChart,
+  ExpensesTimelineChart,
+  IncomeExpensesChart,
+  InstallmentForecast,
+  InvoiceCalendarChart,
+  PaymentBreakdownChart,
+  RecurringVsOnetimeChart,
+  SalaryTimelineChart,
+  SavingsRateChart,
+  SpendingLimitGaugeChart,
+  TopCategoriesChart,
+} from './components/lazy-charts'
 import { SummaryCards } from './components/summary-cards'
 import { TimeRangeSelector } from './components/time-range-selector'
-import { TopCategoriesChart } from './components/top-categories-chart'
 import { useDashboard } from './use-dashboard'
 
 function DashboardSkeleton() {
@@ -29,8 +32,8 @@ function DashboardSkeleton() {
 
       <div className="px-4 lg:px-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+          {['s1', 's2', 's3', 's4'].map((key) => (
+            <Skeleton key={key} className="h-32 rounded-xl" />
           ))}
         </div>
       </div>
@@ -116,7 +119,9 @@ export function DashboardPage() {
       {showIncomeSection && (
         <div className="px-4 lg:px-6">
           {isPro ? (
-            <IncomeExpensesChart data={incomeVsExpenses!} />
+            <Suspense fallback={<Skeleton className="h-80 rounded-xl" />}>
+              <IncomeExpensesChart data={incomeVsExpenses!} />
+            </Suspense>
           ) : (
             <ProChartLock title="Receita vs Despesas">
               <div className="h-80" />
@@ -130,12 +135,16 @@ export function DashboardPage() {
         data-tutorial-id="dashboard-charts"
       >
         <div className="min-w-0">
-          <ExpensesTimelineChart data={expensesTimeline} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <ExpensesTimelineChart data={expensesTimeline} />
+          </Suspense>
         </div>
         {showIncomeSection && (
           <div className="min-w-0">
             {isPro ? (
-              <SavingsRateChart data={savingsRate!} />
+              <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+                <SavingsRateChart data={savingsRate!} />
+              </Suspense>
             ) : (
               <ProChartLock title="Taxa de Economia">
                 <div className="h-64" />
@@ -147,14 +156,20 @@ export function DashboardPage() {
 
       <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 lg:px-6">
         <div className="min-w-0">
-          <CategoryBreakdownChart data={categoryBreakdown} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <CategoryBreakdownChart data={categoryBreakdown} />
+          </Suspense>
         </div>
         <div className="min-w-0">
-          <PaymentBreakdownChart data={paymentBreakdown} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <PaymentBreakdownChart data={paymentBreakdown} />
+          </Suspense>
         </div>
         <div className="min-w-0 md:col-span-2 lg:col-span-1">
           {isPro ? (
-            <CreditCardBreakdownChart data={creditCardBreakdown!} />
+            <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+              <CreditCardBreakdownChart data={creditCardBreakdown!} />
+            </Suspense>
           ) : (
             <ProChartLock title="Gastos por Cartão">
               <div className="h-64" />
@@ -165,10 +180,14 @@ export function DashboardPage() {
 
       <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
         <div className="min-w-0">
-          <CreditCardUtilizationChart data={creditCardUtilization} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <CreditCardUtilizationChart data={creditCardUtilization} />
+          </Suspense>
         </div>
         <div className="min-w-0">
-          <RecurringVsOnetimeChart data={recurringVsOnetime} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <RecurringVsOnetimeChart data={recurringVsOnetime} />
+          </Suspense>
         </div>
       </div>
 
@@ -177,7 +196,9 @@ export function DashboardPage() {
       >
         <div className="min-w-0">
           {isPro ? (
-            <TopCategoriesChart data={categoryBreakdown} />
+            <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+              <TopCategoriesChart data={categoryBreakdown} />
+            </Suspense>
           ) : (
             <ProChartLock title="Top Categorias">
               <div className="h-64" />
@@ -187,7 +208,9 @@ export function DashboardPage() {
         {showIncomeSection && (
           <div className="min-w-0">
             {isPro ? (
-              <SalaryTimelineChart data={salaryTimeline!} />
+              <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+                <SalaryTimelineChart data={salaryTimeline!} />
+              </Suspense>
             ) : (
               <ProChartLock title="Histórico de Salários">
                 <div className="h-64" />
@@ -200,7 +223,9 @@ export function DashboardPage() {
       <div className="grid min-w-0 gap-4 px-4 md:grid-cols-2 lg:px-6">
         <div className="min-w-0">
           {isPro ? (
-            <DayOfWeekChart data={dayOfWeek!} />
+            <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+              <DayOfWeekChart data={dayOfWeek!} />
+            </Suspense>
           ) : (
             <ProChartLock title="Gastos por Dia da Semana">
               <div className="h-64" />
@@ -209,7 +234,9 @@ export function DashboardPage() {
         </div>
         <div className="min-w-0">
           {isPro ? (
-            <SpendingLimitGaugeChart data={spendingLimitProgress} />
+            <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+              <SpendingLimitGaugeChart data={spendingLimitProgress} />
+            </Suspense>
           ) : (
             <ProChartLock title="Limite de Gastos">
               <div className="h-64" />
@@ -220,7 +247,9 @@ export function DashboardPage() {
 
       <div className="px-4 lg:px-6">
         {isPro ? (
-          <InvoiceCalendarChart data={invoiceCalendar!} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <InvoiceCalendarChart data={invoiceCalendar!} />
+          </Suspense>
         ) : (
           <ProChartLock title="Calendário de Faturas">
             <div className="h-64" />
@@ -230,7 +259,9 @@ export function DashboardPage() {
 
       <div className="px-4 lg:px-6">
         {isPro ? (
-          <InstallmentForecast data={installmentForecast!} />
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
+            <InstallmentForecast data={installmentForecast!} />
+          </Suspense>
         ) : (
           <ProChartLock title="Previsão de Parcelas">
             <div className="h-64" />
