@@ -2,7 +2,6 @@ import { analytics } from '@/lib/analytics'
 import { isErrorResponse } from '@/lib/api-client'
 import { supabase } from '@/lib/supabase'
 import { referralService } from '@/services/referral.service'
-import { useAuthStore } from '@/stores/auth.store'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
@@ -28,7 +27,6 @@ async function claimPendingReferral(): Promise<void> {
 
 export function AuthCallbackPage() {
   const navigate = useNavigate()
-  const user = useAuthStore((state) => state.user)
   const hasExchangedCode = useRef(false)
 
   useEffect(() => {
@@ -41,19 +39,15 @@ export function AuthCallbackPage() {
       if (error) {
         console.error('Auth callback error:', error)
         navigate({ to: '/sign-in' })
+        return
       }
+
+      await claimPendingReferral()
+      navigate({ to: '/home' })
     }
 
     handleCallback()
   }, [navigate])
-
-  useEffect(() => {
-    if (user) {
-      claimPendingReferral().then(() => {
-        navigate({ to: '/home' })
-      })
-    }
-  }, [user, navigate])
 
   return (
     <div className="flex min-h-screen items-center justify-center">
