@@ -2,7 +2,7 @@ import { analytics } from '@/lib/analytics'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
 interface OnboardingState {
   isOpen: boolean
@@ -23,7 +23,7 @@ interface OnboardingState {
   reset: () => void
 }
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 8
 
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
