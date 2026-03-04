@@ -142,8 +142,8 @@ export function InstallmentGroupModal({ open, onOpenChange, expense }: Installme
         <div className="space-y-4">
           {isLoading ? (
             <div className="space-y-2">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-14 w-full" />
+              {['s1', 's2', 's3', 's4'].map((key) => (
+                <Skeleton key={key} className="h-14 w-full" />
               ))}
             </div>
           ) : futureInstallments.length === 0 ? (

@@ -48,8 +48,8 @@ export function InvoiceTransactionsList({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <TableRow key={i}>
+            {['s1', 's2', 's3', 's4', 's5'].map((key) => (
+              <TableRow key={key}>
                 <TableCell colSpan={4}>
                   <div className="h-8 animate-pulse rounded bg-muted" />
                 </TableCell>

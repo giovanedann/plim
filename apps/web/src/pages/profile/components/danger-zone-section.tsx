@@ -1,5 +1,5 @@
 import { AlertTriangle, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useReducer } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,70 @@ type ConfirmationStep = 'warning' | 'type-confirm' | 'password'
 
 const CONFIRMATION_TEXT = 'EXCLUIR'
 
+interface DangerZoneState {
+  isModalOpen: boolean
+  step: ConfirmationStep
+  confirmText: string
+  password: string
+  isDeleting: boolean
+}
+
+type DangerZoneAction =
+  | { type: 'OPEN_DELETE_DIALOG' }
+  | { type: 'CLOSE_DELETE_DIALOG' }
+  | { type: 'SET_CONFIRMATION'; payload: string }
+  | { type: 'SET_PASSWORD'; payload: string }
+  | { type: 'NEXT_STEP'; payload: { isSocialLoginOnly: boolean } }
+  | { type: 'PREV_STEP' }
+  | { type: 'SET_DELETING'; payload: boolean }
+  | { type: 'RESET' }
+
+const initialState: DangerZoneState = {
+  isModalOpen: false,
+  step: 'warning',
+  confirmText: '',
+  password: '',
+  isDeleting: false,
+}
+
+function dangerZoneReducer(state: DangerZoneState, action: DangerZoneAction): DangerZoneState {
+  switch (action.type) {
+    case 'OPEN_DELETE_DIALOG':
+      return { ...initialState, isModalOpen: true }
+    case 'CLOSE_DELETE_DIALOG':
+      return initialState
+    case 'SET_CONFIRMATION':
+      return { ...state, confirmText: action.payload }
+    case 'SET_PASSWORD':
+      return { ...state, password: action.payload }
+    case 'NEXT_STEP':
+      if (state.step === 'warning') {
+        return { ...state, step: 'type-confirm' }
+      }
+      if (state.step === 'type-confirm' && state.confirmText === CONFIRMATION_TEXT) {
+        if (action.payload.isSocialLoginOnly) {
+          return state
+        }
+        return { ...state, step: 'password' }
+      }
+      return state
+    case 'PREV_STEP':
+      if (state.step === 'password') {
+        return { ...state, step: 'type-confirm' }
+      }
+      if (state.step === 'type-confirm') {
+        return { ...state, step: 'warning' }
+      }
+      return state
+    case 'SET_DELETING':
+      return { ...state, isDeleting: action.payload }
+    case 'RESET':
+      return initialState
+    default:
+      return state
+  }
+}
+
 function useIsSocialLoginOnly(): boolean {
   const user = useAuthStore((state) => state.user)
   if (!user) return false
@@ -34,39 +98,23 @@ function useIsSocialLoginOnly(): boolean {
 
 export function DangerZoneSection() {
   const isSocialLoginOnly = useIsSocialLoginOnly()
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [step, setStep] = useState<ConfirmationStep>('warning')
-  const [confirmText, setConfirmText] = useState('')
-  const [password, setPassword] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  function resetModal(): void {
-    setStep('warning')
-    setConfirmText('')
-    setPassword('')
-    setIsDeleting(false)
-  }
+  const [state, dispatch] = useReducer(dangerZoneReducer, initialState)
+  const { isModalOpen, step, confirmText, password, isDeleting } = state
 
   function handleOpenModal(): void {
-    resetModal()
-    setIsModalOpen(true)
+    dispatch({ type: 'OPEN_DELETE_DIALOG' })
   }
 
   function handleCloseModal(): void {
-    setIsModalOpen(false)
-    resetModal()
+    dispatch({ type: 'CLOSE_DELETE_DIALOG' })
   }
 
   function handleNextStep(): void {
-    if (step === 'warning') {
-      setStep('type-confirm')
-    } else if (step === 'type-confirm' && confirmText === CONFIRMATION_TEXT) {
-      if (isSocialLoginOnly) {
-        handleDeleteAccount()
-      } else {
-        setStep('password')
-      }
+    if (step === 'type-confirm' && confirmText === CONFIRMATION_TEXT && isSocialLoginOnly) {
+      handleDeleteAccount()
+      return
     }
+    dispatch({ type: 'NEXT_STEP', payload: { isSocialLoginOnly } })
   }
 
   async function handleDeleteAccount(): Promise<void> {
@@ -75,7 +123,7 @@ export function DangerZoneSection() {
       return
     }
 
-    setIsDeleting(true)
+    dispatch({ type: 'SET_DELETING', payload: true })
     try {
       const result = await accountService.deleteAccount(isSocialLoginOnly ? undefined : password)
 
@@ -89,7 +137,7 @@ export function DangerZoneSection() {
     } catch {
       toast.error('Erro ao excluir conta')
     } finally {
-      setIsDeleting(false)
+      dispatch({ type: 'SET_DELETING', payload: false })
     }
   }
 
@@ -171,14 +219,20 @@ export function DangerZoneSection() {
                   <Input
                     id="confirm-text"
                     value={confirmText}
-                    onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      dispatch({ type: 'SET_CONFIRMATION', payload: e.target.value.toUpperCase() })
+                    }
                     placeholder={CONFIRMATION_TEXT}
                     autoComplete="off"
                   />
                 </div>
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setStep('warning')} disabled={isDeleting}>
+                <Button
+                  variant="outline"
+                  onClick={() => dispatch({ type: 'PREV_STEP' })}
+                  disabled={isDeleting}
+                >
                   Voltar
                 </Button>
                 <Button
@@ -216,7 +270,7 @@ export function DangerZoneSection() {
                     id="password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => dispatch({ type: 'SET_PASSWORD', payload: e.target.value })}
                     placeholder="Digite sua senha"
                     autoComplete="current-password"
                   />
@@ -225,7 +279,7 @@ export function DangerZoneSection() {
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button
                   variant="outline"
-                  onClick={() => setStep('type-confirm')}
+                  onClick={() => dispatch({ type: 'PREV_STEP' })}
                   disabled={isDeleting}
                 >
                   Voltar

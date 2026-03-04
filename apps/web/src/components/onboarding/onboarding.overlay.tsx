@@ -14,6 +14,39 @@ import {
   WelcomeStep,
 } from './steps'
 
+interface OnboardingStepRendererProps {
+  currentStep: number
+  existingSalary?: number | null
+  onSaveSalary: (salary: number) => Promise<void>
+  isReplay: boolean
+}
+
+function OnboardingStepRenderer({
+  currentStep,
+  existingSalary,
+  onSaveSalary,
+  isReplay,
+}: OnboardingStepRendererProps) {
+  switch (currentStep) {
+    case 1:
+      return <WelcomeStep />
+    case 2:
+      return <ExpenseTypesStep />
+    case 3:
+      return (
+        <SalaryStep existingSalary={existingSalary} onSave={onSaveSalary} isReplay={isReplay} />
+      )
+    case 4:
+      return <CategoriesStep />
+    case 5:
+      return <DashboardStep />
+    case 6:
+      return <ReadyStep />
+    default:
+      return null
+  }
+}
+
 interface OnboardingOverlayProps {
   existingSalary?: number | null
   onSaveSalary: (salary: number) => Promise<void>
@@ -102,27 +135,6 @@ export function OnboardingOverlay({
     }
   }, [isOpen])
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <WelcomeStep />
-      case 2:
-        return <ExpenseTypesStep />
-      case 3:
-        return (
-          <SalaryStep existingSalary={existingSalary} onSave={onSaveSalary} isReplay={isReplay} />
-        )
-      case 4:
-        return <CategoriesStep />
-      case 5:
-        return <DashboardStep />
-      case 6:
-        return <ReadyStep />
-      default:
-        return null
-    }
-  }
-
   const overlayAnimation = prefersReducedMotion
     ? {
         initial: { opacity: 1 },
@@ -150,7 +162,14 @@ export function OnboardingOverlay({
         >
           <div className="flex-1 flex items-center justify-center overflow-y-auto">
             <AnimatePresence mode="wait">
-              <div key={currentStep}>{renderStep()}</div>
+              <div key={currentStep}>
+                <OnboardingStepRenderer
+                  currentStep={currentStep}
+                  existingSalary={existingSalary}
+                  onSaveSalary={onSaveSalary}
+                  isReplay={isReplay}
+                />
+              </div>
             </AnimatePresence>
           </div>
 
