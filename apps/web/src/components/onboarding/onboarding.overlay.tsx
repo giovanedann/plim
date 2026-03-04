@@ -7,10 +7,12 @@ import { OnboardingProgress } from './onboarding.progress'
 import { SkipConfirmationModal } from './skip-confirmation.modal'
 import {
   CategoriesStep,
-  DashboardStep,
-  ExpenseTypesStep,
+  CreditCardsStep,
+  NavigationTourStep,
   ReadyStep,
   SalaryStep,
+  ThemePickerStep,
+  TransactionsStep,
   WelcomeStep,
 } from './steps'
 
@@ -19,6 +21,7 @@ interface OnboardingStepRendererProps {
   existingSalary?: number | null
   onSaveSalary: (salary: number) => Promise<void>
   isReplay: boolean
+  firstName?: string
 }
 
 function OnboardingStepRenderer({
@@ -26,21 +29,26 @@ function OnboardingStepRenderer({
   existingSalary,
   onSaveSalary,
   isReplay,
+  firstName,
 }: OnboardingStepRendererProps) {
   switch (currentStep) {
     case 1:
-      return <WelcomeStep />
+      return <WelcomeStep firstName={firstName} />
     case 2:
-      return <ExpenseTypesStep />
+      return <NavigationTourStep />
     case 3:
-      return (
-        <SalaryStep existingSalary={existingSalary} onSave={onSaveSalary} isReplay={isReplay} />
-      )
+      return <TransactionsStep />
     case 4:
       return <CategoriesStep />
     case 5:
-      return <DashboardStep />
+      return <CreditCardsStep />
     case 6:
+      return (
+        <SalaryStep existingSalary={existingSalary} onSave={onSaveSalary} isReplay={isReplay} />
+      )
+    case 7:
+      return <ThemePickerStep />
+    case 8:
       return <ReadyStep />
     default:
       return null
@@ -51,12 +59,14 @@ interface OnboardingOverlayProps {
   existingSalary?: number | null
   onSaveSalary: (salary: number) => Promise<void>
   onComplete: () => Promise<void>
+  firstName?: string
 }
 
 export function OnboardingOverlay({
   existingSalary,
   onSaveSalary,
   onComplete,
+  firstName,
 }: OnboardingOverlayProps) {
   const {
     isOpen,
@@ -74,7 +84,7 @@ export function OnboardingOverlay({
   const prefersReducedMotion = useReducedMotion()
 
   const handleNext = useCallback(async () => {
-    if (currentStep === 6) {
+    if (currentStep === 8) {
       try {
         await onComplete()
       } finally {
@@ -168,6 +178,7 @@ export function OnboardingOverlay({
                   existingSalary={existingSalary}
                   onSaveSalary={onSaveSalary}
                   isReplay={isReplay}
+                  firstName={firstName}
                 />
               </div>
             </AnimatePresence>
@@ -181,7 +192,7 @@ export function OnboardingOverlay({
                 onPrev={prevStep}
                 onSkip={requestSkip}
                 isFirstStep={currentStep === 1}
-                isLastStep={currentStep === 6}
+                isLastStep={currentStep === 8}
               />
             </div>
           </div>

@@ -6,6 +6,7 @@ import {
   Heart,
   Home,
   MoreHorizontal,
+  Plus,
   ShoppingBag,
   Tags,
   Utensils,
@@ -34,28 +35,45 @@ export function CategoriesStep() {
       title="Organize por categorias"
       description="Já criamos categorias essenciais para você: Alimentação, Transporte, Moradia e mais. Depois, você pode criar as suas próprias."
     >
-      <div className="grid grid-cols-4 gap-2 mt-4">
-        {DEFAULT_CATEGORIES.map((category, index) => {
-          const Icon = category.icon
-          return (
-            <motion.div
-              key={category.name}
-              initial={prefersReducedMotion ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                delay: prefersReducedMotion ? 0 : 0.25 + index * 0.05,
-                duration: prefersReducedMotion ? 0 : 0.2,
-              }}
-              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-muted/50 border border-border"
-            >
-              <Icon className={`h-6 w-6 ${category.color}`} />
-              <span className="text-xs text-muted-foreground text-center leading-tight">
-                {category.name}
-              </span>
-            </motion.div>
-          )
-        })}
-      </div>
+      <>
+        <div className="grid grid-cols-4 gap-2 mt-4">
+          {DEFAULT_CATEGORIES.map((category, index) => {
+            const Icon = category.icon
+            return (
+              <motion.div
+                key={category.name}
+                initial={prefersReducedMotion ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  delay: prefersReducedMotion ? 0 : 0.25 + index * 0.05,
+                  duration: prefersReducedMotion ? 0 : 0.2,
+                }}
+                className="flex flex-col items-center gap-1 p-3 rounded-lg bg-muted/50 border border-border"
+              >
+                <Icon className={`h-6 w-6 ${category.color}`} />
+                <span className="text-xs text-muted-foreground text-center leading-tight">
+                  {category.name}
+                </span>
+              </motion.div>
+            )
+          })}
+        </div>
+        <motion.div
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: prefersReducedMotion ? 0 : 0.7,
+            duration: prefersReducedMotion ? 0 : 0.2,
+          }}
+          className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mt-4"
+        >
+          <Plus className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground text-left">
+            <span className="font-medium text-foreground">Quer mais?</span> Crie suas próprias
+            categorias na tela de Categorias. No plano gratuito você pode criar até 3.
+          </p>
+        </motion.div>
+      </>
     </OnboardingStep>
   )
 }

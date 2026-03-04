@@ -59,8 +59,8 @@ export function SalaryStep({ existingSalary, onSave, isReplay }: SalaryStepProps
     <OnboardingStep
       icon={<TrendingUpIcon size={80} />}
       iconColorClass="text-emerald-500"
-      title="Por que registrar seu salário?"
-      description="Com sua renda cadastrada, você visualiza quanto sobra no fim do mês e recebe alertas quando os gastos estiverem altos. Seus dados ficam seguros e privados."
+      title="Cadastre seu salário"
+      description="Com sua renda cadastrada, o Plim calcula seu saldo mensal comparando receitas e despesas. Seus dados ficam seguros e privados."
     >
       <AnimatePresence mode="wait">
         {hasExistingSalary && isReplay ? (
