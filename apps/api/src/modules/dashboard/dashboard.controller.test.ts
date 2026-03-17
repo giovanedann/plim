@@ -81,9 +81,9 @@ describe('Dashboard Controller', () => {
   describe('GET /dashboard', () => {
     it('returns complete dashboard data', async () => {
       const mockExecute = vi.fn().mockResolvedValue(baseDashboardData)
-      vi.mocked(GetDashboardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetDashboardUseCase
-      )
+      vi.mocked(GetDashboardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetDashboardUseCase
+      })
 
       const res = await app.request(
         '/dashboard?start_date=2024-01-01&end_date=2024-01-31',
@@ -100,9 +100,9 @@ describe('Dashboard Controller', () => {
 
     it('accepts group_by parameter', async () => {
       const mockExecute = vi.fn().mockResolvedValue(baseDashboardData)
-      vi.mocked(GetDashboardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetDashboardUseCase
-      )
+      vi.mocked(GetDashboardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetDashboardUseCase
+      })
 
       const res = await app.request(
         '/dashboard?start_date=2024-01-01&end_date=2024-01-31&group_by=month',

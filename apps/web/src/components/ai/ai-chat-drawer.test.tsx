@@ -68,7 +68,7 @@ describe('AIChatDrawer', () => {
     }
 
     vi.mocked(useAIStore).mockReturnValue(mockStore)
-    vi.mocked(useAIChat).mockReturnValue(mockAIChat)
+    vi.mocked(useAIChat).mockReturnValue(mockAIChat as any)
     vi.mocked(useProfile).mockReturnValue({
       profile: createMockProfile({ name: 'Test User' }),
       isLoading: false,
@@ -237,7 +237,7 @@ describe('AIChatDrawer', () => {
   describe('typing indicator', () => {
     it('shows typing indicator during loading', () => {
       mockAIChat.isLoading = true
-      vi.mocked(useAIChat).mockReturnValue(mockAIChat)
+      vi.mocked(useAIChat).mockReturnValue(mockAIChat as any)
       mockStore.messages = [
         { id: 'msg-1', role: 'user', content: [{ type: 'text', text: 'Hello' }] },
       ]
@@ -251,7 +251,7 @@ describe('AIChatDrawer', () => {
 
     it('hides typing indicator when not loading', () => {
       mockAIChat.isLoading = false
-      vi.mocked(useAIChat).mockReturnValue(mockAIChat)
+      vi.mocked(useAIChat).mockReturnValue(mockAIChat as any)
 
       render(<AIChatDrawer />)
 
@@ -369,7 +369,7 @@ describe('AIChatDrawer', () => {
 
     it('disables input during loading', () => {
       mockAIChat.isLoading = true
-      vi.mocked(useAIChat).mockReturnValue(mockAIChat)
+      vi.mocked(useAIChat).mockReturnValue(mockAIChat as any)
 
       render(<AIChatDrawer />)
 

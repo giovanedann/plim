@@ -27,7 +27,7 @@ function createMockStream(): MediaStream {
 describe('VoiceRecorder', () => {
   let mockMediaRecorder: MockMediaRecorder
   let mockStream: MediaStream
-  let mockOnRecordingComplete: ReturnType<typeof vi.fn>
+  let mockOnRecordingComplete: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -39,7 +39,9 @@ describe('VoiceRecorder', () => {
 
     Object.defineProperty(global, 'MediaRecorder', {
       writable: true,
-      value: vi.fn().mockImplementation(() => mockMediaRecorder),
+      value: vi.fn().mockImplementation(function () {
+        return mockMediaRecorder
+      }),
     })
 
     Object.defineProperty(navigator, 'mediaDevices', {
@@ -233,9 +235,9 @@ describe('VoiceRecorder', () => {
         readAsDataURL: vi.fn(),
       }
 
-      vi.spyOn(global, 'FileReader').mockImplementation(
-        () => mockFileReader as unknown as FileReader
-      )
+      vi.spyOn(global, 'FileReader').mockImplementation(function () {
+        return mockFileReader as unknown as FileReader
+      })
 
       render(<VoiceRecorder onRecordingComplete={mockOnRecordingComplete} />)
 
@@ -280,9 +282,9 @@ describe('VoiceRecorder', () => {
         readAsDataURL: vi.fn(),
       }
 
-      vi.spyOn(global, 'FileReader').mockImplementation(
-        () => mockFileReader as unknown as FileReader
-      )
+      vi.spyOn(global, 'FileReader').mockImplementation(function () {
+        return mockFileReader as unknown as FileReader
+      })
 
       render(<VoiceRecorder onRecordingComplete={mockOnRecordingComplete} />)
 

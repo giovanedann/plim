@@ -10,11 +10,7 @@ export default defineConfig({
     maxWorkers: 2,
     maxConcurrency: 5,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        maxForks: 2,
-        minForks: 1,
-      },
-    },
+    maxForks: 2,
+    minForks: 1,
   },
 })

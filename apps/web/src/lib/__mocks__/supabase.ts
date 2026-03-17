@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-export const supabase = {
+export const supabase: Record<string, unknown> = {
   auth: {
     getSession: vi.fn().mockResolvedValue({
       data: {

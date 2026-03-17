@@ -66,9 +66,9 @@ describe('Invoices Controller', () => {
         credit_card_id: CARD_ID,
       })
       const mockFindByCard = vi.fn().mockResolvedValue([invoice])
-      vi.mocked(InvoicesRepository).mockImplementation(
-        () => ({ findByCard: mockFindByCard }) as unknown as InvoicesRepository
-      )
+      vi.mocked(InvoicesRepository).mockImplementation(function () {
+        return { findByCard: mockFindByCard } as unknown as InvoicesRepository
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<Invoice[]>
@@ -80,9 +80,9 @@ describe('Invoices Controller', () => {
 
     it('returns empty array when no invoices', async () => {
       const mockFindByCard = vi.fn().mockResolvedValue([])
-      vi.mocked(InvoicesRepository).mockImplementation(
-        () => ({ findByCard: mockFindByCard }) as unknown as InvoicesRepository
-      )
+      vi.mocked(InvoicesRepository).mockImplementation(function () {
+        return { findByCard: mockFindByCard } as unknown as InvoicesRepository
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<Invoice[]>
@@ -102,9 +102,9 @@ describe('Invoices Controller', () => {
         recurrent_commitment_cents: 0,
       }
       const mockExecute = vi.fn().mockResolvedValue(limitUsage)
-      vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetCreditCardLimitUsageUseCase
-      )
+      vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetCreditCardLimitUsageUseCase
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}/limit-usage`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<CreditCardLimitUsage>
@@ -120,9 +120,9 @@ describe('Invoices Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Credit card not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetCreditCardLimitUsageUseCase
-      )
+      vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetCreditCardLimitUsageUseCase
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}/limit-usage`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as ErrorResponse
@@ -141,9 +141,9 @@ describe('Invoices Controller', () => {
             HTTP_STATUS.BAD_REQUEST
           )
         )
-      vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetCreditCardLimitUsageUseCase
-      )
+      vi.mocked(GetCreditCardLimitUsageUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetCreditCardLimitUsageUseCase
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}/limit-usage`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as ErrorResponse
@@ -169,9 +169,9 @@ describe('Invoices Controller', () => {
         }),
       ]
       const mockExecute = vi.fn().mockResolvedValue({ invoice, transactions })
-      vi.mocked(GetOrCreateInvoiceUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetOrCreateInvoiceUseCase
-      )
+      vi.mocked(GetOrCreateInvoiceUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetOrCreateInvoiceUseCase
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}/2026-01`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<{
@@ -190,9 +190,9 @@ describe('Invoices Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Credit card not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(GetOrCreateInvoiceUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetOrCreateInvoiceUseCase
-      )
+      vi.mocked(GetOrCreateInvoiceUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetOrCreateInvoiceUseCase
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}/2026-01`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as ErrorResponse
@@ -211,9 +211,9 @@ describe('Invoices Controller', () => {
             HTTP_STATUS.BAD_REQUEST
           )
         )
-      vi.mocked(GetOrCreateInvoiceUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetOrCreateInvoiceUseCase
-      )
+      vi.mocked(GetOrCreateInvoiceUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetOrCreateInvoiceUseCase
+      })
 
       const res = await app.request(`/invoices/${CARD_ID}/2026-01`, { method: 'GET' }, testEnv)
       const body = (await res.json()) as ErrorResponse
@@ -233,9 +233,9 @@ describe('Invoices Controller', () => {
         paid_at: '2026-01-20T12:00:00.000Z',
       })
       const mockExecute = vi.fn().mockResolvedValue(paidInvoice)
-      vi.mocked(PayInvoiceUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as PayInvoiceUseCase
-      )
+      vi.mocked(PayInvoiceUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as PayInvoiceUseCase
+      })
 
       const res = await app.request(
         `/invoices/${INVOICE_ID}/pay`,
@@ -301,9 +301,9 @@ describe('Invoices Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Invoice not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(PayInvoiceUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as PayInvoiceUseCase
-      )
+      vi.mocked(PayInvoiceUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as PayInvoiceUseCase
+      })
 
       const res = await app.request(
         `/invoices/${INVOICE_ID}/pay`,
@@ -330,9 +330,9 @@ describe('Invoices Controller', () => {
             HTTP_STATUS.BAD_REQUEST
           )
         )
-      vi.mocked(PayInvoiceUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as PayInvoiceUseCase
-      )
+      vi.mocked(PayInvoiceUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as PayInvoiceUseCase
+      })
 
       const res = await app.request(
         `/invoices/${INVOICE_ID}/pay`,

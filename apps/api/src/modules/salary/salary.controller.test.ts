@@ -45,9 +45,9 @@ describe('Salary Controller', () => {
     it('returns active salary for month', async () => {
       const salary = createMockSalaryHistory({ user_id: USER_ID })
       const mockExecute = vi.fn().mockResolvedValue(salary)
-      vi.mocked(GetSalaryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetSalaryUseCase
-      )
+      vi.mocked(GetSalaryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetSalaryUseCase
+      })
 
       const res = await app.request('/salary?month=2024-03', { method: 'GET' }, testEnv)
 
@@ -59,9 +59,9 @@ describe('Salary Controller', () => {
 
     it('returns null when no salary exists', async () => {
       const mockExecute = vi.fn().mockResolvedValue(null)
-      vi.mocked(GetSalaryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetSalaryUseCase
-      )
+      vi.mocked(GetSalaryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetSalaryUseCase
+      })
 
       const res = await app.request('/salary?month=2024-01', { method: 'GET' }, testEnv)
 
@@ -96,9 +96,9 @@ describe('Salary Controller', () => {
         createMockSalaryHistory({ user_id: USER_ID, amount_cents: 400000 }),
       ]
       const mockExecute = vi.fn().mockResolvedValue(history)
-      vi.mocked(ListSalaryHistoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ListSalaryHistoryUseCase
-      )
+      vi.mocked(ListSalaryHistoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ListSalaryHistoryUseCase
+      })
 
       const res = await app.request('/salary/history', { method: 'GET' }, testEnv)
 
@@ -109,9 +109,9 @@ describe('Salary Controller', () => {
 
     it('returns empty array when no history', async () => {
       const mockExecute = vi.fn().mockResolvedValue([])
-      vi.mocked(ListSalaryHistoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ListSalaryHistoryUseCase
-      )
+      vi.mocked(ListSalaryHistoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ListSalaryHistoryUseCase
+      })
 
       const res = await app.request('/salary/history', { method: 'GET' }, testEnv)
 
@@ -129,9 +129,9 @@ describe('Salary Controller', () => {
         effective_from: '2024-01-01',
       })
       const mockExecute = vi.fn().mockResolvedValue(salary)
-      vi.mocked(CreateSalaryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as CreateSalaryUseCase
-      )
+      vi.mocked(CreateSalaryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as CreateSalaryUseCase
+      })
 
       const res = await app.request(
         '/salary',

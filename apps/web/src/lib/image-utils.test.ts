@@ -43,12 +43,10 @@ describe('image-utils', () => {
       }
 
       vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as unknown as HTMLElement)
-      vi.spyOn(globalThis, 'Image').mockImplementation(
-        () => mockImage as unknown as HTMLImageElement
-      )
-      vi.stubGlobal('URL', {
-        createObjectURL: vi.fn().mockReturnValue('blob:test-url'),
+      vi.spyOn(globalThis, 'Image').mockImplementation(function () {
+        return mockImage as unknown as HTMLImageElement
       })
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url')
     })
 
     afterEach(() => {

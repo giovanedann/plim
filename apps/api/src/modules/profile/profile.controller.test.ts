@@ -53,9 +53,9 @@ describe('Profile Controller', () => {
     it('returns profile when found', async () => {
       const profile = createMockProfile({ user_id: USER_ID })
       const mockExecute = vi.fn().mockResolvedValue(profile)
-      vi.mocked(GetProfileUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetProfileUseCase
-      )
+      vi.mocked(GetProfileUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetProfileUseCase
+      })
 
       const res = await app.request('/profile', { method: 'GET' }, testEnv)
 
@@ -71,9 +71,9 @@ describe('Profile Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Profile not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(GetProfileUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetProfileUseCase
-      )
+      vi.mocked(GetProfileUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetProfileUseCase
+      })
 
       const res = await app.request('/profile', { method: 'GET' }, testEnv)
 
@@ -93,9 +93,9 @@ describe('Profile Controller', () => {
     it('updates profile with valid data', async () => {
       const updatedProfile = createMockProfile({ user_id: USER_ID, name: 'Jane Doe' })
       const mockExecute = vi.fn().mockResolvedValue(updatedProfile)
-      vi.mocked(UpdateProfileUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateProfileUseCase
-      )
+      vi.mocked(UpdateProfileUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateProfileUseCase
+      })
 
       const res = await app.request('/profile', patchRequest({ name: 'Jane Doe' }), testEnv)
 
@@ -122,9 +122,9 @@ describe('Profile Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Profile not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(UpdateProfileUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateProfileUseCase
-      )
+      vi.mocked(UpdateProfileUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateProfileUseCase
+      })
 
       const res = await app.request('/profile', patchRequest({ name: 'Jane Doe' }), testEnv)
 

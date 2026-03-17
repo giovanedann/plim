@@ -53,9 +53,9 @@ describe('Spending Limits Controller', () => {
         source_month: null,
       }
       const mockExecute = vi.fn().mockResolvedValue(effectiveLimit)
-      vi.mocked(GetSpendingLimitUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetSpendingLimitUseCase
-      )
+      vi.mocked(GetSpendingLimitUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetSpendingLimitUseCase
+      })
 
       const res = await app.request('/spending-limits/2024-02', { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<EffectiveSpendingLimit>
@@ -74,9 +74,9 @@ describe('Spending Limits Controller', () => {
         source_month: '2024-02',
       }
       const mockExecute = vi.fn().mockResolvedValue(carriedOverLimit)
-      vi.mocked(GetSpendingLimitUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetSpendingLimitUseCase
-      )
+      vi.mocked(GetSpendingLimitUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetSpendingLimitUseCase
+      })
 
       const res = await app.request('/spending-limits/2024-03', { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<EffectiveSpendingLimit>
@@ -88,9 +88,9 @@ describe('Spending Limits Controller', () => {
 
     it('returns null when no limit exists', async () => {
       const mockExecute = vi.fn().mockResolvedValue(null)
-      vi.mocked(GetSpendingLimitUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as GetSpendingLimitUseCase
-      )
+      vi.mocked(GetSpendingLimitUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as GetSpendingLimitUseCase
+      })
 
       const res = await app.request('/spending-limits/2024-01', { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<null>
@@ -120,9 +120,9 @@ describe('Spending Limits Controller', () => {
         amount_cents: 500000,
       })
       const mockExecute = vi.fn().mockResolvedValue(spendingLimit)
-      vi.mocked(UpsertSpendingLimitUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpsertSpendingLimitUseCase
-      )
+      vi.mocked(UpsertSpendingLimitUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpsertSpendingLimitUseCase
+      })
 
       const res = await app.request(
         '/spending-limits',

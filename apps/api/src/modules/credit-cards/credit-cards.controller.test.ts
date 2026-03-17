@@ -55,9 +55,9 @@ describe('Credit Cards Controller', () => {
     it('returns list of credit cards', async () => {
       const card = createMockCreditCard({ id: CARD_ID, user_id: USER_ID })
       const mockExecute = vi.fn().mockResolvedValue([card])
-      vi.mocked(ListCreditCardsUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ListCreditCardsUseCase
-      )
+      vi.mocked(ListCreditCardsUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ListCreditCardsUseCase
+      })
 
       const res = await app.request('/credit-cards', { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<CreditCard[]>
@@ -69,9 +69,9 @@ describe('Credit Cards Controller', () => {
 
     it('returns empty array when no cards', async () => {
       const mockExecute = vi.fn().mockResolvedValue([])
-      vi.mocked(ListCreditCardsUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ListCreditCardsUseCase
-      )
+      vi.mocked(ListCreditCardsUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ListCreditCardsUseCase
+      })
 
       const res = await app.request('/credit-cards', { method: 'GET' }, testEnv)
       const body = (await res.json()) as SuccessResponse<CreditCard[]>
@@ -91,9 +91,9 @@ describe('Credit Cards Controller', () => {
         bank: 'nubank',
       })
       const mockExecute = vi.fn().mockResolvedValue(card)
-      vi.mocked(CreateCreditCardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as CreateCreditCardUseCase
-      )
+      vi.mocked(CreateCreditCardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as CreateCreditCardUseCase
+      })
 
       const res = await app.request(
         '/credit-cards',
@@ -167,9 +167,9 @@ describe('Credit Cards Controller', () => {
     it('updates credit card', async () => {
       const updatedCard = createMockCreditCard({ id: CARD_ID, name: 'Updated Name' })
       const mockExecute = vi.fn().mockResolvedValue(updatedCard)
-      vi.mocked(UpdateCreditCardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateCreditCardUseCase
-      )
+      vi.mocked(UpdateCreditCardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateCreditCardUseCase
+      })
 
       const res = await app.request(
         `/credit-cards/${CARD_ID}`,
@@ -192,9 +192,9 @@ describe('Credit Cards Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Credit card not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(UpdateCreditCardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateCreditCardUseCase
-      )
+      vi.mocked(UpdateCreditCardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateCreditCardUseCase
+      })
 
       const res = await app.request(
         `/credit-cards/${CARD_ID}`,
@@ -243,9 +243,9 @@ describe('Credit Cards Controller', () => {
   describe('DELETE /credit-cards/:id', () => {
     it('deletes credit card', async () => {
       const mockExecute = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(DeleteCreditCardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteCreditCardUseCase
-      )
+      vi.mocked(DeleteCreditCardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteCreditCardUseCase
+      })
 
       const res = await app.request(`/credit-cards/${CARD_ID}`, { method: 'DELETE' }, testEnv)
 
@@ -258,9 +258,9 @@ describe('Credit Cards Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Credit card not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(DeleteCreditCardUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteCreditCardUseCase
-      )
+      vi.mocked(DeleteCreditCardUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteCreditCardUseCase
+      })
 
       const res = await app.request(`/credit-cards/${CARD_ID}`, { method: 'DELETE' }, testEnv)
       const body = (await res.json()) as ErrorResponse

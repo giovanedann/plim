@@ -180,7 +180,12 @@ const apiMockStore = new Map<string, { response: unknown; status: number; method
  * mockApiResponse('/expenses', createMockApiResponse([expense]))
  * mockApiResponse('/expenses/123', createMockApiError('NOT_FOUND', 'Expense not found'), 404)
  */
-export function mockApiResponse(endpoint: string, response: unknown, status = 200, method = 'GET') {
+export function mockApiResponse(
+  endpoint: string,
+  response: unknown,
+  status = 200,
+  method = 'GET'
+): unknown {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
   const targetUrl = `${apiUrl}/api/v1${endpoint}`
   const key = `${method}:${targetUrl}`

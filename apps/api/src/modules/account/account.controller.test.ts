@@ -50,9 +50,9 @@ describe('Account Controller', () => {
     it('exports profile data as CSV', async () => {
       const csvData = 'user_id,name,email\nuser-123,John,john@test.com'
       const mockExecute = vi.fn().mockResolvedValue(csvData)
-      vi.mocked(ExportDataUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ExportDataUseCase
-      )
+      vi.mocked(ExportDataUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ExportDataUseCase
+      })
 
       const res = await app.request('/account/export/profile', { method: 'GET' }, testEnv)
 
@@ -65,9 +65,9 @@ describe('Account Controller', () => {
     it('exports expenses data as CSV', async () => {
       const csvData = 'id,amount,description\n1,1000,Test'
       const mockExecute = vi.fn().mockResolvedValue(csvData)
-      vi.mocked(ExportDataUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ExportDataUseCase
-      )
+      vi.mocked(ExportDataUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ExportDataUseCase
+      })
 
       const res = await app.request('/account/export/expenses', { method: 'GET' }, testEnv)
 
@@ -78,9 +78,9 @@ describe('Account Controller', () => {
     it('exports categories data as CSV', async () => {
       const csvData = 'id,name,icon\n1,Food,burger'
       const mockExecute = vi.fn().mockResolvedValue(csvData)
-      vi.mocked(ExportDataUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ExportDataUseCase
-      )
+      vi.mocked(ExportDataUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ExportDataUseCase
+      })
 
       const res = await app.request('/account/export/categories', { method: 'GET' }, testEnv)
 
@@ -101,9 +101,9 @@ describe('Account Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.RATE_LIMITED, 'Rate limited', HTTP_STATUS.TOO_MANY_REQUESTS)
         )
-      vi.mocked(ExportDataUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ExportDataUseCase
-      )
+      vi.mocked(ExportDataUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ExportDataUseCase
+      })
 
       const res = await app.request('/account/export/profile', { method: 'GET' }, testEnv)
       const body = (await res.json()) as ErrorResponse
@@ -116,13 +116,13 @@ describe('Account Controller', () => {
   describe('DELETE /account', () => {
     it('deletes account with password', async () => {
       const mockGetUserEmail = vi.fn().mockResolvedValue('test@example.com')
-      vi.mocked(AccountRepository).mockImplementation(
-        () => ({ getUserEmail: mockGetUserEmail }) as unknown as AccountRepository
-      )
+      vi.mocked(AccountRepository).mockImplementation(function () {
+        return { getUserEmail: mockGetUserEmail } as unknown as AccountRepository
+      })
       const mockExecute = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(DeleteAccountUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteAccountUseCase
-      )
+      vi.mocked(DeleteAccountUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteAccountUseCase
+      })
 
       const res = await app.request(
         '/account',
@@ -139,13 +139,13 @@ describe('Account Controller', () => {
 
     it('deletes account without password (social login)', async () => {
       const mockGetUserEmail = vi.fn().mockResolvedValue('test@example.com')
-      vi.mocked(AccountRepository).mockImplementation(
-        () => ({ getUserEmail: mockGetUserEmail }) as unknown as AccountRepository
-      )
+      vi.mocked(AccountRepository).mockImplementation(function () {
+        return { getUserEmail: mockGetUserEmail } as unknown as AccountRepository
+      })
       const mockExecute = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(DeleteAccountUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteAccountUseCase
-      )
+      vi.mocked(DeleteAccountUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteAccountUseCase
+      })
 
       const res = await app.request(
         '/account',
@@ -162,9 +162,9 @@ describe('Account Controller', () => {
 
     it('returns 404 when profile not found', async () => {
       const mockGetUserEmail = vi.fn().mockResolvedValue(null)
-      vi.mocked(AccountRepository).mockImplementation(
-        () => ({ getUserEmail: mockGetUserEmail }) as unknown as AccountRepository
-      )
+      vi.mocked(AccountRepository).mockImplementation(function () {
+        return { getUserEmail: mockGetUserEmail } as unknown as AccountRepository
+      })
 
       const res = await app.request(
         '/account',
@@ -183,17 +183,17 @@ describe('Account Controller', () => {
 
     it('returns 401 when password is incorrect', async () => {
       const mockGetUserEmail = vi.fn().mockResolvedValue('test@example.com')
-      vi.mocked(AccountRepository).mockImplementation(
-        () => ({ getUserEmail: mockGetUserEmail }) as unknown as AccountRepository
-      )
+      vi.mocked(AccountRepository).mockImplementation(function () {
+        return { getUserEmail: mockGetUserEmail } as unknown as AccountRepository
+      })
       const mockExecute = vi
         .fn()
         .mockRejectedValue(
           new AppError(ERROR_CODES.UNAUTHORIZED, 'Senha incorreta', HTTP_STATUS.UNAUTHORIZED)
         )
-      vi.mocked(DeleteAccountUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteAccountUseCase
-      )
+      vi.mocked(DeleteAccountUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteAccountUseCase
+      })
 
       const res = await app.request(
         '/account',

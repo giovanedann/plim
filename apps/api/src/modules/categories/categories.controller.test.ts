@@ -55,9 +55,9 @@ describe('Categories Controller', () => {
       const systemCategory = createMockCategory({ id: 'system-1', user_id: null })
       const userCategory = createMockCategory({ id: 'user-1', user_id: USER_ID })
       const mockExecute = vi.fn().mockResolvedValue([systemCategory, userCategory])
-      vi.mocked(ListCategoriesUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ListCategoriesUseCase
-      )
+      vi.mocked(ListCategoriesUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ListCategoriesUseCase
+      })
 
       const res = await app.request('/categories', { method: 'GET' }, testEnv)
 
@@ -68,9 +68,9 @@ describe('Categories Controller', () => {
 
     it('returns empty array when no categories exist', async () => {
       const mockExecute = vi.fn().mockResolvedValue([])
-      vi.mocked(ListCategoriesUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as ListCategoriesUseCase
-      )
+      vi.mocked(ListCategoriesUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as ListCategoriesUseCase
+      })
 
       const res = await app.request('/categories', { method: 'GET' }, testEnv)
 
@@ -84,9 +84,9 @@ describe('Categories Controller', () => {
     it('creates category with valid data', async () => {
       const category = createMockCategory({ name: 'Custom', icon: '⭐', color: '#00FF00' })
       const mockExecute = vi.fn().mockResolvedValue(category)
-      vi.mocked(CreateCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as CreateCategoryUseCase
-      )
+      vi.mocked(CreateCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as CreateCategoryUseCase
+      })
 
       const res = await app.request(
         '/categories',
@@ -152,9 +152,9 @@ describe('Categories Controller', () => {
     it('updates user category', async () => {
       const updatedCategory = createMockCategory({ id: 'user-1', name: 'Updated' })
       const mockExecute = vi.fn().mockResolvedValue(updatedCategory)
-      vi.mocked(UpdateCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateCategoryUseCase
-      )
+      vi.mocked(UpdateCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateCategoryUseCase
+      })
 
       const res = await app.request(
         '/categories/user-1',
@@ -181,9 +181,9 @@ describe('Categories Controller', () => {
             HTTP_STATUS.FORBIDDEN
           )
         )
-      vi.mocked(UpdateCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateCategoryUseCase
-      )
+      vi.mocked(UpdateCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateCategoryUseCase
+      })
 
       const res = await app.request(
         '/categories/system-1',
@@ -206,9 +206,9 @@ describe('Categories Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Category not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(UpdateCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as UpdateCategoryUseCase
-      )
+      vi.mocked(UpdateCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as UpdateCategoryUseCase
+      })
 
       const res = await app.request(
         '/categories/non-existent',
@@ -241,9 +241,9 @@ describe('Categories Controller', () => {
   describe('DELETE /categories/:id', () => {
     it('soft deletes user category', async () => {
       const mockExecute = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(DeleteCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteCategoryUseCase
-      )
+      vi.mocked(DeleteCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteCategoryUseCase
+      })
 
       const res = await app.request('/categories/user-1', { method: 'DELETE' }, testEnv)
 
@@ -260,9 +260,9 @@ describe('Categories Controller', () => {
             HTTP_STATUS.FORBIDDEN
           )
         )
-      vi.mocked(DeleteCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteCategoryUseCase
-      )
+      vi.mocked(DeleteCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteCategoryUseCase
+      })
 
       const res = await app.request('/categories/system-1', { method: 'DELETE' }, testEnv)
 
@@ -275,9 +275,9 @@ describe('Categories Controller', () => {
         .mockRejectedValue(
           new AppError(ERROR_CODES.NOT_FOUND, 'Category not found', HTTP_STATUS.NOT_FOUND)
         )
-      vi.mocked(DeleteCategoryUseCase).mockImplementation(
-        () => ({ execute: mockExecute }) as unknown as DeleteCategoryUseCase
-      )
+      vi.mocked(DeleteCategoryUseCase).mockImplementation(function () {
+        return { execute: mockExecute } as unknown as DeleteCategoryUseCase
+      })
 
       const res = await app.request('/categories/non-existent', { method: 'DELETE' }, testEnv)
 

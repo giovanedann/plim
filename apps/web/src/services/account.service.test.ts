@@ -17,10 +17,8 @@ vi.stubGlobal('fetch', mockFetch)
 // Mock URL.createObjectURL and revokeObjectURL
 const mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
 const mockRevokeObjectURL = vi.fn()
-vi.stubGlobal('URL', {
-  createObjectURL: mockCreateObjectURL,
-  revokeObjectURL: mockRevokeObjectURL,
-})
+URL.createObjectURL = mockCreateObjectURL
+URL.revokeObjectURL = mockRevokeObjectURL
 
 import { supabase } from '@/lib/supabase'
 

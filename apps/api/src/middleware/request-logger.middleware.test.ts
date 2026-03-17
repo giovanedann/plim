@@ -32,7 +32,9 @@ describe('requestLoggerMiddleware', () => {
       flush: mockFlush,
       withExecutionContext: vi.fn().mockReturnThis(),
     }
-    vi.mocked(Logtail).mockImplementation(() => mockInstance as unknown as Logtail)
+    vi.mocked(Logtail).mockImplementation(function () {
+      return mockInstance as unknown as Logtail
+    })
 
     sut = createTestApp()
   })

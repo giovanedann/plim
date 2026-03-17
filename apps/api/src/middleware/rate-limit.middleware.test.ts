@@ -5,15 +5,17 @@ import type { Env } from '../types'
 import { rateLimitMiddleware } from './rate-limit.middleware'
 
 vi.mock('@upstash/redis', () => ({
-  Redis: vi.fn().mockImplementation(() => ({})),
+  Redis: vi.fn().mockImplementation(function () {
+    return {}
+  }),
 }))
 
 const mockLimit = vi.fn()
 vi.mock('@upstash/ratelimit', () => ({
   Ratelimit: Object.assign(
-    vi.fn().mockImplementation(() => ({
-      limit: mockLimit,
-    })),
+    vi.fn().mockImplementation(function () {
+      return { limit: mockLimit }
+    }),
     {
       tokenBucket: vi.fn(),
     }

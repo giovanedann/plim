@@ -15,7 +15,7 @@ function createMockFile(name: string, size: number, type: string): File {
 }
 
 describe('ImageUploader', () => {
-  let mockOnImageCapture: ReturnType<typeof vi.fn>
+  let mockOnImageCapture: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -178,9 +178,9 @@ describe('ImageUploader', () => {
         readAsDataURL: vi.fn(),
       }
 
-      vi.spyOn(global, 'FileReader').mockImplementation(
-        () => mockFileReader as unknown as FileReader
-      )
+      vi.spyOn(global, 'FileReader').mockImplementation(function () {
+        return mockFileReader as unknown as FileReader
+      })
 
       const user = userEvent.setup()
       render(<ImageUploader onImageCapture={mockOnImageCapture} />)
