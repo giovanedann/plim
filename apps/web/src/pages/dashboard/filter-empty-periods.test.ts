@@ -10,9 +10,9 @@ function createBaseDashboardData(overrides: Partial<DashboardData> = {}): Dashbo
       balance: 150000,
       savings_rate: 30,
       comparison: {
-        income_change_percent: 5,
-        expenses_change_percent: -2,
-        balance_change_percent: 15,
+        previous_income: 0,
+        previous_expenses: 0,
+        previous_balance: 0,
       },
     },
     expensesTimeline: {
@@ -237,9 +237,9 @@ describe('filterEmptyPeriods', () => {
         balance: 150000,
         savings_rate: 30,
         comparison: {
-          income_change_percent: 5,
-          expenses_change_percent: -2,
-          balance_change_percent: 15,
+          previous_income: 0,
+          previous_expenses: 0,
+          previous_balance: 0,
         },
       }
       const data = createBaseDashboardData({ summary })

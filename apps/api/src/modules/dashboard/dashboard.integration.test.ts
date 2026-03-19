@@ -59,9 +59,9 @@ describe('Dashboard Integration', () => {
         balance: 180000,
         savings_rate: 0.36,
         comparison: {
-          income_change_percent: 10,
-          expenses_change_percent: -5,
-          balance_change_percent: 15,
+          previous_income: 0,
+          previous_expenses: 0,
+          previous_balance: 0,
         },
       }
 
@@ -91,9 +91,9 @@ describe('Dashboard Integration', () => {
         balance: 600000,
         savings_rate: 0.6,
         comparison: {
-          income_change_percent: 0,
-          expenses_change_percent: 0,
-          balance_change_percent: 0,
+          previous_income: 0,
+          previous_expenses: 0,
+          previous_balance: 0,
         },
       }
 
@@ -119,9 +119,9 @@ describe('Dashboard Integration', () => {
         balance: -50000,
         savings_rate: 0,
         comparison: {
-          income_change_percent: 0,
-          expenses_change_percent: 0,
-          balance_change_percent: 0,
+          previous_income: 0,
+          previous_expenses: 0,
+          previous_balance: 0,
         },
       }
 

@@ -13,9 +13,9 @@ export const expensesTimelineQuerySchema = dashboardQuerySchema.extend({
 })
 
 export const summaryComparisonSchema = z.object({
-  income_change_percent: z.number(),
-  expenses_change_percent: z.number(),
-  balance_change_percent: z.number(),
+  previous_income: z.number().int().nonnegative(),
+  previous_expenses: z.number().int().nonnegative(),
+  previous_balance: z.number().int(),
 })
 
 export const dashboardSummarySchema = z.object({
@@ -47,7 +47,7 @@ export const incomeVsExpensesResponseSchema = z.object({
 })
 
 export const categoryBreakdownItemSchema = z.object({
-  category_id: z.uuid(),
+  category_id: z.uuid().nullable(),
   name: z.string(),
   color: z.string().nullable(),
   icon: z.string().nullable(),

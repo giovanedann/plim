@@ -1,10 +1,11 @@
 import type { Category, CreateCategory, UpdateCategory } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const CATEGORY_COLUMNS = 'id, user_id, name, icon, color, is_active, created_at, updated_at'
 
 export class CategoriesRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async findByUserId(userId: string): Promise<Category[]> {
     const { data, error } = await this.supabase

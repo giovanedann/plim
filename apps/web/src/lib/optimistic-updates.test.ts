@@ -24,9 +24,9 @@ function createMockDashboardData(overrides: Partial<DashboardData> = {}): Dashbo
       balance: 300000,
       savings_rate: 60,
       comparison: {
-        income_change_percent: 0,
-        expenses_change_percent: 0,
-        balance_change_percent: 0,
+        previous_income: 0,
+        previous_expenses: 0,
+        previous_balance: 0,
       },
     },
     expensesTimeline: {

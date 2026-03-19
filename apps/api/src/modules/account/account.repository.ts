@@ -1,3 +1,4 @@
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ExportableTable =
@@ -19,7 +20,7 @@ interface ProfileEmail {
 }
 
 export class AccountRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getUserEmail(userId: string): Promise<string | null> {
     const { data, error } = await this.supabase

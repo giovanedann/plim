@@ -30,9 +30,9 @@ const mockDashboardData = {
     balance: 200000,
     savings_rate: 0.4,
     comparison: {
-      income_change_percent: 0,
-      expenses_change_percent: 0,
-      balance_change_percent: 0,
+      previous_income: 0,
+      previous_expenses: 0,
+      previous_balance: 0,
     },
   },
   expensesTimeline: {

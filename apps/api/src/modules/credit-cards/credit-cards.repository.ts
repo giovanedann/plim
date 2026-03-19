@@ -1,11 +1,12 @@
 import type { CreateCreditCard, CreditCard, UpdateCreditCard } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const CREDIT_CARD_COLUMNS =
   'id, user_id, name, color, flag, bank, last_4_digits, expiration_day, closing_day, credit_limit_cents, is_active, created_at, updated_at'
 
 export class CreditCardsRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async findByUserId(userId: string): Promise<CreditCard[]> {
     const { data, error } = await this.supabase
@@ -68,10 +69,7 @@ export class CreditCardsRepository {
   async update(id: string, userId: string, input: UpdateCreditCard): Promise<CreditCard | null> {
     const { data, error } = await this.supabase
       .from('credit_card')
-      .update({
-        ...input,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ ...input, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', userId)
       .select(CREDIT_CARD_COLUMNS)

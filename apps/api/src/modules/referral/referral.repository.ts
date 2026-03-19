@@ -1,4 +1,5 @@
 import type { ReferralStats } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface ReferralProfile {
@@ -16,7 +17,7 @@ interface ReferralRow {
 }
 
 export class ReferralRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getProfileByReferralCode(code: string): Promise<ReferralProfile | null> {
     const { data, error } = await this.supabase
@@ -111,7 +112,7 @@ export class ReferralRepository {
       throw new Error(error.message)
     }
 
-    return data as ClaimReferralResult
+    return data as unknown as ClaimReferralResult
   }
 
   async hasBeenReferred(userId: string): Promise<boolean> {

@@ -1,3 +1,4 @@
+import type { Database } from '@plim/shared/database'
 import { type SupabaseClient, createClient } from '@supabase/supabase-js'
 
 export type Bindings = {
@@ -22,8 +23,11 @@ export type Bindings = {
  * Creates a Supabase client using the user's JWT token.
  * This client respects RLS policies for the authenticated user.
  */
-export function createSupabaseClientWithAuth(env: Bindings, accessToken: string): SupabaseClient {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
+export function createSupabaseClientWithAuth(
+  env: Bindings,
+  accessToken: string
+): SupabaseClient<Database> {
+  return createClient<Database>(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -36,8 +40,8 @@ export function createSupabaseClientWithAuth(env: Bindings, accessToken: string)
  * Creates a Supabase client with admin privileges for account deletion.
  * This client bypasses RLS - use only for account deletion operations.
  */
-export function createSupabaseAdminClient(env: Bindings): SupabaseClient {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_ACCOUNT_DELETE_SECRET_KEY, {
+export function createSupabaseAdminClient(env: Bindings): SupabaseClient<Database> {
+  return createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ACCOUNT_DELETE_SECRET_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

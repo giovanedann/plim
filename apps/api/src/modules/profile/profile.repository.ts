@@ -1,8 +1,9 @@
 import type { Profile, UpdateProfile } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export class ProfileRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async findByUserId(userId: string): Promise<Profile | null> {
     const { data, error } = await this.supabase

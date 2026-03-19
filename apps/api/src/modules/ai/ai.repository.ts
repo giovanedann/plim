@@ -1,3 +1,4 @@
+import type { Database, Json } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AIUsage {
@@ -86,7 +87,7 @@ export interface StoreIntentInput {
 }
 
 export class AIRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   private getWeekBoundaries(): { startOfWeek: string; endOfWeek: string } {
     const now = new Date()
@@ -289,7 +290,7 @@ export class AIRepository {
         cache_key: cacheKey,
         request_type: requestType,
         response_message: responseMessage,
-        response_action: responseAction,
+        response_action: responseAction as Json | null,
         tokens_saved: tokensSaved,
         expires_at: expiresAt.toISOString(),
       },
@@ -337,7 +338,7 @@ export class AIRepository {
       canonical_text: input.canonical_text,
       embedding: JSON.stringify(input.embedding),
       function_name: input.function_name,
-      params_template: input.params_template,
+      params_template: input.params_template as Json,
       extraction_hints: input.extraction_hints,
     })
 

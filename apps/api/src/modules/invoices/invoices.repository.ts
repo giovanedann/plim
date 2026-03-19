@@ -1,4 +1,5 @@
 import type { CreateInvoice, Expense, Invoice, UpdateInvoice } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const INVOICE_COLUMNS =
@@ -8,7 +9,7 @@ const EXPENSE_COLUMNS =
   'id, user_id, type, category_id, description, amount_cents, payment_method, date, is_recurrent, recurrence_day, recurrence_start, recurrence_end, installment_current, installment_total, installment_group_id, recurrent_group_id, credit_card_id, invoice_id, created_at, updated_at'
 
 export class InvoicesRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async findByCardAndMonth(
     creditCardId: string,
@@ -93,10 +94,7 @@ export class InvoicesRepository {
   async update(id: string, userId: string, input: UpdateInvoice): Promise<Invoice | null> {
     const { data, error } = await this.supabase
       .from('invoice')
-      .update({
-        ...input,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ ...input, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', userId)
       .select(INVOICE_COLUMNS)

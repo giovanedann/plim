@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "gen:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > packages/shared/src/database.types.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

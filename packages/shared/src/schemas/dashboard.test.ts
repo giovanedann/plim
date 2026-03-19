@@ -124,9 +124,9 @@ describe('dashboardSummarySchema', () => {
     balance: 200000,
     savings_rate: 40.0,
     comparison: {
-      income_change_percent: 5.5,
-      expenses_change_percent: -2.3,
-      balance_change_percent: 15.0,
+      previous_income: 0,
+      previous_expenses: 0,
+      previous_balance: 0,
     },
   }
 

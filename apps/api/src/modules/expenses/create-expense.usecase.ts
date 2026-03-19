@@ -1,12 +1,12 @@
 import { ERROR_CODES, HTTP_STATUS } from '@plim/shared'
-import type { CreateExpense, Expense, TransactionType } from '@plim/shared'
+import type { CreateExpense, Expense, PaymentMethod, TransactionType } from '@plim/shared'
 import { AppError } from '../../middleware/error-handler.middleware'
 import type { CreateExpenseData, ExpensesRepository } from './expenses.repository'
 
 interface RecurrentInput {
   description: string
   amount_cents: number
-  payment_method: string
+  payment_method: PaymentMethod
   recurrence_day: number
   recurrence_start: string
   recurrence_end?: string
@@ -16,7 +16,7 @@ interface RecurrentInput {
 interface InstallmentInput {
   description: string
   amount_cents: number
-  payment_method: string
+  payment_method: PaymentMethod
   date: string
   installment_total: number
   credit_card_id?: string

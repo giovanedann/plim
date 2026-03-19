@@ -12,13 +12,14 @@ import type {
   TimelineDataPoint,
   TimelineGroupBy,
 } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface ExpenseRow {
   date: string
   amount_cents: number
   payment_method: string
-  category_id: string
+  category_id: string | null
   category_name: string
   category_color: string | null
   category_icon: string | null
@@ -51,7 +52,7 @@ interface SalaryRow {
 }
 
 export class DashboardRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getExpensesForPeriod(userId: string, query: DashboardQuery): Promise<ExpenseRow[]> {
     const { data: expenses, error } = await this.supabase
@@ -83,9 +84,9 @@ export class DashboardRepository {
         icon: string | null
       } | null
       return {
-        date: row.date,
-        amount_cents: row.amount_cents,
-        payment_method: row.payment_method,
+        date: row.date!,
+        amount_cents: row.amount_cents!,
+        payment_method: row.payment_method!,
         category_id: row.category_id,
         category_name: category?.name ?? 'Sem categoria',
         category_color: category?.color ?? null,
@@ -147,8 +148,8 @@ export class DashboardRepository {
     if (error || !expenses) return []
 
     return expenses.map((row) => ({
-      amount_cents: row.amount_cents,
-      date: row.date,
+      amount_cents: row.amount_cents!,
+      date: row.date!,
     }))
   }
 
@@ -171,7 +172,7 @@ export class DashboardRepository {
 
   aggregateByCategory(expenses: ExpenseRow[], total: number): CategoryBreakdownItem[] {
     const grouped = new Map<
-      string,
+      string | null,
       { name: string; color: string | null; icon: string | null; amount: number }
     >()
 
@@ -253,21 +254,21 @@ export class DashboardRepository {
 
       if (creditCards) {
         for (const card of creditCards) {
-          creditCardsMap.set(card.id, {
-            name: card.name,
-            color: card.color,
-            bank: card.bank,
-            flag: card.flag,
+          creditCardsMap.set(card.id!, {
+            name: card.name!,
+            color: card.color!,
+            bank: card.bank!,
+            flag: card.flag!,
           })
         }
       }
     }
 
     return expenses.map((row) => {
-      const creditCard = row.credit_card_id ? creditCardsMap.get(row.credit_card_id) : null
+      const creditCard = row.credit_card_id ? creditCardsMap.get(row.credit_card_id!) : null
       return {
-        date: row.date,
-        amount_cents: row.amount_cents,
+        date: row.date!,
+        amount_cents: row.amount_cents!,
         credit_card_id: row.credit_card_id,
         credit_card_name: creditCard?.name ?? null,
         credit_card_color: creditCard?.color ?? null,
@@ -421,7 +422,7 @@ export class DashboardRepository {
         .select('amount_cents')
         .eq('user_id', userId)
         .eq('type', 'expense')
-        .eq('credit_card_id', card.id)
+        .eq('credit_card_id', card.id!)
         .gte('date', cycleStart)
         .lte('date', cycleEnd)
 
@@ -430,7 +431,7 @@ export class DashboardRepository {
       const usedCents = (expenses ?? []).reduce((sum, e) => sum + (e.amount_cents as number), 0)
 
       results.push({
-        credit_card_id: card.id as string,
+        credit_card_id: card.id!,
         name: card.name as string,
         color: card.color as string,
         bank: card.bank as string,

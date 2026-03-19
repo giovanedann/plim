@@ -25,13 +25,7 @@ export class GetSummaryUseCase {
     const balance = totalIncome - totalExpenses
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0
 
-    const comparison = await this.calculateComparison(
-      userId,
-      query,
-      totalIncome,
-      totalExpenses,
-      balance
-    )
+    const comparison = await this.calculateComparison(userId, query)
 
     return {
       total_income: totalIncome,
@@ -44,13 +38,9 @@ export class GetSummaryUseCase {
 
   private async calculateComparison(
     userId: string,
-    query: DashboardQuery,
-    currentIncome: number,
-    currentExpenses: number,
-    currentBalance: number
+    query: DashboardQuery
   ): Promise<DashboardSummary['comparison']> {
-    const periodDays = this.daysBetween(query.start_date, query.end_date)
-    const previousQuery = this.getPreviousPeriod(query, periodDays)
+    const previousQuery = this.getPreviousCalendarMonth(query)
 
     const [prevExpenses, prevSalaries, prevIncomes] = await Promise.all([
       this.dashboardRepository.getExpensesForPeriod(userId, previousQuery),
@@ -72,36 +62,21 @@ export class GetSummaryUseCase {
     const prevBalance = prevTotalIncome - prevTotalExpenses
 
     return {
-      income_change_percent: this.percentChange(prevTotalIncome, currentIncome),
-      expenses_change_percent: this.percentChange(prevTotalExpenses, currentExpenses),
-      balance_change_percent: this.percentChange(prevBalance, currentBalance),
+      previous_income: prevTotalIncome,
+      previous_expenses: prevTotalExpenses,
+      previous_balance: prevBalance,
     }
   }
 
-  private daysBetween(start: string, end: string): number {
-    const startDate = new Date(start)
-    const endDate = new Date(end)
-    return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  }
-
-  private getPreviousPeriod(query: DashboardQuery, days: number): DashboardQuery {
-    const endDate = new Date(query.start_date)
-    endDate.setDate(endDate.getDate() - 1)
-
-    const startDate = new Date(endDate)
-    startDate.setDate(startDate.getDate() - days + 1)
+  private getPreviousCalendarMonth(query: DashboardQuery): DashboardQuery {
+    const [year, month] = query.start_date.split('-').map(Number) as [number, number]
+    const prevMonth = month === 1 ? 12 : month - 1
+    const prevYear = month === 1 ? year - 1 : year
+    const daysInPrevMonth = new Date(Date.UTC(prevYear, prevMonth, 0)).getUTCDate()
 
     return {
-      start_date: startDate.toISOString().slice(0, 10),
-      end_date: endDate.toISOString().slice(0, 10),
+      start_date: `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`,
+      end_date: `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(daysInPrevMonth).padStart(2, '0')}`,
     }
-  }
-
-  private percentChange(previous: number, current: number): number {
-    if (previous === 0) {
-      return current === 0 ? 0 : 100
-    }
-    const change = ((current - previous) / Math.abs(previous)) * 100
-    return Math.round(change * 100) / 100
   }
 }

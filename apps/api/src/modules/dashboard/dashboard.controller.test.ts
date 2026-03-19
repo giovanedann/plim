@@ -28,9 +28,9 @@ const baseDashboardData: DashboardData = {
     balance: 200000,
     savings_rate: 40,
     comparison: {
-      income_change_percent: 5,
-      expenses_change_percent: -2,
-      balance_change_percent: 10,
+      previous_income: 0,
+      previous_expenses: 0,
+      previous_balance: 0,
     },
   },
   expensesTimeline: { data: [], group_by: 'day' },

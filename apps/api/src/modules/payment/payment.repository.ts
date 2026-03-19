@@ -1,3 +1,4 @@
+import type { Database, Json } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface PaymentSubscription {
@@ -50,7 +51,7 @@ const FREE_LIMITS = {
 } as const
 
 export class PaymentRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getSubscription(userId: string): Promise<PaymentSubscription | null> {
     const { data, error } = await this.supabase
@@ -169,7 +170,7 @@ export class PaymentRepository {
       mp_preapproval_id: input.mp_preapproval_id ?? null,
       event_type: input.event_type,
       amount_cents: input.amount_cents ?? null,
-      raw_payload: input.raw_payload,
+      raw_payload: input.raw_payload as Json,
     })
 
     if (error) {

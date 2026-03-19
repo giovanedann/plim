@@ -1,10 +1,11 @@
 import type { CreateSalary, SalaryHistory } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const SALARY_COLUMNS = 'id, user_id, amount_cents, effective_from, created_at'
 
 export class SalaryRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async findActiveForMonth(userId: string, month: string): Promise<SalaryHistory | null> {
     const firstDayOfMonth = `${month}-01`

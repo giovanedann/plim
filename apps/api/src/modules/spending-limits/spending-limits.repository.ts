@@ -1,10 +1,11 @@
 import type { SpendingLimit, UpsertSpendingLimit } from '@plim/shared'
+import type { Database } from '@plim/shared/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const SPENDING_LIMIT_COLUMNS = 'id, user_id, year_month, amount_cents, created_at, updated_at'
 
 export class SpendingLimitsRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async findByMonth(userId: string, yearMonth: string): Promise<SpendingLimit | null> {
     const { data, error } = await this.supabase
