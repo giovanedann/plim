@@ -113,7 +113,7 @@ export class GetDashboardUseCase {
       spendingLimitProgress,
     ] = await Promise.all([
       this.incomeVsExpensesUseCase.execute(userId, dateQuery),
-      this.creditCardBreakdownUseCase.execute(userId, dateQuery),
+      this.creditCardBreakdownUseCase.execute(userId),
       this.savingsRateUseCase.execute(userId, dateQuery),
       this.salaryTimelineUseCase.execute(userId, dateQuery),
       this.installmentForecastUseCase.execute(userId),

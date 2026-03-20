@@ -20,6 +20,7 @@ type MockRepository = {
   getTotalIncome: ReturnType<typeof vi.fn>
   getTotalExpenses: ReturnType<typeof vi.fn>
   getPreviousPeriodData: ReturnType<typeof vi.fn>
+  getCreditCardBreakdownByCycle: ReturnType<typeof vi.fn>
   getCreditCardUtilization: ReturnType<typeof vi.fn>
   aggregateRecurringVsOnetime: ReturnType<typeof vi.fn>
   aggregateByDayOfWeek: ReturnType<typeof vi.fn>
@@ -49,6 +50,7 @@ function createMockDashboardRepository(): MockRepository {
       expenses: 310000,
       balance: 170000,
     }),
+    getCreditCardBreakdownByCycle: vi.fn().mockResolvedValue({ expenses: [], total: 0 }),
     getCreditCardUtilization: vi.fn().mockResolvedValue([]),
     aggregateRecurringVsOnetime: vi
       .fn()
@@ -163,7 +165,7 @@ describe('GetDashboardUseCase', () => {
     await sut.execute('user-123', { start_date: '2024-01-01', end_date: '2024-01-31' }, 'free')
 
     expect(mockRepository.getExpensesForPeriod).toHaveBeenCalled()
-    expect(mockRepository.getExpensesWithCreditCards).not.toHaveBeenCalled()
+    expect(mockRepository.getCreditCardBreakdownByCycle).not.toHaveBeenCalled()
     expect(mockRepository.getFutureExpenses).not.toHaveBeenCalled()
     expect(mockRepository.aggregateByCreditCard).not.toHaveBeenCalled()
     expect(mockRepository.calculateInstallmentForecast).not.toHaveBeenCalled()
@@ -172,7 +174,7 @@ describe('GetDashboardUseCase', () => {
   it('runs all DB queries for pro tier', async () => {
     await sut.execute('user-123', { start_date: '2024-01-01', end_date: '2024-01-31' }, 'pro')
 
-    expect(mockRepository.getExpensesWithCreditCards).toHaveBeenCalled()
+    expect(mockRepository.getCreditCardBreakdownByCycle).toHaveBeenCalled()
     expect(mockRepository.getFutureExpenses).toHaveBeenCalled()
     expect(mockRepository.calculateMonthlyIncomeExpenses).toHaveBeenCalled()
     expect(mockRepository.calculateSavingsRate).toHaveBeenCalled()

@@ -4,13 +4,13 @@ import type { DashboardRepository } from './dashboard.repository'
 import { GetCreditCardBreakdownUseCase } from './get-credit-card-breakdown.usecase'
 
 type MockRepository = {
-  getExpensesWithCreditCards: ReturnType<typeof vi.fn>
+  getCreditCardBreakdownByCycle: ReturnType<typeof vi.fn>
   aggregateByCreditCard: ReturnType<typeof vi.fn>
 }
 
 function createMockDashboardRepository(): MockRepository {
   return {
-    getExpensesWithCreditCards: vi.fn(),
+    getCreditCardBreakdownByCycle: vi.fn(),
     aggregateByCreditCard: vi.fn(),
   }
 }
@@ -24,7 +24,7 @@ describe('GetCreditCardBreakdownUseCase', () => {
     sut = new GetCreditCardBreakdownUseCase(mockRepository as unknown as DashboardRepository)
   })
 
-  it('returns credit card breakdown with expenses', async () => {
+  it('returns credit card breakdown with expenses from billing cycle', async () => {
     const card1 = createMockCreditCard({ id: 'card-1', name: 'Nubank' })
     const card2 = createMockCreditCard({ id: 'card-2', name: 'Inter' })
     const expenses = [
@@ -35,26 +35,27 @@ describe('GetCreditCardBreakdownUseCase', () => {
       { credit_card_id: card1.id, name: card1.name, amount: 20000, percentage: 66.7 },
       { credit_card_id: card2.id, name: card2.name, amount: 10000, percentage: 33.3 },
     ]
-    mockRepository.getExpensesWithCreditCards.mockResolvedValue(expenses)
+    mockRepository.getCreditCardBreakdownByCycle.mockResolvedValue({
+      expenses,
+      total: 30000,
+    })
     mockRepository.aggregateByCreditCard.mockReturnValue(aggregatedData)
 
-    const result = await sut.execute('user-123', {
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
-    })
+    const result = await sut.execute('user-123')
 
     expect(result.total).toBe(30000)
     expect(result.data).toEqual(aggregatedData)
+    expect(mockRepository.getCreditCardBreakdownByCycle).toHaveBeenCalledWith('user-123')
   })
 
   it('returns empty breakdown when no credit card expenses', async () => {
-    mockRepository.getExpensesWithCreditCards.mockResolvedValue([])
+    mockRepository.getCreditCardBreakdownByCycle.mockResolvedValue({
+      expenses: [],
+      total: 0,
+    })
     mockRepository.aggregateByCreditCard.mockReturnValue([])
 
-    const result = await sut.execute('user-123', {
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
-    })
+    const result = await sut.execute('user-123')
 
     expect(result.total).toBe(0)
     expect(result.data).toEqual([])

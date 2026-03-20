@@ -122,12 +122,10 @@ export function createDashboardRouter(): Hono<DashboardEnv> {
     return success(c, result, HTTP_STATUS.OK)
   })
 
-  router.get('/credit-card-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
+  router.get('/credit-card-breakdown', async (c) => {
     const deps = c.get('dashboardDeps')
-    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
     const result = await getCreditCardBreakdownController(
       c.get('userId'),
-      query,
       deps.getCreditCardBreakdown
     )
     return success(c, result, HTTP_STATUS.OK)
@@ -215,11 +213,9 @@ export function createDashboardRouterWithDeps(deps: DashboardDependencies): Hono
     return success(c, result, HTTP_STATUS.OK)
   })
 
-  router.get('/credit-card-breakdown', sValidator('query', dashboardQuerySchema), async (c) => {
-    const { tier: _, ...query } = await clampQuery(deps, c.get('userId'), c.req.valid('query'))
+  router.get('/credit-card-breakdown', async (c) => {
     const result = await getCreditCardBreakdownController(
       c.get('userId'),
-      query,
       deps.getCreditCardBreakdown
     )
     return success(c, result, HTTP_STATUS.OK)

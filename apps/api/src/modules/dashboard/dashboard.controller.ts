@@ -122,23 +122,18 @@ dashboardController.get(
   }
 )
 
-dashboardController.get(
-  '/credit-card-breakdown',
-  sValidator('query', dashboardQuerySchema),
-  async (c) => {
-    const userId = c.get('userId')
-    const query = c.req.valid('query')
+dashboardController.get('/credit-card-breakdown', async (c) => {
+  const userId = c.get('userId')
 
-    const { getCreditCardBreakdown } = createDashboardDependencies({
-      env: c.env,
-      accessToken: c.get('accessToken'),
-    })
+  const { getCreditCardBreakdown } = createDashboardDependencies({
+    env: c.env,
+    accessToken: c.get('accessToken'),
+  })
 
-    const data = await getCreditCardBreakdown.execute(userId, query)
+  const data = await getCreditCardBreakdown.execute(userId)
 
-    return success(c, data, HTTP_STATUS.OK)
-  }
-)
+  return success(c, data, HTTP_STATUS.OK)
+})
 
 dashboardController.get('/savings-rate', sValidator('query', dashboardQuerySchema), async (c) => {
   const userId = c.get('userId')
