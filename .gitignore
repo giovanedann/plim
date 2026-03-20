@@ -50,3 +50,6 @@ backups/
 
 # Instagram posts
 instagram_posts/
+
+# Supabase CLI temp files
+supabase/.temp/
