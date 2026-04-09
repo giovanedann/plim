@@ -219,7 +219,7 @@ export const TUTORIALS: Tutorial[] = [
         elementId: 'upgrade-payment-button',
         title: 'Pagar com PIX',
         description:
-          'O pagamento é feito via PIX por R$ 24,90. É válido por 30 dias e não tem renovação automática — você renova só quando quiser.',
+          'O pagamento é feito via PIX por R$ 10,00. É válido por 30 dias e não tem renovação automática — você renova só quando quiser.',
         action: 'click',
       },
       {

@@ -62,7 +62,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'approved',
         status_detail: 'accredited',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: '2026-02-01T12:00:00Z',
       })
 
@@ -84,7 +84,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'pending',
         status_detail: 'pending_waiting_payment',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: null,
       })
 
@@ -101,7 +101,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'pending',
         status_detail: 'pending_waiting_payment',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: null,
       })
 
@@ -137,7 +137,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'approved',
         status_detail: 'accredited',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: '2026-02-01T12:00:00Z',
       })
 
@@ -166,7 +166,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'approved',
         status_detail: 'accredited',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: '2026-02-01T12:00:00Z',
       })
 
@@ -188,7 +188,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'approved',
         status_detail: 'accredited',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: '2026-02-01T12:00:00Z',
       })
 
@@ -210,7 +210,7 @@ describe('HandleWebhookUseCase', () => {
         status: 'approved',
         status_detail: 'accredited',
         payer: { email: 'user@email.com' },
-        transaction_amount: 24.9,
+        transaction_amount: 10,
         date_approved: '2026-02-01T12:00:00Z',
       })
 
@@ -220,13 +220,13 @@ describe('HandleWebhookUseCase', () => {
         user_id: 'user-1',
         mp_payment_id: 'pay-123',
         event_type: 'pix_approved',
-        amount_cents: 2490,
+        amount_cents: 1000,
         raw_payload: {
           id: 12345,
           status: 'approved',
           status_detail: 'accredited',
           payer: { email: 'user@email.com' },
-          transaction_amount: 24.9,
+          transaction_amount: 10,
           date_approved: '2026-02-01T12:00:00Z',
         },
       })

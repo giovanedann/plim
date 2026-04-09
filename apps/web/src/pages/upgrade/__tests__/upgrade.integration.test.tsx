@@ -87,7 +87,7 @@ describe('UpgradePage Integration', () => {
       render(<UpgradePage />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByText('R$ 24,90')).toBeInTheDocument()
+        expect(screen.getByText('R$ 10,00')).toBeInTheDocument()
       })
 
       expect(screen.getByText(/100 requisições de texto/)).toBeInTheDocument()

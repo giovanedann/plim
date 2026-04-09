@@ -57,7 +57,7 @@ const tiers: PricingTier[] = [
   },
   {
     name: 'Pro',
-    price: 'R$ 24,90',
+    price: 'R$ 10,00',
     period: '/mês',
     description: 'Para quem quer o máximo da IA',
     features: [

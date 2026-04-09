@@ -210,7 +210,7 @@ export function UpgradePage(): React.JSX.Element {
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
               <div className="text-center">
-                <p className="text-3xl font-bold">R$ 24,90</p>
+                <p className="text-3xl font-bold">R$ 10,00</p>
                 <p className="text-sm text-muted-foreground">/ 30 dias</p>
                 <p className="mt-1 text-xs text-muted-foreground">Pagamento único via PIX</p>
               </div>

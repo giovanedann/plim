@@ -22,7 +22,7 @@ function createFetchResponse(body: unknown, ok = true, status = 200): Response {
 function createDefaultParams(overrides?: Partial<CreatePixPaymentParams>): CreatePixPaymentParams {
   return {
     email: 'user@email.com',
-    amountBrl: 29.9,
+    amountBrl: 10,
     notificationUrl: 'https://api.plim.app.br/api/v1/webhooks/mercadopago',
     externalReference: 'plim-pro-user-1',
     statementDescriptor: 'PLIM PRO',
@@ -66,7 +66,7 @@ describe('MercadoPagoClient', () => {
           headers: expect.objectContaining({
             Authorization: `Bearer ${ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
-            'X-Idempotency-Key': expect.stringContaining('pix-user@email.com-29.9-'),
+            'X-Idempotency-Key': expect.stringContaining('pix-user@email.com-10-'),
           }),
         })
       )
@@ -81,7 +81,7 @@ describe('MercadoPagoClient', () => {
       const body = JSON.parse(call[1]?.body as string)
 
       expect(body).toMatchObject({
-        transaction_amount: 29.9,
+        transaction_amount: 10,
         payment_method_id: 'pix',
         payer: { email: 'user@email.com', first_name: 'Joao', last_name: 'Silva' },
         description: 'Plim Pro - 30 dias',
@@ -96,7 +96,7 @@ describe('MercadoPagoClient', () => {
               description: 'Assinatura Plim Pro por 30 dias',
               category_id: 'services',
               quantity: 1,
-              unit_price: 29.9,
+              unit_price: 10,
             },
           ],
         },
@@ -153,7 +153,7 @@ describe('MercadoPagoClient', () => {
       status: 'approved',
       status_detail: 'accredited',
       payer: { email: 'user@email.com' },
-      transaction_amount: 29.9,
+      transaction_amount: 10,
       date_approved: '2026-02-06T10:00:00.000Z',
     }
 

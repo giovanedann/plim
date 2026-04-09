@@ -2,7 +2,7 @@ import type { PixPaymentResponse } from '@plim/shared'
 import type { CreatePixPaymentParams, MercadoPagoClient } from './client/mercado-pago-client'
 import type { PaymentRepository } from './payment.repository'
 
-const PRO_PRICE_BRL = 24.9
+const PRO_PRICE_BRL = 10
 
 export interface PixPaymentUrls {
   apiBaseUrl: string
