@@ -172,6 +172,55 @@ describe('ExpensesPage Integration', () => {
       })
     })
 
+    it('creates an income transaction with type=income when using Receita tab', async () => {
+      setupBasicServiceMocks()
+      vi.spyOn(expenseService, 'listExpensesPaginated').mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      })
+      vi.spyOn(expenseService, 'listExpenses').mockResolvedValue({ data: [] })
+      const createSpy = vi
+        .spyOn(expenseService, 'createExpense')
+        .mockResolvedValue({ data: createMockExpense({ type: 'income' }) })
+
+      render(<ExpensesPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Nova Transação')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByText('Nova Transação'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
+
+      // Click "Receita" tab inside the modal
+      const receitaButton = screen
+        .getAllByRole('button', { name: 'Receita' })
+        .find((btn) => btn.closest('[role="dialog"]'))
+      if (!receitaButton) throw new Error('Receita button not found inside modal')
+      await user.click(receitaButton)
+
+      // After clicking Receita, the submit button label should switch to "Criar Receita"
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Criar Receita/i })).toBeInTheDocument()
+      })
+
+      await user.type(screen.getByLabelText('Descrição'), 'Aquecedor Heloisa')
+      await user.type(screen.getByLabelText(/Valor/), '129')
+
+      await user.click(screen.getByRole('button', { name: /Criar Receita/i }))
+
+      await waitFor(() => {
+        expect(createSpy).toHaveBeenCalled()
+      })
+
+      const submitted = createSpy.mock.calls[0]?.[0]
+      expect(submitted).toBeDefined()
+      expect(submitted?.type).toBe('income')
+    })
+
     it('shows edit and delete options for expenses', async () => {
       const mockExpense = createMockExpense({
         description: 'Test Expense',
