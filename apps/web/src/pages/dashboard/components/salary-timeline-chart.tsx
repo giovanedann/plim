@@ -21,8 +21,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-function formatDate(date: string): string {
-  const d = new Date(date)
+export function formatDate(date: string): string {
   const monthNames = [
     'Jan',
     'Fev',
@@ -37,7 +36,11 @@ function formatDate(date: string): string {
     'Nov',
     'Dez',
   ]
-  return `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(2)}`
+  // Parse YYYY-MM-DD components directly. `new Date(str)` would interpret the
+  // date as UTC midnight and `getMonth()` reads local time, shifting 1st-of-month
+  // dates back a month in negative-offset timezones (e.g. America/Sao_Paulo).
+  const [year, month] = date.split('-').map(Number)
+  return `${monthNames[(month ?? 1) - 1]} ${String(year).slice(2)}`
 }
 
 export function SalaryTimelineChart({ data }: SalaryTimelineChartProps) {
