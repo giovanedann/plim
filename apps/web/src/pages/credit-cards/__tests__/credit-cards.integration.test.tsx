@@ -2,7 +2,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { creditCardService } from '@/services/credit-card.service'
 import { PLAN_LIMITS, createMockCreditCard, resetIdCounter } from '@plim/shared'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CreditCardsPage } from '../credit-cards.page'
@@ -173,6 +173,38 @@ describe('CreditCardsPage Integration', () => {
         expect(screen.getByRole('dialog')).toBeInTheDocument()
         expect(screen.getByText(/Nome do Cartão/i)).toBeInTheDocument()
       })
+    })
+
+    it('populates the form with the card data when editing', async () => {
+      const card = createMockCreditCard({
+        name: 'Nubank Ultravioleta',
+        color: 'light_purple',
+        flag: 'mastercard',
+        bank: 'nubank',
+        last_4_digits: '4321',
+        expiration_day: 15,
+        closing_day: 8,
+        credit_limit_cents: 1234500,
+      })
+
+      vi.spyOn(creditCardService, 'listCreditCards').mockResolvedValue({ data: [card] })
+
+      render(<CreditCardsPage />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByText('Nubank Ultravioleta')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('button', { name: /ações do cartão/i }))
+      await user.click(await screen.findByText('Editar'))
+
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByText('Editar Cartão')).toBeInTheDocument()
+      expect(within(dialog).getByLabelText(/Nome do cartão/i)).toHaveValue('Nubank Ultravioleta')
+      expect(within(dialog).getByLabelText(/Últimos 4 dígitos/i)).toHaveValue('4321')
+      expect(within(dialog).getByLabelText(/Dia de vencimento/i)).toHaveValue('15')
+      expect(within(dialog).getByLabelText(/Dia de fechamento/i)).toHaveValue('8')
+      expect(within(dialog).getByLabelText(/Limite de crédito/i)).toHaveValue('12.345,00')
     })
 
     it('shows dropdown menu for edit and delete', async () => {

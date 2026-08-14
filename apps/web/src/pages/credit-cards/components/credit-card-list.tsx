@@ -135,6 +135,7 @@ export function CreditCardList({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 bg-background/80 backdrop-blur-sm hover:bg-background"
+                    aria-label={`Ações do cartão ${card.name}`}
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>

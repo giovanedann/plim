@@ -105,6 +105,7 @@ export function CreditCardsPage() {
       )}
 
       <CreditCardModal
+        key={selectedCard?.id ?? 'new'}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         creditCard={selectedCard}

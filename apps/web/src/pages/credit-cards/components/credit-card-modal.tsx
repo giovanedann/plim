@@ -136,6 +136,22 @@ function parseCurrencyInputToCents(value: string): number {
   return Math.round(decimal * 100)
 }
 
+function toFormValues(creditCard?: CreditCard | null): FormData {
+  return {
+    name: creditCard?.name ?? '',
+    color: creditCard?.color ?? 'black',
+    flag: creditCard?.flag ?? 'visa',
+    bank: creditCard?.bank ?? 'nubank',
+    last4Digits: creditCard?.last_4_digits ?? '',
+    expirationDay: creditCard?.expiration_day?.toString() ?? '',
+    closingDay: creditCard?.closing_day?.toString() ?? '',
+    creditLimit:
+      creditCard?.credit_limit_cents != null
+        ? formatCurrencyInput(centsToDecimal(creditCard.credit_limit_cents).toFixed(2))
+        : '',
+  }
+}
+
 interface CreditCardModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -155,19 +171,7 @@ export function CreditCardModal({
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: creditCard?.name ?? '',
-      color: creditCard?.color ?? 'black',
-      flag: creditCard?.flag ?? 'visa',
-      bank: creditCard?.bank ?? 'nubank',
-      last4Digits: creditCard?.last_4_digits ?? '',
-      expirationDay: creditCard?.expiration_day?.toString() ?? '',
-      closingDay: creditCard?.closing_day?.toString() ?? '',
-      creditLimit:
-        creditCard?.credit_limit_cents != null
-          ? formatCurrencyInput(centsToDecimal(creditCard.credit_limit_cents).toFixed(2))
-          : '',
-    },
+    defaultValues: toFormValues(creditCard),
   })
 
   const watchedName = form.watch('name')
@@ -227,6 +231,11 @@ export function CreditCardModal({
     }
   }
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) form.reset(toFormValues(creditCard))
+    onOpenChange(next)
+  }
+
   const handleCreditLimitChange = (value: string) => {
     const digits = value.replace(/\D/g, '')
     if (digits === '') {
@@ -239,11 +248,7 @@ export function CreditCardModal({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      key={open ? (creditCard?.id ?? 'new') : 'closed'}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Cartão' : 'Novo Cartão'}</DialogTitle>
@@ -453,7 +458,7 @@ export function CreditCardModal({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={!watchedName.trim() || isPending}>
